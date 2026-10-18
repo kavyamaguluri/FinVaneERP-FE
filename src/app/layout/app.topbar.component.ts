@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { LayoutService } from './service/app.layout.service';
-import { AuthenticationService } from '../features/service/authentication.service';
+import { AuthenticationService, UserSession } from '../features/service/authentication.service';
 
 @Component({
   selector: 'app-topbar',
@@ -35,10 +35,19 @@ import { AuthenticationService } from '../features/service/authentication.servic
           <i class="pi pi-calendar mr-1"></i>FY 2026-27
         </span>
 
-        <!-- User Profile Menu -->
-        <div class="flex align-items-center gap-2">
+        <!-- User Profile & Logout -->
+        <div class="flex align-items-center gap-2 pl-2 border-left-1 surface-border">
           <p-avatar label="AD" shape="circle" styleClass="bg-primary text-white"></p-avatar>
-          <span class="font-medium text-sm text-900 hidden md:inline">Admin User</span>
+          <div class="hidden md:flex flex-column">
+            <span class="font-semibold text-xs text-900 leading-tight">{{ currentUser?.fullName || 'Admin User' }}</span>
+            <span class="text-500 text-xs">{{ currentUser?.role || 'Administrator' }}</span>
+          </div>
+          <button pButton type="button" 
+                  icon="pi pi-sign-out" 
+                  title="Logout" 
+                  class="p-button-text p-button-rounded p-button-danger p-button-sm ml-1" 
+                  (click)="onLogout()">
+          </button>
         </div>
       </div>
     </div>
@@ -52,17 +61,26 @@ import { AuthenticationService } from '../features/service/authentication.servic
 })
 export class AppTopbarComponent {
   activeTenant: string = '1';
+  currentUser: UserSession | null = null;
 
   constructor(
     public layoutService: LayoutService,
     private authService: AuthenticationService
   ) {
     this.activeTenant = this.authService.getActiveTenant();
+    this.currentUser = this.authService.getCurrentUser();
+    this.authService.currentUser$.subscribe(u => this.currentUser = u);
   }
 
   onTenantChange(event: any) {
     const newTenant = event.target.value;
     this.authService.setActiveTenant(newTenant);
-    window.location.reload(); // Reload with new tenant context
+    window.location.reload();
+  }
+
+  onLogout() {
+    if (confirm('Are you sure you want to sign out?')) {
+      this.authService.logout();
+    }
   }
 }

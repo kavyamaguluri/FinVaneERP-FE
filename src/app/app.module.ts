@@ -30,6 +30,7 @@ import { PartiesComponent } from './features/components/apps/masters/parties/par
 import { VoucherEntryComponent } from './features/components/apps/vouchers/entry/voucher-entry.component';
 import { TrialBalanceComponent } from './features/components/apps/statutory/trial-balance/trial-balance.component';
 import { ModulePlaceholderComponent } from './features/components/apps/placeholder/module-placeholder.component';
+import { LoginComponent } from './features/components/auth/login.component';
 
 // Pipes & Interceptors
 import { IndianCurrencyPipe } from './shared/pipes/indian-currency.pipe';
@@ -48,6 +49,7 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
     VoucherEntryComponent,
     TrialBalanceComponent,
     ModulePlaceholderComponent,
+    LoginComponent,
     IndianCurrencyPipe
   ],
   imports: [
