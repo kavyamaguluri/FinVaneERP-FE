@@ -1,0 +1,72 @@
+/* PrimeNG Ultima & Core Themes */
+@import "primeng/resources/themes/lara-light-indigo/theme.css";
+@import "primeng/resources/primeng.min.css";
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+
+/* Google Font: Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --primary-color: #2563eb;
+  --primary-color-text: #ffffff;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-family);
+  background-color: #f8fafc;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Card Styling & PrimeNG overrides */
+.p-card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+}
+
+.p-datatable.p-datatable-sm .p-datatable-thead > tr > th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Print Styling for Invoices and Financial Reports */
+@media print {
+  .no-print,
+  .layout-topbar,
+  .layout-sidebar,
+  .p-menubar,
+  .p-toast {
+    display: none !important;
+  }
+
+  .layout-main-container {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+  }
+}
