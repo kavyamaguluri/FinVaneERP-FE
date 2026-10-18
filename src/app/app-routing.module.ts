@@ -7,6 +7,7 @@ import { PartiesComponent } from './features/components/apps/masters/parties/par
 import { VoucherEntryComponent } from './features/components/apps/vouchers/entry/voucher-entry.component';
 import { TrialBalanceComponent } from './features/components/apps/statutory/trial-balance/trial-balance.component';
 import { ModulePlaceholderComponent } from './features/components/apps/placeholder/module-placeholder.component';
+import { UserManagementComponent } from './features/components/apps/admin/user-management.component';
 import { LoginComponent } from './features/components/auth/login.component';
 import { AuthGuard } from './features/service/auth.guard';
 
@@ -36,6 +37,8 @@ const routes: Routes = [
       { path: 'statutory/financials', component: ModulePlaceholderComponent, data: { title: 'Financial Statements (Schedule III)', section: 'Statutory & Compliance', icon: 'pi pi-chart-bar', description: 'Balance sheet, profit & loss statement, and cash flow statements' } },
       { path: 'statutory/gst-returns', component: ModulePlaceholderComponent, data: { title: 'GSTR-1 & 3B Returns', section: 'Statutory & Compliance', icon: 'pi pi-id-card', description: 'Generate GSTR-1, GSTR-3B summaries, and export JSON for filing' } },
       { path: 'assets/register', component: ModulePlaceholderComponent, data: { title: 'Fixed Assets Register', section: 'Statutory & Compliance', icon: 'pi pi-database', description: 'Track asset acquisitions, depreciation schedules, and disposals' } },
+
+      { path: 'admin/users', component: UserManagementComponent },
 
       { path: '**', redirectTo: '' }
     ]

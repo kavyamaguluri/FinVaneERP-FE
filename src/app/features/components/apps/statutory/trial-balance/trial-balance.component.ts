@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { LedgerReportService } from '../../../../service/accounts/ledger.service';
 import { TrialBalanceReport, TrialBalanceRow } from '../../../../api/accounts/trial-balance.model';
 
@@ -20,7 +20,7 @@ import { TrialBalanceReport, TrialBalanceRow } from '../../../../api/accounts/tr
       <!-- Printable Report Header -->
       <div class="text-center mb-4">
         <h3 class="text-2xl font-bold text-900 m-0">TRIAL BALANCE</h3>
-        <p class="text-sm text-600 m-0 mt-1">As of: {{ asOfDate }} | Currency: INR (₹)</p>
+        <p class="text-sm text-600 m-0 mt-1">As of: {{ asOfDate }} | Currency: INR (â‚¹)</p>
       </div>
 
       <!-- Trial Balance Table -->
@@ -34,8 +34,8 @@ import { TrialBalanceReport, TrialBalanceRow } from '../../../../api/accounts/tr
             <th style="width: 15%">Account Code</th>
             <th style="width: 35%">Ledger Particulars</th>
             <th style="width: 20%">Account Group</th>
-            <th style="width: 15%" class="text-right">Debit Balance (₹)</th>
-            <th style="width: 15%" class="text-right">Credit Balance (₹)</th>
+            <th style="width: 15%" class="text-right">Debit Balance (â‚¹)</th>
+            <th style="width: 15%" class="text-right">Credit Balance (â‚¹)</th>
           </tr>
         </ng-template>
 
@@ -111,3 +111,4 @@ export class TrialBalanceComponent implements OnInit {
     window.print();
   }
 }
+

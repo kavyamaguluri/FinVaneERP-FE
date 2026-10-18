@@ -1,13 +1,32 @@
 ﻿import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 export interface UserSession {
+  id?: number;
   username: string;
+  email?: string;
   fullName: string;
-  role: string;
+  role: 'ADMIN' | 'USER' | string;
   token?: string;
+  tenantId?: string;
+}
+
+export interface RegisterPayload {
+  username: string;
+  email: string;
+  fullName: string;
+  password: string;
+  role: 'ADMIN' | 'CLIENT_ADMIN' | 'CLIENT_USER' | string;
+  tenantId?: string;
+}
+
+export interface LoginPayload {
+  username: string;
+  password: string;
 }
 
 @Injectable({
@@ -25,15 +44,14 @@ export class AuthenticationService {
   public activeTenant$ = this.activeTenantSubject.asObservable();
 
   private currentUserSubject: BehaviorSubject<UserSession | null>;
-  public currentUser$;
+  public currentUser$: Observable<UserSession | null>;
 
-  constructor(private router: Router) {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     const savedUser = localStorage.getItem(this.USER_KEY);
-    const initialUser: UserSession | null = savedUser ? JSON.parse(savedUser) : {
-      username: 'admin',
-      fullName: 'Admin User',
-      role: 'ADMIN'
-    };
+    const initialUser: UserSession | null = savedUser ? JSON.parse(savedUser) : null;
     this.currentUserSubject = new BehaviorSubject<UserSession | null>(initialUser);
     this.currentUser$ = this.currentUserSubject.asObservable();
   }
@@ -56,27 +74,59 @@ export class AuthenticationService {
   }
 
   public isLoggedIn(): boolean {
-    return this.currentUserSubject.value !== null;
+    return this.currentUserSubject.value !== null && !!this.getToken();
   }
 
   public getCurrentUser(): UserSession | null {
     return this.currentUserSubject.value;
   }
 
-  public login(username: string, password: string):boolean {
-    if (username && password) {
-      const session: UserSession = {
-        username: username,
-        fullName: username === 'admin' ? 'Admin User' : username,
-        role: 'ADMIN',
-        token: 'dev_mock_jwt_token_' + Date.now()
-      };
-      localStorage.setItem(this.USER_KEY, JSON.stringify(session));
-      localStorage.setItem(this.TOKEN_KEY, session.token!);
-      this.currentUserSubject.next(session);
-      return true;
+  public isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.role === 'ADMIN';
+  }
+
+  public register(payload: RegisterPayload): Observable<any> {
+    const url = `${environment.apiUrl}/auth/register`;
+    return this.http.post<any>(url, payload).pipe(
+      tap((res) => {
+        if (res && res.data) {
+          this.saveSession(res.data);
+        }
+      })
+    );
+  }
+
+  public login(credentials: LoginPayload): Observable<any> {
+    const url = `${environment.apiUrl}/auth/login`;
+    return this.http.post<any>(url, credentials).pipe(
+      tap((res) => {
+        if (res && res.data) {
+          this.saveSession(res.data);
+        }
+      })
+    );
+  }
+
+  private saveSession(data: any): void {
+    const session: UserSession = {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      fullName: data.fullName,
+      role: data.role || 'USER',
+      token: data.token,
+      tenantId: data.tenantId || '1'
+    };
+
+    localStorage.setItem(this.USER_KEY, JSON.stringify(session));
+    if (data.token) {
+      localStorage.setItem(this.TOKEN_KEY, data.token);
     }
-    return false;
+    if (data.tenantId) {
+      this.setActiveTenant(data.tenantId);
+    }
+    this.currentUserSubject.next(session);
   }
 
   public logout(): void {
@@ -86,3 +136,4 @@ export class AuthenticationService {
     this.router.navigate(['/login']);
   }
 }
+

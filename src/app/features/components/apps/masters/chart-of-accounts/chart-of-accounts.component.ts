@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { AccountsService } from '../../../../service/accounts/accounts.service';
 import { AccountGroup, AccountLedger } from '../../../../api/accounts/account-ledger.model';
 
@@ -83,7 +83,7 @@ import { AccountGroup, AccountLedger } from '../../../../api/accounts/account-le
           </select>
         </div>
         <div class="field mb-3">
-          <label for="opening" class="font-semibold text-sm">Opening Balance (₹)</label>
+          <label for="opening" class="font-semibold text-sm">Opening Balance (â‚¹)</label>
           <input type="number" pInputText id="opening" [(ngModel)]="newLedger.openingBalance" placeholder="0.00" class="w-full" />
         </div>
       </ng-template>
@@ -165,3 +165,4 @@ export class ChartOfAccountsComponent implements OnInit {
     });
   }
 }
+

@@ -1,9 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
+import { AuthenticationService } from '../features/service/authentication.service';
 
 @Component({
   selector: 'app-menu',
   template: `
     <div class="layout-menu-container p-3">
+      <!-- Role Context Banner -->
+      <div class="mb-3 px-3 py-2 border-round surface-50 border-1 surface-border flex align-items-center justify-content-between">
+        <div>
+          <span class="text-xs text-500 block">User Access Level</span>
+          <span class="font-bold text-xs" [ngClass]="getRoleTextColor()">
+            <i class="pi mr-1" [ngClass]="getRoleIcon()"></i>{{ getRoleTitle() }}
+          </span>
+        </div>
+        <span class="p-badge text-xxs font-bold" [ngClass]="getRoleBadgeClass()">
+          {{ currentRole }}
+        </span>
+      </div>
+
       <ul class="layout-menu list-none p-0 m-0">
         <li *ngFor="let item of model" class="mb-3">
           <div class="text-xs uppercase font-bold text-500 mb-2 px-3 tracking-wider">{{ item.label }}</div>
@@ -15,7 +29,7 @@ import { Component, OnInit } from '@angular/core';
                  class="flex align-items-center gap-3 px-3 py-2 text-700 hover:surface-100 border-round text-sm font-medium transition-colors no-underline cursor-pointer">
                 <i [class]="sub.icon" class="text-base"></i>
                 <span>{{ sub.label }}</span>
-                <span *ngIf="sub.badge" class="p-badge p-badge-warning ml-auto text-xs">{{ sub.badge }}</span>
+                <span *ngIf="sub.badge" class="p-badge p-badge-danger ml-auto text-xs">{{ sub.badge }}</span>
               </a>
             </li>
           </ul>
@@ -32,13 +46,58 @@ import { Component, OnInit } from '@angular/core';
     .active-menuitem i {
       color: #2563eb !important;
     }
+    .text-xxs {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.35rem;
+    }
   `]
 })
 export class AppMenuComponent implements OnInit {
   model: any[] = [];
+  currentRole: string = 'CLIENT_USER';
+
+  constructor(private authService: AuthenticationService) {}
 
   ngOnInit() {
-    this.model = [
+    this.updateUserRole();
+    this.authService.currentUser$.subscribe(() => {
+      this.updateUserRole();
+      this.buildMenu();
+    });
+    this.buildMenu();
+  }
+
+  updateUserRole() {
+    const user = this.authService.getCurrentUser();
+    this.currentRole = user?.role || 'CLIENT_USER';
+  }
+
+  getRoleTitle(): string {
+    if (this.currentRole === 'ADMIN') return 'SYSTEM ADMIN';
+    if (this.currentRole === 'CLIENT_ADMIN') return 'CLIENT ADMIN';
+    return 'CLIENT USER';
+  }
+
+  getRoleTextColor(): string {
+    if (this.currentRole === 'ADMIN') return 'text-red-600';
+    if (this.currentRole === 'CLIENT_ADMIN') return 'text-blue-600';
+    return 'text-green-600';
+  }
+
+  getRoleIcon(): string {
+    if (this.currentRole === 'ADMIN') return 'pi-shield';
+    if (this.currentRole === 'CLIENT_ADMIN') return 'pi-briefcase';
+    return 'pi-user';
+  }
+
+  getRoleBadgeClass(): string {
+    if (this.currentRole === 'ADMIN') return 'p-badge-danger';
+    if (this.currentRole === 'CLIENT_ADMIN') return 'p-badge-info';
+    return 'p-badge-success';
+  }
+
+  buildMenu() {
+    const baseMenu: any[] = [
       {
         label: 'Home',
         items: [
@@ -81,5 +140,17 @@ export class AppMenuComponent implements OnInit {
         ]
       }
     ];
+
+    // If Admin (or any user viewing access management), include the Administration section
+    if (this.currentRole === 'ADMIN') {
+      baseMenu.push({
+        label: 'Administration & Security',
+        items: [
+          { label: 'User Access & Roles', icon: 'pi pi-users', routerLink: '/admin/users', badge: 'ADMIN' }
+        ]
+      });
+    }
+
+    this.model = baseMenu;
   }
 }

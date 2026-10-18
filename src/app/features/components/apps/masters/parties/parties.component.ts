@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { PartyService } from '../../../../service/parties/party.service';
 import { Party } from '../../../../api/parties/party.model';
 import { APP_CONFIG_MAPPING } from '../../../../../../environments/app.config.mapping';
@@ -101,7 +101,7 @@ import { APP_CONFIG_MAPPING } from '../../../../../../environments/app.config.ma
           </select>
         </div>
         <div class="field mb-3">
-          <label class="font-semibold text-sm">Opening Balance (₹)</label>
+          <label class="font-semibold text-sm">Opening Balance (â‚¹)</label>
           <input type="number" pInputText [(ngModel)]="newParty.openingBalance" placeholder="0.00" class="w-full" />
         </div>
       </ng-template>
@@ -188,3 +188,4 @@ export class PartiesComponent implements OnInit {
     return (APP_CONFIG_MAPPING.stateCodes as any)[code] || 'Other';
   }
 }
+
