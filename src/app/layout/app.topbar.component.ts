@@ -163,12 +163,9 @@ import { environment } from '../../environments/environment';
           </li>
         </ul>
 
-        <!-- Right Side: Active Entity, User Details, Sign Out -->
+        <!-- Right Side: Active Entity & Sign Out -->
         <span *ngIf="activeEntityName" class="navbar-text text-white fw-semibold me-3">
           {{ activeEntityName }}
-        </span>
-        <span class="navbar-text text-light me-3 small">
-          {{ displayName }}
         </span>
         <button type="button" class="btn btn-outline-light btn-sm" (click)="onLogout()">
           Sign out
@@ -213,12 +210,7 @@ export class AppTopbarComponent implements OnInit {
     });
   }
 
-  get displayName(): string {
-    let name = this.currentUser?.fullName || this.currentUser?.username || '';
-    // Strip any "admin" or "system admin" role mention
-    name = name.replace(/\b(system\s+)?admin\b/gi, '').replace(/[·\(\)]/g, '').trim();
-    return name || this.currentUser?.username || 'User';
-  }
+
 
   toggleDropdown(name: string, event: Event) {
     event.stopPropagation();
