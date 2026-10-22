@@ -23,6 +23,9 @@ import { ToastModule } from 'primeng/toast';
 
 // Masters
 import { ChartOfAccountsComponent } from './features/components/apps/masters/chart-of-accounts/chart-of-accounts.component';
+import { CoaMappingComponent } from './features/components/apps/masters/chart-of-accounts/coa-mapping.component';
+import { SectorMappingComponent } from './features/components/apps/masters/chart-of-accounts/sector-mapping.component';
+import { LocationsComponent } from './features/components/apps/masters/locations/locations.component';
 import { PartiesComponent } from './features/components/apps/masters/parties/parties.component';
 import { InventoryComponent } from './features/components/apps/masters/inventory/inventory.component';
 import { EmployeesComponent } from './features/components/apps/payroll/employees.component';
@@ -31,6 +34,10 @@ import { EmployeesComponent } from './features/components/apps/payroll/employees
 import { InvoicesComponent } from './features/components/apps/operations/invoices/invoices.component';
 import { DayBookComponent } from './features/components/apps/vouchers/day-book/day-book.component';
 import { VoucherEntryComponent } from './features/components/apps/vouchers/entry/voucher-entry.component';
+import { BankingComponent } from './features/components/apps/operations/banking/banking.component';
+import { FixedAssetsComponent } from './features/components/apps/operations/assets/fixed-assets.component';
+import { NotesComponent } from './features/components/apps/operations/notes/notes.component';
+import { StockTransfersComponent } from './features/components/apps/operations/transfers/stock-transfers.component';
 
 // Reports
 import { TrialBalanceComponent } from './features/components/apps/statutory/trial-balance/trial-balance.component';
@@ -58,12 +65,19 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
     AppTopbarComponent,
     DashboardComponent,
     ChartOfAccountsComponent,
+    CoaMappingComponent,
+    SectorMappingComponent,
+    LocationsComponent,
     PartiesComponent,
     InventoryComponent,
     EmployeesComponent,
     InvoicesComponent,
     DayBookComponent,
     VoucherEntryComponent,
+    BankingComponent,
+    FixedAssetsComponent,
+    NotesComponent,
+    StockTransfersComponent,
     TrialBalanceComponent,
     BalanceSheetComponent,
     ProfitLossComponent,

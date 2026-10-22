@@ -132,7 +132,7 @@ export class UserManagementComponent implements OnInit {
   userPassword = '';
   selectedFileName = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.loadUsers();

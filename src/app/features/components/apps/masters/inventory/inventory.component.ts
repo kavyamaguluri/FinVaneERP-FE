@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../../environments/environment';
 
 export interface InventoryItem {
   id: number;
@@ -23,68 +21,57 @@ export interface InventoryItem {
 @Component({
   selector: 'app-inventory-list',
   template: `
-    <div class="page-header">
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
       <div>
-        <h3 class="mb-0">Inventory &amp; Services</h3>
-        <div class="subtitle">Goods track stock across locations; services are billed directly, no stock movement</div>
+        <h3 class="mb-0 fw-bold">Inventory &amp; Services</h3>
+        <div class="subtitle text-muted small">Goods track stock across locations; services are billed directly, no stock movement</div>
       </div>
       <div class="io-toolbar d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="exportExcel()">Export Excel</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary">Export Excel</button>
         <button type="button" class="btn btn-sm btn-outline-secondary">Inventory Report</button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="openAddModal()">+ New Item / Service</button>
+        <button type="button" class="btn btn-primary btn-sm">+ New Item / Service</button>
       </div>
     </div>
 
-    <div class="card p-3">
+    <div class="card p-3 shadow-sm border-0 bg-white">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr class="text-uppercase small fw-bold">
+          <thead class="bg-light small text-muted text-uppercase">
+            <tr>
               <th>SKU</th>
               <th>Name</th>
               <th>Type</th>
               <th>Category</th>
               <th>Brand</th>
               <th>HSN/SAC</th>
-              <th class="text-end">Stock (all locations)</th>
-              <th class="text-end">Reorder</th>
-              <th class="text-end">Cost Price</th>
-              <th class="text-end">Sale Price</th>
-              <th class="text-end">Margin</th>
-              <th class="text-end">Margin %</th>
-              <th>GST%</th>
-              <th style="min-width: 120px;" class="text-end">Actions</th>
+              <th class="text-end">Stock</th>
+              <th class="text-end">Purchase ₹</th>
+              <th class="text-end">Sale ₹</th>
+              <th class="text-end">GST %</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let i of items" [class.table-danger]="i.itemType === 'goods' && i.currentStock <= i.reorderLevel">
-              <td class="font-monospace small fw-bold">{{ i.sku }}</td>
+            <tr *ngFor="let item of items">
+              <td><strong class="text-secondary">{{ item.sku }}</strong></td>
+              <td class="fw-medium text-dark">{{ item.name }}</td>
               <td>
-                <span class="fw-semibold text-teal" style="color: #0f766e;">{{ i.name }}</span>
-              </td>
-              <td>
-                <span class="badge" [ngClass]="i.itemType === 'service' ? 'bg-info-subtle text-info-emphasis' : 'bg-success-subtle text-success-emphasis'">
-                  {{ i.itemType }}
+                <span class="badge" [ngClass]="item.itemType === 'goods' ? 'text-bg-primary' : 'text-bg-info text-white'">
+                  {{ item.itemType }}
                 </span>
-                <span *ngIf="i.itemClass" class="badge bg-light text-dark border ms-1">{{ i.itemClass }}</span>
               </td>
-              <td class="small">{{ i.category || '—' }}</td>
-              <td class="small">{{ i.brand || '—' }}</td>
-              <td class="font-monospace small">{{ i.hsnSac || '—' }}</td>
-              <td class="text-end font-monospace">{{ i.itemType === 'service' ? '—' : i.currentStock }}</td>
-              <td class="text-end font-monospace">{{ i.itemType === 'service' ? '—' : i.reorderLevel }}</td>
-              <td class="text-end font-monospace">&#8377;{{ i.purchasePrice | number:'1.2-2' }}</td>
-              <td class="text-end font-monospace">&#8377;{{ i.salePrice | number:'1.2-2' }}</td>
-              <td class="text-end font-monospace" [ngClass]="i.margin > 0 ? 'text-success' : (i.margin < 0 ? 'text-danger' : '')">
-                &#8377;{{ i.margin | number:'1.2-2' }}
+              <td>{{ item.category }}</td>
+              <td>{{ item.brand || '—' }}</td>
+              <td><code>{{ item.hsnSac }}</code></td>
+              <td class="text-end fw-semibold" [ngClass]="item.currentStock > 0 ? 'text-success' : 'text-muted'">
+                {{ item.itemType === 'goods' ? item.currentStock : '—' }}
               </td>
-              <td class="text-end font-monospace" [ngClass]="i.marginPercent && i.marginPercent > 0 ? 'text-success' : (i.marginPercent && i.marginPercent < 0 ? 'text-danger' : '')">
-                {{ i.marginPercent === null ? '—' : (i.marginPercent | number:'1.2-2') + '%' }}
-              </td>
-              <td class="small font-monospace">{{ i.gstRate }}%</td>
+              <td class="text-end">₹{{ item.purchasePrice | number:'1.2-2' }}</td>
+              <td class="text-end fw-bold">₹{{ item.salePrice | number:'1.2-2' }}</td>
+              <td class="text-end">{{ item.gstRate }}%</td>
               <td class="text-end text-nowrap">
-                <button type="button" class="btn btn-sm btn-outline-secondary py-0 me-1" (click)="editItem(i)">Edit</button>
-                <button type="button" class="btn btn-sm btn-outline-danger py-0" (click)="deleteItem(i)">Delete</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1">Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger">Del</button>
               </td>
             </tr>
           </tbody>
@@ -95,60 +82,91 @@ export interface InventoryItem {
 })
 export class InventoryComponent implements OnInit {
   items: InventoryItem[] = [
-    {
-      id: 1,
-      sku: 'SKU-001',
-      name: 'Steel Bracket 4in',
-      itemType: 'goods',
-      itemClass: 'FG',
-      category: 'Hardware',
-      brand: 'Tata Steel',
-      hsnSac: '73089090',
-      currentStock: 100,
-      reorderLevel: 20,
-      purchasePrice: 150.00,
-      salePrice: 220.00,
-      margin: 70.00,
-      marginPercent: 31.82,
-      gstRate: 18
-    },
-    {
-      id: 2,
-      sku: 'SKU-002',
-      name: 'Consulting Hour',
-      itemType: 'service',
-      category: 'Services',
-      brand: 'FinVane Advisory',
-      hsnSac: '998311',
-      currentStock: 0,
-      reorderLevel: 0,
-      purchasePrice: 0.00,
-      salePrice: 1500.00,
-      margin: 1500.00,
-      marginPercent: 100.00,
-      gstRate: 18
-    }
-  ];
-
-  constructor(private http: HttpClient) {}
-
+  {
+    "id": 1,
+    "sku": "SKU-STL-001",
+    "name": "Steel Almirah 2-Door",
+    "itemType": "goods",
+    "itemClass": "FG",
+    "category": "Furniture",
+    "brand": "Godrej",
+    "hsnSac": "9403",
+    "currentStock": 85,
+    "reorderLevel": 10,
+    "purchasePrice": 8500,
+    "salePrice": 11500,
+    "margin": 3000,
+    "marginPercent": 26.09,
+    "gstRate": 18
+  },
+  {
+    "id": 2,
+    "sku": "SKU-CHR-014",
+    "name": "Office Chair - Ergo",
+    "itemType": "goods",
+    "itemClass": "FG",
+    "category": "Furniture",
+    "brand": "Featherlite",
+    "hsnSac": "9401",
+    "currentStock": 120,
+    "reorderLevel": 15,
+    "purchasePrice": 3200,
+    "salePrice": 4800,
+    "margin": 1600,
+    "marginPercent": 33.33,
+    "gstRate": 18
+  },
+  {
+    "id": 3,
+    "sku": "SKU-STA-002",
+    "name": "A4 Paper Ream (Box of 5)",
+    "itemType": "goods",
+    "itemClass": "RM",
+    "category": "Stationery",
+    "brand": "JK Paper",
+    "hsnSac": "4802",
+    "currentStock": 350,
+    "reorderLevel": 20,
+    "purchasePrice": 950,
+    "salePrice": 1250,
+    "margin": 300,
+    "marginPercent": 24,
+    "gstRate": 12
+  },
+  {
+    "id": 4,
+    "sku": "SVC-AMC-001",
+    "name": "Annual Maintenance Contract - Furniture",
+    "itemType": "service",
+    "itemClass": "SVC",
+    "category": "Services",
+    "brand": "Acme Care",
+    "hsnSac": "998719",
+    "currentStock": 0,
+    "reorderLevel": 0,
+    "purchasePrice": 0,
+    "salePrice": 15000,
+    "margin": 15000,
+    "marginPercent": 100,
+    "gstRate": 18
+  },
+  {
+    "id": 5,
+    "sku": "SVC-INS-001",
+    "name": "Installation & Setup Service",
+    "itemType": "service",
+    "itemClass": "SVC",
+    "category": "Services",
+    "brand": "Acme Care",
+    "hsnSac": "995461",
+    "currentStock": 0,
+    "reorderLevel": 0,
+    "purchasePrice": 0,
+    "salePrice": 3500,
+    "margin": 3500,
+    "marginPercent": 100,
+    "gstRate": 18
+  }
+];
   ngOnInit() {}
-
-  openAddModal() {
-    alert('Create Item/Service form');
-  }
-
-  editItem(i: InventoryItem) {
-    alert(`Editing item: ${i.name}`);
-  }
-
-  deleteItem(i: InventoryItem) {
-    if (confirm(`Delete "${i.name}" permanently?`)) {
-      this.items = this.items.filter(x => x.id !== i.id);
-    }
-  }
-
-  exportExcel() {
-    alert('Exporting inventory stock to Excel.');
-  }
 }
