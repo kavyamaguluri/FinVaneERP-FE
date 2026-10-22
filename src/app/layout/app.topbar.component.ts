@@ -161,10 +161,10 @@ import { AuthenticationService, UserSession } from '../features/service/authenti
           </li>
         </ul>
 
-        <!-- Right Side: Entity Switcher, User Details, Sign Out -->
-        <a routerLink="/entities" class="btn btn-outline-light btn-sm me-3" title="Switch business" (click)="closeAllMenus()">
-          {{ activeEntityName }} &#x25BE;
-        </a>
+        <!-- Right Side: Active Entity, User Details, Sign Out -->
+        <span *ngIf="activeEntityName" class="navbar-text text-white fw-semibold me-3">
+          {{ activeEntityName }}
+        </span>
         <span class="navbar-text text-light me-3 small">
           {{ displayName }}
         </span>
@@ -208,9 +208,10 @@ export class AppTopbarComponent implements OnInit {
   }
 
   get displayName(): string {
-    const raw = this.currentUser?.fullName || this.currentUser?.username || '';
-    const clean = raw.replace(/\s*\([^)]*admin[^)]*\)/gi, '').trim();
-    return clean || raw || 'User';
+    let name = this.currentUser?.fullName || this.currentUser?.username || '';
+    // Strip any "admin" or "system admin" role mention
+    name = name.replace(/\b(system\s+)?admin\b/gi, '').replace(/[·\(\)]/g, '').trim();
+    return name || this.currentUser?.username || 'User';
   }
 
   toggleDropdown(name: string, event: Event) {

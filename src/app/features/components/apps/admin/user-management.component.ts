@@ -105,7 +105,7 @@ export class UserManagementComponent implements OnInit {
   message = '';
   errorMessage = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.loadUsers();
