@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 
@@ -30,7 +30,7 @@ import { AuthenticationService } from '../../service/authentication.service';
                          name="email"
                          [(ngModel)]="email"
                          class="form-control"
-                         placeholder="admin@bharaterp.local"
+                         placeholder="admin@finvane.com"
                          required
                          autofocus />
                 </div>
@@ -95,3 +95,4 @@ export class LoginComponent implements OnInit {
     });
   }
 }
+

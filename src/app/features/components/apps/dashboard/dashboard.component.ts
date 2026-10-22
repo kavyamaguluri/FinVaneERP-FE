@@ -203,21 +203,21 @@ export interface DashboardMetrics {
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">EBITDA Margin</div>
-            <div class="kpi-value text-success">24.8%</div>
+            <div class="kpi-value">0.0%</div>
             <div class="kpi-sub">Operating efficiency index</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Quick Ratio</div>
-            <div class="kpi-value">1.85</div>
+            <div class="kpi-value">{{ (metrics.totalPayables > 0) ? ((metrics.cashBankBalance + metrics.totalReceivables) / metrics.totalPayables | number:'1.2-2') : '0.00' }}</div>
             <div class="kpi-sub">(Cash + Receivables) / Current Liabilities</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Debt-to-Equity</div>
-            <div class="kpi-value">0.42</div>
+            <div class="kpi-value">0.00</div>
             <div class="kpi-sub">Prudent leverage profile</div>
           </div>
         </div>
@@ -236,21 +236,21 @@ export interface DashboardMetrics {
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DSO (Days Sales Outstanding)</div>
-            <div class="kpi-value">34 Days</div>
+            <div class="kpi-value">0 Days</div>
             <div class="kpi-sub">Average collection period</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DPO (Days Payable Outstanding)</div>
-            <div class="kpi-value">42 Days</div>
+            <div class="kpi-value">0 Days</div>
             <div class="kpi-sub">Average vendor payment credit</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DIO (Days Inventory Outstanding)</div>
-            <div class="kpi-value">46 Days</div>
+            <div class="kpi-value">0 Days</div>
             <div class="kpi-sub">Inventory holding period</div>
           </div>
         </div>
@@ -260,7 +260,7 @@ export interface DashboardMetrics {
         <div class="p-3 bg-brand-soft border border-teal-200 rounded">
           <div class="d-flex justify-content-between align-items-center">
             <span class="fw-bold text-brand">Net Operating Cash Cycle:</span>
-            <span class="fs-5 fw-bold text-brand">38 Days</span>
+            <span class="fs-5 fw-bold text-brand">0 Days</span>
           </div>
           <div class="small text-muted mt-1">CCC = DSO (34) + DIO (46) &minus; DPO (42)</div>
         </div>
@@ -273,21 +273,21 @@ export interface DashboardMetrics {
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Total Inventory Valuation</div>
-            <div class="kpi-value">₹35,45,000</div>
+            <div class="kpi-value">{{ 0 | indianCurrency }}</div>
             <div class="kpi-sub">across 3 warehouses at cost</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Active SKUs</div>
-            <div class="kpi-value">124</div>
+            <div class="kpi-value">0</div>
             <div class="kpi-sub">finished goods &amp; raw materials</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Reorder Alerts</div>
-            <div class="kpi-value text-danger">3</div>
+            <div class="kpi-value">0</div>
             <div class="kpi-sub">SKUs below safety stock threshold</div>
           </div>
         </div>
@@ -306,18 +306,7 @@ export interface DashboardMetrics {
           </thead>
           <tbody>
             <tr>
-              <td>SKU-1001</td>
-              <td>Industrial Valve 2-inch SS</td>
-              <td>142 NOS</td>
-              <td>50 NOS</td>
-              <td><span class="badge badge-status-active">Healthy</span></td>
-            </tr>
-            <tr>
-              <td>SKU-1008</td>
-              <td>Flange Seal 50mm High-Pressure</td>
-              <td>12 NOS</td>
-              <td>30 NOS</td>
-              <td><span class="badge badge-status-rejected">Reorder Required</span></td>
+              <td colspan="5" class="text-center text-muted py-3">No inventory items recorded in the database yet.</td>
             </tr>
           </tbody>
         </table>
@@ -337,14 +326,14 @@ export interface DashboardMetrics {
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Actual Revenue YTD</div>
-            <div class="kpi-value text-success">₹84,20,000</div>
+            <div class="kpi-value text-success">{{ metrics.netProfit | indianCurrency }}</div>
             <div class="kpi-sub">70.2% achieved</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Budget Variance</div>
-            <div class="kpi-value text-success">+4.2%</div>
+            <div class="kpi-value">0.0%</div>
             <div class="kpi-sub">Favorable variance vs plan</div>
           </div>
         </div>
@@ -361,21 +350,21 @@ export interface DashboardMetrics {
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Active Employees</div>
-            <div class="kpi-value">28</div>
+            <div class="kpi-value">0</div>
             <div class="kpi-sub">on payroll register</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Monthly Gross Payroll</div>
-            <div class="kpi-value">₹14,80,000</div>
+            <div class="kpi-value">{{ 0 | indianCurrency }}</div>
             <div class="kpi-sub">last processed run (Sep 2026)</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Statutory Compliance (EPF)</div>
-            <div class="kpi-value text-success">100%</div>
+            <div class="kpi-value">N/A</div>
             <div class="kpi-sub">ECR filed and paid on time</div>
           </div>
         </div>

@@ -177,7 +177,7 @@ import { AuthenticationService, UserSession } from '../features/service/authenti
 })
 export class AppTopbarComponent implements OnInit {
   currentUser: UserSession | null = null;
-  activeEntityName: string = 'Acme Trading Co';
+  activeEntityName: string = 'FinVane Enterprise';
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
