@@ -1,6 +1,8 @@
 import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { AuthenticationService, UserSession } from '../features/service/authentication.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-topbar',
@@ -177,30 +179,38 @@ import { AuthenticationService, UserSession } from '../features/service/authenti
 })
 export class AppTopbarComponent implements OnInit {
   currentUser: UserSession | null = null;
+  activeEntityName: string = '';
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
 
   constructor(
     private authService: AuthenticationService,
+    private http: HttpClient,
     private router: Router,
     private elementRef: ElementRef
   ) { }
 
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
-    this.authService.currentUser$.subscribe(u => this.currentUser = u);
+    this.authService.currentUser$.subscribe(u => {
+      this.currentUser = u;
+      this.loadActiveEntityFromDb();
+    });
+    this.loadActiveEntityFromDb();
   }
 
-  get activeEntityName(): string {
-    const stored = localStorage.getItem('finvane_active_entity_name');
-    if (stored && stored.trim()) {
-      return stored.trim();
-    }
-    if (this.currentUser?.entityName && this.currentUser.entityName.trim()) {
-      return this.currentUser.entityName.trim();
-    }
-    return 'Acme Trading Co';
+  loadActiveEntityFromDb() {
+    if (!this.authService.isLoggedIn()) return;
+    this.http.get<any>(`${environment.apiUrl}/entities/active`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.name) {
+          this.activeEntityName = res.data.name;
+          localStorage.setItem('finvane_active_entity_name', res.data.name);
+        }
+      },
+      error: () => {}
+    });
   }
 
   get displayName(): string {
