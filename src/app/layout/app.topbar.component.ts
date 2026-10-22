@@ -200,11 +200,7 @@ export class AppTopbarComponent implements OnInit {
     if (this.currentUser?.entityName && this.currentUser.entityName.trim()) {
       return this.currentUser.entityName.trim();
     }
-    const tenantId = this.currentUser?.tenantId || this.authService.getActiveTenant();
-    if (tenantId && tenantId !== 'default') {
-      return `Entity ${tenantId}`;
-    }
-    return 'Entity';
+    return 'Acme Trading Co';
   }
 
   get displayName(): string {
