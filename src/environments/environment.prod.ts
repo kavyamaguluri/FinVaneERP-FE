@@ -1,7 +1,7 @@
 ﻿export const environment = {
   production: true,
-  apiBaseUrl: '/api/v2',
-  apiUrl: '/api/v2',
+  apiBaseUrl: 'https://finvane-backend.onrender.com/api/v2',
+  apiUrl: 'https://finvane-backend.onrender.com/api/v2',
   defaultTenantId: '1',
   currencySymbol: '₹',
   appName: 'FinVane ERP',
