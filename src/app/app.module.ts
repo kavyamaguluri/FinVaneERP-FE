@@ -26,9 +26,13 @@ import { DashboardComponent } from './features/components/apps/dashboard/dashboa
 import { ChartOfAccountsComponent } from './features/components/apps/masters/chart-of-accounts/chart-of-accounts.component';
 import { PartiesComponent } from './features/components/apps/masters/parties/parties.component';
 import { VoucherEntryComponent } from './features/components/apps/vouchers/entry/voucher-entry.component';
+import { DayBookComponent } from './features/components/apps/vouchers/day-book/day-book.component';
 import { TrialBalanceComponent } from './features/components/apps/statutory/trial-balance/trial-balance.component';
 import { ModulePlaceholderComponent } from './features/components/apps/placeholder/module-placeholder.component';
 import { UserManagementComponent } from './features/components/apps/admin/user-management.component';
+import { AuditLogComponent } from './features/components/apps/admin/audit-log.component';
+import { EntitiesComponent } from './features/components/apps/entities/entities.component';
+import { FinancialModelComponent } from './features/components/apps/financial-model/financial-model.component';
 import { LoginComponent } from './features/components/auth/login.component';
 
 // Pipes & Interceptors
@@ -44,9 +48,13 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
     ChartOfAccountsComponent,
     PartiesComponent,
     VoucherEntryComponent,
+    DayBookComponent,
     TrialBalanceComponent,
     ModulePlaceholderComponent,
     UserManagementComponent,
+    AuditLogComponent,
+    EntitiesComponent,
+    FinancialModelComponent,
     LoginComponent,
     IndianCurrencyPipe
   ],

@@ -1,19 +1,24 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AppLayoutComponent } from './layout/app.layout.component';
+import { AuthGuard } from './features/service/auth.guard';
+
+// Components
 import { DashboardComponent } from './features/components/apps/dashboard/dashboard.component';
 import { ChartOfAccountsComponent } from './features/components/apps/masters/chart-of-accounts/chart-of-accounts.component';
 import { PartiesComponent } from './features/components/apps/masters/parties/parties.component';
 import { VoucherEntryComponent } from './features/components/apps/vouchers/entry/voucher-entry.component';
+import { DayBookComponent } from './features/components/apps/vouchers/day-book/day-book.component';
 import { TrialBalanceComponent } from './features/components/apps/statutory/trial-balance/trial-balance.component';
-import { ModulePlaceholderComponent } from './features/components/apps/placeholder/module-placeholder.component';
 import { UserManagementComponent } from './features/components/apps/admin/user-management.component';
+import { AuditLogComponent } from './features/components/apps/admin/audit-log.component';
+import { EntitiesComponent } from './features/components/apps/entities/entities.component';
+import { FinancialModelComponent } from './features/components/apps/financial-model/financial-model.component';
+import { ModulePlaceholderComponent } from './features/components/apps/placeholder/module-placeholder.component';
 import { LoginComponent } from './features/components/auth/login.component';
-import { AuthGuard } from './features/service/auth.guard';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
   {
     path: '',
     component: AppLayoutComponent,
@@ -24,25 +29,22 @@ const routes: Routes = [
 
       // Masters
       { path: 'accounts', component: ChartOfAccountsComponent },
-      { path: 'accounts/coa-mapping', component: ModulePlaceholderComponent, data: { title: 'COA Mapping (Schedule III)', section: 'Masters', icon: 'bi bi-diagram-3', description: 'Assign Schedule III line mapping to Chart of Accounts ledgers' } },
-      { path: 'accounts/sector-mapping', component: ModulePlaceholderComponent, data: { title: 'Sector Mapping', section: 'Masters', icon: 'bi bi-signpost-split', description: 'Configure sector-specific reporting categories' } },
       { path: 'parties', component: PartiesComponent },
-      { path: 'inventory', component: ModulePlaceholderComponent, data: { title: 'Items & Stock', section: 'Masters', icon: 'bi bi-box-seam', description: 'Manage inventory items, SKUs, pricing, GST rates, and stock balances' } },
-      { path: 'payroll/employees', component: ModulePlaceholderComponent, data: { title: 'Employees', section: 'Masters', icon: 'bi bi-person-badge', description: 'Manage employee records, designations, salaries, and statutory details' } },
+      { path: 'inventory', component: ModulePlaceholderComponent, data: { title: 'Stock Items', section: 'Masters', icon: 'bi bi-boxes', description: 'Manage inventory item catalog, SKU codes, and reorder levels' } },
+      { path: 'locations', component: ModulePlaceholderComponent, data: { title: 'Locations', section: 'Masters', icon: 'bi bi-geo-alt', description: 'Manage branch locations, storage warehouses, and zones' } },
 
-      // Operations: Sales / Purchase
-      { path: 'invoices', component: ModulePlaceholderComponent, data: { title: 'Invoices', section: 'Operations', icon: 'bi bi-receipt', description: 'Issue and record GST Sales and Purchase Invoices' } },
-      { path: 'quotations', component: ModulePlaceholderComponent, data: { title: 'Sales Quotations', section: 'Operations', icon: 'bi bi-file-earmark-text', description: 'Create and track customer estimates and price quotations' } },
+      // Operations: Invoices & Orders
+      { path: 'invoices', component: ModulePlaceholderComponent, data: { title: 'Invoices', section: 'Operations', icon: 'bi bi-receipt', description: 'Sales and Purchase Invoices' } },
+      { path: 'quotations', component: ModulePlaceholderComponent, data: { title: 'Sales Quotations', section: 'Operations', icon: 'bi bi-file-earmark-text', description: 'Manage sales quotations and estimates' } },
       { path: 'orders', component: ModulePlaceholderComponent, data: { title: 'Orders', section: 'Operations', icon: 'bi bi-cart-check', description: 'Manage Sales and Purchase Orders' } },
       { path: 'notes', component: ModulePlaceholderComponent, data: { title: 'Credit & Debit Notes', section: 'Operations', icon: 'bi bi-arrow-return-left', description: 'Record Credit Notes and Debit Notes for returns and adjustments' } },
 
       // Operations: Vouchers
+      { path: 'vouchers', component: DayBookComponent },
       { path: 'vouchers/new', component: VoucherEntryComponent },
-      { path: 'vouchers', component: VoucherEntryComponent },
 
       // Operations: Inventory
       { path: 'transfers', component: ModulePlaceholderComponent, data: { title: 'Stock Transfers', section: 'Operations', icon: 'bi bi-arrow-left-right', description: 'Record inter-branch and inter-warehouse stock transfers' } },
-      { path: 'locations', component: ModulePlaceholderComponent, data: { title: 'Locations', section: 'Operations', icon: 'bi bi-geo-alt', description: 'Manage branch locations, storage warehouses, and zones' } },
       { path: 'inventory/direct-stock', component: ModulePlaceholderComponent, data: { title: 'Direct Stock', section: 'Operations', icon: 'bi bi-box-seam', description: 'Direct stock entry and physical stock audit reconciliation' } },
 
       // Operations: Production
@@ -77,16 +79,16 @@ const routes: Routes = [
       { path: 'budgets', component: ModulePlaceholderComponent, data: { title: 'Budget vs Actual', section: 'Budget', icon: 'bi bi-bar-chart-steps', description: 'Analyze variances between budgeted targets and posted actuals' } },
 
       // Corporate Finance
-      { path: 'financial-model', component: ModulePlaceholderComponent, data: { title: 'Corporate Finance', section: 'Corporate Finance', icon: 'bi bi-pie-chart', description: 'Financial forecasting, DCF valuation, and capital planning' } },
+      { path: 'financial-model', component: FinancialModelComponent },
 
       // Admin
       { path: 'admin/users', component: UserManagementComponent },
-      { path: 'admin/audit-log', component: ModulePlaceholderComponent, data: { title: 'Audit Log', section: 'Admin', icon: 'bi bi-clock-history', description: 'Security audit trail of all transactions and system changes' } },
+      { path: 'admin/audit-log', component: AuditLogComponent },
 
-      // Business Entities
-      { path: 'entities', component: ModulePlaceholderComponent, data: { title: 'Business Entities', section: 'Entities', icon: 'bi bi-building', description: 'Manage multiple entities and switch active business' } },
+      // Business Entities ("Choose a Business")
+      { path: 'entities', component: EntitiesComponent },
 
-      // Legacy route redirects to canonical express paths
+      // Legacy route redirects
       { path: 'masters/accounts', redirectTo: 'accounts', pathMatch: 'full' },
       { path: 'masters/parties', redirectTo: 'parties', pathMatch: 'full' },
       { path: 'masters/items', redirectTo: 'inventory', pathMatch: 'full' },
@@ -111,4 +113,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes, { useHash: false })],
   exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
