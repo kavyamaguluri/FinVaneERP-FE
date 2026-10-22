@@ -18,7 +18,7 @@ import { environment } from '../../environments/environment';
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- Menus and Action Items -->
+      <!-- Menus and Action Items matching Express views/partials/header.ejs exactly -->
       <div class="collapse navbar-collapse" [class.show]="mobileNavOpen">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
           <!-- Dashboard -->
@@ -26,29 +26,31 @@ import { environment } from '../../environments/environment';
             <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" (click)="closeAllMenus()">Dashboard</a>
           </li>
 
-          <!-- Masters Dropdown -->
+          <!-- Masters Dropdown matching Express -->
           <li class="nav-item dropdown" [class.show]="openDropdown === 'masters'">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" (click)="toggleDropdown('masters', $event)">Masters</a>
             <ul class="dropdown-menu" [class.show]="openDropdown === 'masters'">
-              <li><a class="dropdown-item" routerLink="/accounts" (click)="closeAllMenus()">Chart of Accounts</a></li>
-              <li><a class="dropdown-item" routerLink="/parties" (click)="closeAllMenus()">Customers &amp; Vendors</a></li>
-              <li><a class="dropdown-item" routerLink="/inventory" (click)="closeAllMenus()">Stock Items</a></li>
-              <li><a class="dropdown-item" routerLink="/locations" (click)="closeAllMenus()">Locations</a></li>
+              <li><a class="dropdown-item" routerLink="/accounts" (click)="closeAllMenus()"><i class="bi bi-journal-text me-2"></i>Chart of Accounts</a></li>
+              <li><a class="dropdown-item" routerLink="/accounts/coa-mapping" (click)="closeAllMenus()"><i class="bi bi-diagram-3 me-2"></i>COA Mapping (Schedule III)</a></li>
+              <li><a class="dropdown-item" routerLink="/accounts/sector-mapping" (click)="closeAllMenus()"><i class="bi bi-signpost-split me-2"></i>Sector Mapping</a></li>
+              <li><a class="dropdown-item" routerLink="/parties" (click)="closeAllMenus()"><i class="bi bi-people me-2"></i>Customers &amp; Vendors</a></li>
+              <li><a class="dropdown-item" routerLink="/inventory" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Items &amp; Stock</a></li>
+              <li><a class="dropdown-item" routerLink="/payroll/employees" (click)="closeAllMenus()"><i class="bi bi-person-badge me-2"></i>Employees</a></li>
             </ul>
           </li>
 
-          <!-- Operations Dropdown -->
+          <!-- Operations Dropdown matching Express -->
           <li class="nav-item dropdown" [class.show]="openDropdown === 'operations'">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" (click)="toggleDropdown('operations', $event)">Operations</a>
             <ul class="dropdown-menu" [class.show]="openDropdown === 'operations'">
-              <!-- Invoices Submenu -->
-              <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'invoices'">
-                <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('invoices', $event)">
-                  <span><i class="bi bi-receipt me-2"></i>Invoices &amp; Orders</span>
+              <!-- Sales / Purchase Submenu matching Express -->
+              <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'sales_purchase'">
+                <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('sales_purchase', $event)">
+                  <span><i class="bi bi-cart3 me-2"></i>Sales / Purchase</span>
                   <i class="bi bi-chevron-right"></i>
                 </a>
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" routerLink="/invoices" (click)="closeAllMenus()"><i class="bi bi-receipt me-2"></i>Sales Invoices</a></li>
+                  <li><a class="dropdown-item" routerLink="/invoices" [queryParams]="{type: 'sales'}" (click)="closeAllMenus()"><i class="bi bi-receipt me-2"></i>Sales Invoices</a></li>
                   <li><a class="dropdown-item" routerLink="/invoices" [queryParams]="{type: 'purchase'}" (click)="closeAllMenus()"><i class="bi bi-receipt-cutoff me-2"></i>Purchase Invoices</a></li>
                   <li><a class="dropdown-item" routerLink="/quotations" (click)="closeAllMenus()"><i class="bi bi-file-earmark-text me-2"></i>Sales Quotations</a></li>
                   <li><a class="dropdown-item" routerLink="/orders" [queryParams]="{type: 'sales'}" (click)="closeAllMenus()"><i class="bi bi-cart-check me-2"></i>Sales Orders</a></li>
@@ -58,7 +60,7 @@ import { environment } from '../../environments/environment';
                 </ul>
               </li>
 
-              <!-- Vouchers Submenu -->
+              <!-- Vouchers Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'vouchers'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('vouchers', $event)">
                   <span><i class="bi bi-journal-text me-2"></i>Vouchers</span>
@@ -73,7 +75,7 @@ import { environment } from '../../environments/environment';
                 </ul>
               </li>
 
-              <!-- Inventory Submenu -->
+              <!-- Inventory Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'inventory'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('inventory', $event)">
                   <span><i class="bi bi-box-seam me-2"></i>Inventory</span>
@@ -85,7 +87,7 @@ import { environment } from '../../environments/environment';
                 </ul>
               </li>
 
-              <!-- Production Submenu -->
+              <!-- Production Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'production'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('production', $event)">
                   <span><i class="bi bi-gear-wide-connected me-2"></i>Production</span>
@@ -101,7 +103,7 @@ import { environment } from '../../environments/environment';
 
               <li><a class="dropdown-item" routerLink="/inventory/direct-stock" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Direct Stock</a></li>
 
-              <!-- Payroll Submenu -->
+              <!-- Payroll Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'payroll'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('payroll', $event)">
                   <span><i class="bi bi-people me-2"></i>Payroll</span>
@@ -118,7 +120,7 @@ import { environment } from '../../environments/environment';
             </ul>
           </li>
 
-          <!-- Reports -->
+          <!-- Reports Dropdown matching Express -->
           <li class="nav-item dropdown" [class.show]="openDropdown === 'reports'">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" (click)="toggleDropdown('reports', $event)">Reports</a>
             <ul class="dropdown-menu" [class.show]="openDropdown === 'reports'">
@@ -130,13 +132,13 @@ import { environment } from '../../environments/environment';
             </ul>
           </li>
 
-          <!-- Statutory -->
+          <!-- Statutory Dropdown matching Express -->
           <li class="nav-item dropdown" [class.show]="openDropdown === 'statutory'">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" (click)="toggleDropdown('statutory', $event)">Statutory</a>
             <ul class="dropdown-menu" [class.show]="openDropdown === 'statutory'">
               <li><a class="dropdown-item" routerLink="/reports/financials" (click)="closeAllMenus()">Financials</a></li>
               <li><hr class="dropdown-divider"></li>
-              <!-- GST Submenu -->
+              <!-- GST Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'gst'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('gst', $event)">
                   <span>GST</span>
@@ -152,7 +154,7 @@ import { environment } from '../../environments/environment';
             </ul>
           </li>
 
-          <!-- Budget -->
+          <!-- Budget Dropdown matching Express -->
           <li class="nav-item dropdown" [class.show]="openDropdown === 'budget'">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" (click)="toggleDropdown('budget', $event)">Budget</a>
             <ul class="dropdown-menu" [class.show]="openDropdown === 'budget'">
@@ -176,13 +178,16 @@ import { environment } from '../../environments/environment';
           </li>
         </ul>
 
-        <!-- Right Side: Entity Switcher Link & Sign Out Button -->
+        <!-- Right Side matching Screenshots: [Acme Trading Co ▾] Admin User · admin [Sign out] -->
         <a routerLink="/entities"
            class="btn btn-outline-light btn-sm me-3"
            title="Switch business"
            (click)="closeAllMenus()">
           {{ activeEntityName || 'Acme Trading Co' }} &#x25BE;
         </a>
+        <span class="navbar-text text-light me-3 small">
+          {{ userDisplayName }}
+        </span>
         <button type="button" class="btn btn-outline-light btn-sm" (click)="onLogout()">
           Sign out
         </button>
@@ -192,7 +197,8 @@ import { environment } from '../../environments/environment';
 })
 export class AppTopbarComponent implements OnInit {
   currentUser: UserSession | null = null;
-  activeEntityName: string = '';
+  activeEntityName: string = 'Acme Trading Co';
+  userDisplayName: string = 'Admin User · admin';
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
@@ -206,11 +212,23 @@ export class AppTopbarComponent implements OnInit {
 
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
+    this.updateUserDisplay();
     this.authService.currentUser$.subscribe(u => {
       this.currentUser = u;
+      this.updateUserDisplay();
       this.loadActiveEntityFromDb();
     });
     this.loadActiveEntityFromDb();
+  }
+
+  updateUserDisplay() {
+    if (this.currentUser) {
+      const name = this.currentUser.fullName || this.currentUser.username || 'Admin User';
+      const role = (this.currentUser.role || 'admin').toLowerCase();
+      this.userDisplayName = `${name} · ${role}`;
+    } else {
+      this.userDisplayName = 'Admin User · admin';
+    }
   }
 
   loadActiveEntityFromDb() {
