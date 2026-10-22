@@ -1,82 +1,82 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { LedgerReportService } from '../../../../service/accounts/ledger.service';
-import { TrialBalanceReport, TrialBalanceRow } from '../../../../api/accounts/trial-balance.model';
+import { TrialBalanceReport } from '../../../../api/accounts/trial-balance.model';
 
 @Component({
   selector: 'app-trial-balance',
   template: `
-    <div class="p-card p-4">
-      <div class="flex flex-wrap justify-content-between align-items-center mb-4 no-print gap-2">
-        <div>
-          <h2 class="text-xl font-bold text-900 m-0">Statutory > Trial Balance</h2>
-          <span class="text-sm text-500">Summary of all debit and credit balances across ledger accounts</span>
-        </div>
-        <div class="flex align-items-center gap-3">
-          <input type="date" [(ngModel)]="asOfDate" (change)="loadReport()" class="p-2 border-1 surface-border border-round text-sm" />
-          <button pButton label="Print / Save PDF" icon="pi pi-print" class="p-button-outlined p-button-sm" (click)="printReport()"></button>
-        </div>
+    <!-- Page Header matching Express report view -->
+    <div class="page-header no-print">
+      <div>
+        <h3 class="mb-0">Trial Balance</h3>
+        <div class="subtitle">Summary of all debit and credit balances across ledger accounts</div>
       </div>
+      <div class="io-toolbar">
+        <div class="d-flex align-items-center gap-2">
+          <label class="small fw-semibold text-muted mb-0">As of:</label>
+          <input type="date" [(ngModel)]="asOfDate" (change)="loadReport()" class="form-control form-control-sm" style="width: auto;" />
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer me-1"></i>Print / Save PDF
+        </button>
+      </div>
+    </div>
 
+    <div class="card p-4">
       <!-- Printable Report Header -->
       <div class="text-center mb-4">
-        <h3 class="text-2xl font-bold text-900 m-0">TRIAL BALANCE</h3>
-        <p class="text-sm text-600 m-0 mt-1">As of: {{ asOfDate }} | Currency: INR (â‚¹)</p>
+        <div class="text-muted small text-uppercase fw-bold letter-spacing-1">Fin Vane ERP</div>
+        <h4 class="fw-bold mb-1 text-dark">TRIAL BALANCE</h4>
+        <p class="text-muted small mb-0">As of: {{ asOfDate }} · Currency: INR (₹)</p>
       </div>
 
       <!-- Trial Balance Table -->
-      <p-table [value]="report?.rows || []"
-               [loading]="loading"
-               styleClass="p-datatable-sm p-datatable-gridlines"
-               responsiveLayout="scroll">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width: 15%">Account Code</th>
+              <th style="width: 35%">Ledger Particulars</th>
+              <th style="width: 20%">Account Group</th>
+              <th style="width: 15%" class="text-end">Debit Balance (₹)</th>
+              <th style="width: 15%" class="text-end">Credit Balance (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of report?.rows || []">
+              <td class="font-monospace small text-brand">{{ row.ledgerCode }}</td>
+              <td class="fw-semibold text-dark">{{ row.ledgerName }}</td>
+              <td class="small text-muted">{{ row.groupName }}</td>
+              <td class="text-end font-monospace fw-semibold">
+                <span *ngIf="row.closingDebit > 0">{{ row.closingDebit | indianCurrency }}</span>
+                <span *ngIf="!row.closingDebit || row.closingDebit === 0" class="text-muted">-</span>
+              </td>
+              <td class="text-end font-monospace fw-semibold">
+                <span *ngIf="row.closingCredit > 0">{{ row.closingCredit | indianCurrency }}</span>
+                <span *ngIf="!row.closingCredit || row.closingCredit === 0" class="text-muted">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="!report?.rows || report?.rows?.length === 0">
+              <td colspan="5" class="text-center p-4 text-muted">No transactions recorded for this period.</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="fw-bold" style="background: var(--brand-50); border-top: 2px solid var(--brand-100);">
+              <td colspan="3" class="text-end text-uppercase text-brand">Grand Total:</td>
+              <td class="text-end font-monospace fs-6 text-brand">{{ report?.totalDebit || 0 | indianCurrency }}</td>
+              <td class="text-end font-monospace fs-6 text-brand">{{ report?.totalCredit || 0 | indianCurrency }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 15%">Account Code</th>
-            <th style="width: 35%">Ledger Particulars</th>
-            <th style="width: 20%">Account Group</th>
-            <th style="width: 15%" class="text-right">Debit Balance (â‚¹)</th>
-            <th style="width: 15%" class="text-right">Credit Balance (â‚¹)</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td class="font-mono text-xs">{{ row.ledgerCode }}</td>
-            <td class="font-medium text-900">{{ row.ledgerName }}</td>
-            <td class="text-xs text-600">{{ row.groupName }}</td>
-            <td class="text-right font-mono font-semibold">
-              <span *ngIf="row.closingDebit > 0">{{ row.closingDebit | indianCurrency }}</span>
-              <span *ngIf="!row.closingDebit || row.closingDebit === 0" class="text-400">-</span>
-            </td>
-            <td class="text-right font-mono font-semibold">
-              <span *ngIf="row.closingCredit > 0">{{ row.closingCredit | indianCurrency }}</span>
-              <span *ngIf="!row.closingCredit || row.closingCredit === 0" class="text-400">-</span>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="footer">
-          <tr class="bg-primary-50 font-bold">
-            <td colspan="3" class="text-right uppercase">Grand Total:</td>
-            <td class="text-right font-mono text-base text-primary">{{ report?.totalDebit || 0 | indianCurrency }}</td>
-            <td class="text-right font-mono text-base text-primary">{{ report?.totalCredit || 0 | indianCurrency }}</td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5" class="text-center p-4 text-500">No transactions recorded for this period.</td>
-          </tr>
-        </ng-template>
-      </p-table>
-
-      <!-- Balance Status Indicator -->
-      <div class="mt-4 p-3 border-round flex justify-content-between align-items-center no-print"
-           [ngClass]="{'bg-green-50 border-1 border-green-200': report?.isBalanced, 'bg-red-50 border-1 border-red-200': !report?.isBalanced}">
-        <div class="flex align-items-center gap-2">
-          <i [class]="report?.isBalanced ? 'pi pi-check-circle text-green-600 text-xl' : 'pi pi-times-circle text-red-600 text-xl'"></i>
-          <span class="font-semibold text-sm" [ngClass]="{'text-green-900': report?.isBalanced, 'text-red-900': !report?.isBalanced}">
-            {{ report?.isBalanced ? 'The Trial Balance is strictly balanced (Total Debits = Total Credits).' : 'Warning: Imbalance detected in General Ledger postings.' }}
+      <!-- Balance Verification Alert -->
+      <div class="mt-4 p-3 rounded no-print d-flex justify-content-between align-items-center"
+           [ngClass]="{'bg-brand-soft border border-teal-200': (report?.isBalanced ?? report?.balanced), 'alert-danger': !(report?.isBalanced ?? report?.balanced)}">
+        <div class="d-flex align-items-center gap-2">
+          <i [class]="(report?.isBalanced ?? report?.balanced) ? 'bi bi-check-circle-fill text-success fs-5' : 'bi bi-exclamation-triangle-fill text-danger fs-5'"></i>
+          <span class="fw-semibold small" [ngClass]="{'text-brand': (report?.isBalanced ?? report?.balanced), 'text-danger': !(report?.isBalanced ?? report?.balanced)}">
+            {{ (report?.isBalanced ?? report?.balanced) ? 'The Trial Balance is strictly balanced (Total Debits = Total Credits).' : 'Warning: Imbalance detected in General Ledger postings.' }}
           </span>
         </div>
       </div>
@@ -98,7 +98,12 @@ export class TrialBalanceComponent implements OnInit {
     this.loading = true;
     this.ledgerService.getTrialBalance(this.asOfDate).subscribe({
       next: (res) => {
-        this.report = res.data;
+        if (res && res.data) {
+          this.report = {
+            ...res.data,
+            isBalanced: res.data.balanced ?? res.data.isBalanced
+          };
+        }
         this.loading = false;
       },
       error: () => {
@@ -111,4 +116,3 @@ export class TrialBalanceComponent implements OnInit {
     window.print();
   }
 }
-

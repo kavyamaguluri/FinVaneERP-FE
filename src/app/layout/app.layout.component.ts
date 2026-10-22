@@ -1,42 +1,98 @@
-﻿import { Component } from '@angular/core';
-import { LayoutService } from './service/app.layout.service';
+import { Component, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-layout',
   template: `
-    <div class="layout-wrapper min-h-screen flex flex-column">
+    <div class="layout-wrapper min-h-screen d-flex flex-column" style="background-color: var(--bg);">
       <app-topbar></app-topbar>
-      <div class="layout-main-content flex flex-1">
-        <app-sidebar></app-sidebar>
-        
-        <!-- Mobile Overlay to close sidebar on click outside -->
-        <div *ngIf="layoutService.state.staticMenuMobileActive" 
-             class="layout-mask fixed top-0 left-0 w-full h-full z-4"
-             style="background: rgba(0,0,0,0.3);"
-             (click)="layoutService.state.staticMenuMobileActive = false">
-        </div>
-
-        <div class="layout-main flex-1 p-4" 
-             [style.margin-left]="getMainMargin()">
-          <router-outlet></router-outlet>
-        </div>
+      <div class="container-fluid py-4 px-4 flex-grow-1">
+        <button *ngIf="showBackButton"
+                type="button"
+                id="global-back-btn"
+                class="btn btn-sm btn-outline-secondary mb-3"
+                title="Go back to the previous page"
+                (click)="onBack()">
+          &larr; Back
+        </button>
+        <router-outlet></router-outlet>
       </div>
     </div>
   `,
   styles: [`
-    .layout-main {
-      transition: margin-left 0.25s cubic-bezier(0.05, 0.74, 0.2, 0.99);
-      min-height: calc(100vh - 4rem);
+    #global-back-btn {
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    #global-back-btn:hover {
+      background: var(--ink-100);
+      color: var(--ink-900);
     }
   `]
 })
-export class AppLayoutComponent {
-  constructor(public layoutService: LayoutService) {}
+export class AppLayoutComponent implements OnInit {
+  private readonly STORAGE_KEY = 'finvane_nav_stack';
+  showBackButton: boolean = false;
 
-  getMainMargin(): string {
-    if (!this.layoutService.isDesktop()) {
-      return '0';
+  constructor(private router: Router, private location: Location) {}
+
+  ngOnInit() {
+    this.updateStack(this.router.url);
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.updateStack(event.urlAfterRedirects);
+      });
+  }
+
+  private updateStack(url: string) {
+    // Show back button on all subpages (not on the root dashboard)
+    const cleanPath = url.split('?')[0];
+    this.showBackButton = cleanPath !== '/' && cleanPath !== '/dashboard';
+
+    let stack: string[] = [];
+    try {
+      stack = JSON.parse(sessionStorage.getItem(this.STORAGE_KEY) || '[]');
+    } catch {
+      stack = [];
     }
-    return this.layoutService.state.staticMenuDesktopInactive ? '0' : '260px';
+
+    if (stack[stack.length - 1] !== url) {
+      stack.push(url);
+      if (stack.length > 50) stack = stack.slice(-50);
+      sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stack));
+    }
+  }
+
+  onBack() {
+    let stack: string[] = [];
+    try {
+      stack = JSON.parse(sessionStorage.getItem(this.STORAGE_KEY) || '[]');
+    } catch {
+      stack = [];
+    }
+
+    const currentPath = this.router.url.split('?')[0];
+    let target: string | null = null;
+    let cutIndex = -1;
+
+    for (let i = stack.length - 2; i >= 0; i--) {
+      const entryPath = stack[i].split('?')[0];
+      if (entryPath !== currentPath && !/\/(edit|new)$/.test(entryPath)) {
+        target = stack[i];
+        cutIndex = i;
+        break;
+      }
+    }
+
+    if (target) {
+      sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(stack.slice(0, cutIndex + 1)));
+      this.router.navigateByUrl(target);
+    } else {
+      this.router.navigateByUrl('/dashboard');
+    }
   }
 }

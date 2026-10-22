@@ -13,5 +13,6 @@ export interface TrialBalanceReport {
   rows: TrialBalanceRow[];
   totalDebit: number;
   totalCredit: number;
-  isBalanced: boolean;
+  balanced?: boolean;
+  isBalanced?: boolean;
 }

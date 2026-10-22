@@ -1,5 +1,5 @@
-﻿import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { VouchersService } from '../../../../service/accounts/vouchers.service';
 import { AccountsService } from '../../../../service/accounts/accounts.service';
 import { AccountLedger } from '../../../../api/accounts/account-ledger.model';
@@ -8,119 +8,136 @@ import { VoucherRequest } from '../../../../api/accounts/voucher.model';
 @Component({
   selector: 'app-voucher-entry',
   template: `
-    <div class="p-card p-4">
-      <div class="flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="text-xl font-bold text-900 m-0">Accounting > Double-Entry Voucher</h2>
-          <span class="text-sm text-500">Post balanced Journal, Payment, Receipt, or Contra entries</span>
-        </div>
-        <button pButton label="Back to Register" icon="pi pi-arrow-left" class="p-button-outlined p-button-sm" routerLink="/vouchers"></button>
+    <!-- Page Header matching Express voucher view -->
+    <div class="page-header">
+      <div>
+        <h3 class="mb-0">New {{ voucherTypeTitle }}</h3>
+        <div class="subtitle">Post double-entry balanced transaction to the general ledger</div>
       </div>
+      <div class="io-toolbar">
+        <a routerLink="/vouchers" class="btn btn-sm btn-outline-secondary">
+          &larr; Day Book (All Vouchers)
+        </a>
+      </div>
+    </div>
 
+    <div class="card p-4">
       <!-- Voucher Header Fields -->
-      <div class="grid mb-3">
-        <div class="col-12 md:col-3">
-          <label class="font-semibold text-sm block mb-1">Voucher Type *</label>
-          <select [(ngModel)]="voucher.voucherType" class="w-full p-2 border-1 surface-border border-round text-sm">
-            <option value="JOURNAL">Journal Voucher (JV)</option>
-            <option value="PAYMENT">Payment Voucher (PV)</option>
-            <option value="RECEIPT">Receipt Voucher (RV)</option>
-            <option value="CONTRA">Contra Voucher (CV)</option>
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Voucher Type *</label>
+          <select [(ngModel)]="voucher.voucherType" (change)="onTypeChange()" class="form-select form-select-sm">
+            <option value="JOURNAL">Journal (JV)</option>
+            <option value="PAYMENT">Payment (PV)</option>
+            <option value="RECEIPT">Receipt (RV)</option>
+            <option value="CONTRA">Contra (CV)</option>
           </select>
         </div>
 
-        <div class="col-12 md:col-3">
-          <label class="font-semibold text-sm block mb-1">Voucher Date *</label>
-          <input type="date" [(ngModel)]="voucher.voucherDate" class="w-full p-2 border-1 surface-border border-round text-sm" />
+        <div class="col-md-3">
+          <label class="form-label">Voucher Date *</label>
+          <input type="date" [(ngModel)]="voucher.voucherDate" class="form-control form-control-sm" />
         </div>
 
-        <div class="col-12 md:col-6">
-          <label class="font-semibold text-sm block mb-1">Reference / Cheque / Inv No.</label>
-          <input type="text" pInputText [(ngModel)]="voucher.referenceNo" placeholder="Optional reference" class="w-full" />
+        <div class="col-md-6">
+          <label class="form-label">Reference / Cheque / Invoice No.</label>
+          <input type="text" [(ngModel)]="voucher.referenceNo" placeholder="Optional reference" class="form-control form-control-sm" />
         </div>
       </div>
 
       <!-- Line Items Table -->
       <div class="mb-4">
-        <div class="flex justify-content-between align-items-center mb-2">
-          <span class="font-semibold text-sm text-700">Accounting Entries (Dr / Cr)</span>
-          <button pButton label="Add Line" icon="pi pi-plus" class="p-button-text p-button-sm" (click)="addLine()"></button>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold small text-muted text-uppercase">Accounting Line Entries (Dr / Cr)</span>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLine()">
+            <i class="bi bi-plus-lg me-1"></i>Add Line
+          </button>
         </div>
 
-        <p-table [value]="voucher.items" styleClass="p-datatable-sm p-datatable-gridlines">
-          <ng-template pTemplate="header">
-            <tr>
-              <th style="width: 35%">Account Ledger *</th>
-              <th style="width: 15%">Type *</th>
-              <th style="width: 20%" class="text-right">Amount (₹) *</th>
-              <th style="width: 25%">Line Narration</th>
-              <th style="width: 5%"></th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-item let-i="rowIndex">
-            <tr>
-              <td>
-                <select [(ngModel)]="item.ledgerId" class="w-full p-2 border-1 surface-border border-round text-sm">
-                  <option *ngFor="let l of ledgers" [value]="l.id">{{ l.code }} - {{ l.name }}</option>
-                </select>
-              </td>
-              <td>
-                <select [(ngModel)]="item.entryType" (change)="recalculateTotals()" class="w-full p-2 border-1 surface-border border-round text-sm font-semibold">
-                  <option value="DEBIT">Dr (Debit)</option>
-                  <option value="CREDIT">Cr (Credit)</option>
-                </select>
-              </td>
-              <td>
-                <input type="number" pInputText [(ngModel)]="item.amount" (input)="recalculateTotals()" class="w-full text-right font-mono" placeholder="0.00" />
-              </td>
-              <td>
-                <input type="text" pInputText [(ngModel)]="item.lineNarration" class="w-full" placeholder="Particulars" />
-              </td>
-              <td class="text-center">
-                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeLine(i)" [disabled]="voucher.items.length <= 2"></button>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 35%">Account Ledger *</th>
+                <th style="width: 15%">Type *</th>
+                <th style="width: 20%" class="text-end">Amount (₹) *</th>
+                <th style="width: 25%">Line Narration</th>
+                <th style="width: 5%" class="text-center"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of voucher.items; let i = index">
+                <td>
+                  <select [(ngModel)]="item.ledgerId" class="form-select form-select-sm">
+                    <option *ngFor="let l of ledgers" [value]="l.id">{{ l.code }} - {{ l.name }}</option>
+                  </select>
+                </td>
+                <td>
+                  <select [(ngModel)]="item.entryType" (change)="recalculateTotals()" class="form-select form-select-sm fw-bold">
+                    <option value="DEBIT">Dr (Debit)</option>
+                    <option value="CREDIT">Cr (Credit)</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number"
+                         [(ngModel)]="item.amount"
+                         (input)="recalculateTotals()"
+                         class="form-control form-control-sm text-end font-monospace"
+                         placeholder="0.00" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="item.lineNarration" class="form-control form-control-sm" placeholder="Particulars" />
+                </td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeLine(i)" [disabled]="voucher.items.length <= 2">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Master Narration -->
+      <!-- General Narration -->
       <div class="mb-4">
-        <label class="font-semibold text-sm block mb-1">General Narration</label>
-        <textarea rows="2" [(ngModel)]="voucher.narration" class="w-full p-2 border-1 surface-border border-round text-sm" placeholder="Narration for this transaction"></textarea>
+        <label class="form-label">General Narration</label>
+        <textarea rows="2" [(ngModel)]="voucher.narration" class="form-control form-control-sm" placeholder="Narration for this transaction"></textarea>
       </div>
 
       <!-- Totals & Balance Verification Footer -->
-      <div class="flex flex-wrap justify-content-between align-items-center surface-ground p-3 border-round border-1 surface-border mb-4">
-        <div class="flex gap-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center p-3 rounded mb-3" style="background: var(--bg); border: 1px solid var(--ink-100);">
+        <div class="d-flex gap-4">
           <div>
-            <span class="text-xs text-500 block">Total Debit:</span>
-            <span class="font-mono font-bold text-lg text-900">{{ totalDebit | indianCurrency }}</span>
+            <span class="small text-muted d-block">Total Debit:</span>
+            <span class="font-monospace fw-bold fs-5 text-dark">{{ totalDebit | indianCurrency }}</span>
           </div>
           <div>
-            <span class="text-xs text-500 block">Total Credit:</span>
-            <span class="font-mono font-bold text-lg text-900">{{ totalCredit | indianCurrency }}</span>
+            <span class="small text-muted d-block">Total Credit:</span>
+            <span class="font-monospace fw-bold fs-5 text-dark">{{ totalCredit | indianCurrency }}</span>
           </div>
         </div>
 
-        <div class="flex align-items-center gap-3">
-          <!-- Neutral state when no amounts are entered yet -->
-          <span *ngIf="totalDebit === 0 && totalCredit === 0" class="p-badge font-semibold px-3 py-2 text-sm surface-200 text-700">
-            <i class="pi pi-info-circle mr-1"></i>Enter amounts
+        <div class="d-flex align-items-center gap-3">
+          <span *ngIf="totalDebit === 0 && totalCredit === 0" class="badge bg-secondary text-white px-3 py-2">
+            Enter amounts
           </span>
 
-          <!-- Balanced state when amounts match -->
-          <span *ngIf="totalDebit > 0 && isBalanced" class="p-badge p-badge-success font-semibold px-3 py-2 text-sm">
-            <i class="pi pi-check mr-1"></i>Balanced
+          <span *ngIf="totalDebit > 0 && isBalanced" class="badge badge-status-posted px-3 py-2">
+            <i class="bi bi-check-circle me-1"></i>Balanced
           </span>
 
-          <!-- Unbalanced state with non-zero difference -->
-          <span *ngIf="(totalDebit > 0 || totalCredit > 0) && !isBalanced" class="p-badge p-badge-danger font-semibold px-3 py-2 text-sm">
-            <i class="pi pi-exclamation-triangle mr-1"></i>Difference: {{ difference | indianCurrency }}
+          <span *ngIf="(totalDebit > 0 || totalCredit > 0) && !isBalanced" class="badge badge-status-rejected px-3 py-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>Difference: {{ difference | indianCurrency }}
           </span>
 
-          <button pButton label="Post Voucher" icon="pi pi-check" class="p-button-sm" [disabled]="!isBalanced || submitting" (click)="submitVoucher()"></button>
+          <button type="button"
+                  class="btn btn-primary"
+                  [disabled]="!isBalanced || submitting"
+                  (click)="submitVoucher()">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+            Post Voucher
+          </button>
         </div>
       </div>
     </div>
@@ -146,10 +163,19 @@ export class VoucherEntryComponent implements OnInit {
   constructor(
     private vouchersService: VouchersService,
     private accountsService: AccountsService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const type = (params['type'] || '').toUpperCase();
+      if (type === 'RECEIPT') this.voucher.voucherType = 'RECEIPT';
+      else if (type === 'CONTRA') this.voucher.voucherType = 'CONTRA';
+      else if (type === 'JOURNAL') this.voucher.voucherType = 'JOURNAL';
+      else if (type === 'PAYMENT') this.voucher.voucherType = 'PAYMENT';
+    });
+
     this.accountsService.getAllActiveLedgers().subscribe({
       next: (res) => {
         this.ledgers = res.data || [];
@@ -161,6 +187,19 @@ export class VoucherEntryComponent implements OnInit {
         }
       }
     });
+  }
+
+  get voucherTypeTitle(): string {
+    switch (this.voucher.voucherType) {
+      case 'RECEIPT': return 'Receipt Voucher';
+      case 'PAYMENT': return 'Payment Voucher';
+      case 'CONTRA': return 'Contra Voucher';
+      default: return 'Journal Voucher';
+    }
+  }
+
+  onTypeChange() {
+    this.recalculateTotals();
   }
 
   addLine() {
@@ -208,7 +247,7 @@ export class VoucherEntryComponent implements OnInit {
     this.vouchersService.createVoucher(this.voucher).subscribe({
       next: (res) => {
         alert('Voucher posted successfully: ' + (res.data?.voucherNumber || 'Success'));
-        this.router.navigate(['/statutory/trial-balance']);
+        this.router.navigate(['/vouchers']);
       },
       error: (err) => {
         this.submitting = false;

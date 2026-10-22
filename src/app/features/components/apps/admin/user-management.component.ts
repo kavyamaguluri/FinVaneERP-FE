@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
@@ -16,98 +16,86 @@ export interface UserSummary {
 @Component({
   selector: 'app-user-management',
   template: `
-    <div class="p-card p-4">
-      <!-- Header -->
-      <div class="flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-        <div>
-          <div class="flex align-items-center gap-2">
-            <h2 class="text-xl font-bold text-900 m-0">Administration > User Access & Role Permissions</h2>
-            <span class="p-badge p-badge-danger text-xs font-semibold">Admin Only</span>
-          </div>
-          <span class="text-sm text-500 mt-1 block">
-            Manage system users, authorize permissions, and grant roles (ADMIN, CLIENT_ADMIN, CLIENT_USER).
-          </span>
+    <!-- Page Header matching Express admin/users view -->
+    <div class="page-header">
+      <div>
+        <h3 class="mb-0">Users</h3>
+        <div class="subtitle">
+          Manage system users, authorize permissions, and grant roles (ADMIN, CLIENT_ADMIN, CLIENT_USER).
         </div>
-        <button pButton label="Refresh Users" icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="loadUsers()"></button>
       </div>
-
-      <!-- Feedback Messages -->
-      <div *ngIf="message" class="bg-green-50 border-1 border-green-200 border-round p-3 mb-3 flex align-items-center gap-2 text-green-700 text-sm">
-        <i class="pi pi-check-circle text-base"></i>
-        <span>{{ message }}</span>
+      <div class="io-toolbar">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="loadUsers()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh Users
+        </button>
       </div>
+    </div>
 
-      <div *ngIf="errorMessage" class="bg-red-50 border-1 border-red-200 border-round p-3 mb-3 flex align-items-center gap-2 text-red-700 text-sm">
-        <i class="pi pi-exclamation-circle text-base"></i>
-        <span>{{ errorMessage }}</span>
+    <!-- Feedback Alerts -->
+    <div *ngIf="message" class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3">
+      <i class="bi bi-check-circle-fill fs-5"></i>
+      <span>{{ message }}</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card p-3">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width: 5%">#</th>
+              <th style="width: 25%">User Details</th>
+              <th style="width: 25%">Email Address</th>
+              <th style="width: 15%">Current Role</th>
+              <th style="width: 20%">Assign Role</th>
+              <th style="width: 10%" class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td class="font-monospace small text-muted">{{ u.id }}</td>
+              <td>
+                <div class="fw-semibold text-dark">{{ u.fullName }}</div>
+                <div class="text-muted small font-monospace">&#64;{{ u.username }}</div>
+              </td>
+              <td>
+                <span class="small font-monospace">{{ u.email }}</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getBadgeClass(u.role)">
+                  {{ u.role }}
+                </span>
+              </td>
+              <td>
+                <select class="form-select form-select-sm fw-semibold"
+                        [value]="u.role"
+                        (change)="changeRole(u, $event)">
+                  <option value="ADMIN">ADMIN (System Owner)</option>
+                  <option value="CLIENT_ADMIN">CLIENT_ADMIN (Company Admin)</option>
+                  <option value="CLIENT_USER">CLIENT_USER (Operator / Staff)</option>
+                </select>
+              </td>
+              <td class="text-center">
+                <button type="button"
+                        class="btn btn-sm"
+                        [ngClass]="u.isActive ? 'btn-outline-success' : 'btn-outline-secondary'"
+                        (click)="toggleStatus(u)">
+                  <i [class]="u.isActive ? 'bi bi-check me-1' : 'bi bi-slash-circle me-1'"></i>
+                  {{ u.isActive ? 'Active' : 'Disabled' }}
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="users.length === 0">
+              <td colspan="6" class="text-center p-4 text-muted">No users found.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <!-- Users Table -->
-      <p-table [value]="users"
-               [loading]="loading"
-               responsiveLayout="scroll"
-               styleClass="p-datatable-sm p-datatable-striped"
-               [paginator]="true"
-               [rows]="10">
-
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 5%">#</th>
-            <th style="width: 25%">User Details</th>
-            <th style="width: 25%">Email Address</th>
-            <th style="width: 15%">Current Role</th>
-            <th style="width: 20%">Grant / Assign Role</th>
-            <th style="width: 10%" class="text-center">Status</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-u>
-          <tr>
-            <td class="font-mono text-xs text-500">{{ u.id }}</td>
-            <td>
-              <div class="font-semibold text-900">{{ u.fullName }}</div>
-              <div class="text-xs text-500 font-mono">&#64;{{ u.username }}</div>
-            </td>
-            <td>
-              <span class="text-sm text-700 font-mono">{{ u.email }}</span>
-            </td>
-            <td>
-              <span class="p-badge font-bold text-xs"
-                    [ngClass]="{
-                      'p-badge-danger': u.role === 'ADMIN',
-                      'p-badge-info': u.role === 'CLIENT_ADMIN',
-                      'p-badge-success': u.role === 'CLIENT_USER'
-                    }">
-                {{ u.role }}
-              </span>
-            </td>
-            <td>
-              <select class="p-2 border-1 surface-border border-round text-xs font-semibold cursor-pointer w-full"
-                      [value]="u.role"
-                      (change)="changeRole(u, $event)">
-                <option value="ADMIN">ADMIN (System Owner)</option>
-                <option value="CLIENT_ADMIN">CLIENT_ADMIN (Company Admin)</option>
-                <option value="CLIENT_USER">CLIENT_USER (Operator / Staff)</option>
-              </select>
-            </td>
-            <td class="text-center">
-              <button pButton
-                      [label]="u.isActive ? 'Active' : 'Disabled'"
-                      [icon]="u.isActive ? 'pi pi-check' : 'pi pi-ban'"
-                      class="p-button-xs"
-                      [ngClass]="u.isActive ? 'p-button-outlined p-button-success' : 'p-button-outlined p-button-secondary'"
-                      (click)="toggleStatus(u)">
-              </button>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="6" class="text-center p-4 text-500">No users found.</td>
-          </tr>
-        </ng-template>
-      </p-table>
     </div>
   `
 })
@@ -121,6 +109,12 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+  }
+
+  getBadgeClass(role: string): string {
+    if (role === 'ADMIN') return 'badge-status-rejected';
+    if (role === 'CLIENT_ADMIN') return 'bg-brand-soft text-brand';
+    return 'badge-status-draft';
   }
 
   loadUsers() {
@@ -151,7 +145,7 @@ export class UserManagementComponent implements OnInit {
 
     this.loading = true;
     this.http.put<any>(`${environment.apiUrl}/users/${user.id}/role`, { role: newRole }).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
         this.message = `Successfully updated role for ${user.fullName} to ${newRole}`;
         user.role = newRole;
@@ -167,7 +161,7 @@ export class UserManagementComponent implements OnInit {
   toggleStatus(user: UserSummary) {
     this.loading = true;
     this.http.put<any>(`${environment.apiUrl}/users/${user.id}/status`, {}).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
         user.isActive = !user.isActive;
         this.message = `User ${user.fullName} is now ${user.isActive ? 'Active' : 'Disabled'}`;
@@ -179,4 +173,3 @@ export class UserManagementComponent implements OnInit {
     });
   }
 }
-

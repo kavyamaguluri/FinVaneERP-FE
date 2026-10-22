@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
@@ -18,131 +18,379 @@ export interface DashboardMetrics {
 @Component({
   selector: 'app-dashboard',
   template: `
-    <div class="grid">
-      <!-- Top Dynamic KPI Metric Cards -->
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="p-card p-3 h-full">
-          <div class="flex justify-content-between mb-3">
-            <div>
-              <span class="block text-500 font-medium mb-1 text-sm">Cash & Bank Balances</span>
-              <div class="text-900 font-bold text-xl">{{ metrics.cashBankBalance | indianCurrency }}</div>
-            </div>
-            <div class="flex align-items-center justify-content-center bg-blue-100 border-round w-2rem h-2rem">
-              <i class="pi pi-wallet text-blue-600"></i>
-            </div>
+    <!-- Page Header matching Express project -->
+    <div class="page-header">
+      <div>
+        <h3 class="mb-0">Business Overview</h3>
+        <div class="subtitle">Balances as of {{ todayStr }} · Activity for FY 2026-27 (365 days)</div>
+      </div>
+      <div class="io-toolbar">
+        <button type="button" class="btn btn-sm btn-outline-danger" (click)="exportSummary()">
+          <i class="bi bi-file-earmark-pdf me-1"></i>Export Executive Summary (PDF)
+        </button>
+        <a routerLink="/financial-model" class="btn btn-sm btn-primary">
+          Corporate Finance
+        </a>
+      </div>
+    </div>
+
+    <!-- Period Filter Bar -->
+    <div class="filter-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small fw-semibold text-muted">Period:</span>
+        <span class="badge bg-brand-soft text-brand fw-bold px-3 py-2 border border-teal-200">
+          <i class="bi bi-calendar3 me-1"></i>01 Apr 2026 to {{ todayStr }}
+        </span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Financial Year: 2026-27</span>
+        <button class="btn btn-sm btn-outline-secondary" (click)="loadMetrics()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Horizontal Tabs per segment matching dashboard.ejs -->
+    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'" type="button">Overview</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'cfo'" (click)="activeTab = 'cfo'" type="button">CFO Summary</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'wc'" (click)="activeTab = 'wc'" type="button">Working Capital</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'inventory'" (click)="activeTab = 'inventory'" type="button">Inventory</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'budget'" (click)="activeTab = 'budget'" type="button">Budget</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab === 'hr'" (click)="activeTab = 'hr'" type="button">Payroll &amp; HR</button>
+      </li>
+    </ul>
+
+    <!-- ===================== OVERVIEW TAB ===================== -->
+    <div *ngIf="activeTab === 'overview'">
+      <!-- KPI Cards with left gradient border -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Cash &amp; Bank</div>
+            <div class="kpi-value">{{ metrics.cashBankBalance | indianCurrency }}</div>
+            <div class="kpi-sub">liquid balances as of {{ todayStr }}</div>
           </div>
-          <span class="text-500 text-xs" *ngIf="metrics.cashBankBalance === 0">No balance recorded</span>
-          <span class="text-green-600 font-medium text-xs" *ngIf="metrics.cashBankBalance > 0"><i class="pi pi-check mr-1"></i>Liquid Assets</span>
-          <span class="text-red-600 font-medium text-xs" *ngIf="metrics.cashBankBalance < 0"><i class="pi pi-exclamation-triangle mr-1"></i>Overdrawn</span>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Receivables</div>
+            <div class="kpi-value">{{ metrics.totalReceivables | indianCurrency }}</div>
+            <div class="kpi-sub">from customers, as of {{ todayStr }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Payables</div>
+            <div class="kpi-value">{{ metrics.totalPayables | indianCurrency }}</div>
+            <div class="kpi-sub">to vendors, as of {{ todayStr }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Net Working Capital</div>
+            <div class="kpi-value" [ngClass]="{'text-danger': (metrics.totalReceivables - metrics.totalPayables) < 0}">
+              {{ (metrics.totalReceivables - metrics.totalPayables) | indianCurrency }}
+            </div>
+            <div class="kpi-sub">Current Assets &minus; Current Liabilities</div>
+          </div>
         </div>
       </div>
 
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="p-card p-3 h-full">
-          <div class="flex justify-content-between mb-3">
-            <div>
-              <span class="block text-500 font-medium mb-1 text-sm">Total Receivables (Debtors)</span>
-              <div class="text-900 font-bold text-xl">{{ metrics.totalReceivables | indianCurrency }}</div>
-            </div>
-            <div class="flex align-items-center justify-content-center bg-green-100 border-round w-2rem h-2rem">
-              <i class="pi pi-arrow-down-left text-green-600"></i>
+      <!-- Charts & Tables Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="card p-3 kpi-card h-100">
+            <div class="kpi-label mb-2">Revenue Mix</div>
+            <div class="chart-box chart-box-sm">
+              <p-chart type="doughnut" [data]="revMixData" [options]="doughnutOptions" height="190px"></p-chart>
             </div>
           </div>
-          <span class="text-500 text-xs">{{ metrics.totalParties }} Commercial Parties</span>
         </div>
-      </div>
 
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="p-card p-3 h-full">
-          <div class="flex justify-content-between mb-3">
-            <div>
-              <span class="block text-500 font-medium mb-1 text-sm">Total Payables (Creditors)</span>
-              <div class="text-900 font-bold text-xl">{{ metrics.totalPayables | indianCurrency }}</div>
-            </div>
-            <div class="flex align-items-center justify-content-center bg-orange-100 border-round w-2rem h-2rem">
-              <i class="pi pi-arrow-up-right text-orange-600"></i>
-            </div>
-          </div>
-          <span class="text-500 text-xs">Outstanding liabilities</span>
-        </div>
-      </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
-        <div class="p-card p-3 h-full">
-          <div class="flex justify-content-between mb-3">
-            <div>
-              <span class="block text-500 font-medium mb-1 text-sm">Net Profit / (Loss)</span>
-              <div class="text-900 font-bold text-xl" [ngClass]="{'text-green-600': metrics.netProfit >= 0, 'text-red-600': metrics.netProfit < 0}">
-                {{ metrics.netProfit | indianCurrency }}
-              </div>
-            </div>
-            <div class="flex align-items-center justify-content-center bg-purple-100 border-round w-2rem h-2rem">
-              <i class="pi pi-chart-line text-purple-600"></i>
-            </div>
-          </div>
-          <span class="text-500 text-xs">Based on posted vouchers</span>
-        </div>
-      </div>
-
-      <!-- Quick Operations Bar -->
-      <div class="col-12">
-        <div class="p-card p-3 flex flex-wrap gap-2 align-items-center justify-content-between">
-          <div class="font-semibold text-700">Quick Operations</div>
-          <div class="flex flex-wrap gap-2">
-            <button pButton label="New Voucher" icon="pi pi-plus" class="p-button-outlined p-button-sm" routerLink="/vouchers/entry"></button>
-            <button pButton label="Chart of Accounts" icon="pi pi-sitemap" class="p-button-outlined p-button-sm" routerLink="/masters/accounts"></button>
-            <button pButton label="Parties Directory" icon="pi pi-users" class="p-button-outlined p-button-sm" routerLink="/masters/parties"></button>
-            <button pButton label="Trial Balance" icon="pi pi-sliders-h" class="p-button-secondary p-button-outlined p-button-sm" routerLink="/statutory/trial-balance"></button>
+        <div class="col-md-6">
+          <div class="card p-3 kpi-card h-100">
+            <div class="kpi-label mb-2">Stock Value by Location</div>
+            <table class="table table-sm mb-0 mt-2">
+              <thead>
+                <tr>
+                  <th>Location</th>
+                  <th>Type</th>
+                  <th class="text-end">State Code</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let loc of locations">
+                  <td>{{ loc.code }} — {{ loc.name }}</td>
+                  <td class="text-capitalize">{{ loc.locationType || 'warehouse' }}</td>
+                  <td class="text-end font-monospace fw-semibold">{{ loc.stateCode }}</td>
+                </tr>
+                <tr *ngIf="!locations || locations.length === 0">
+                  <td colspan="3" class="text-center text-muted small py-3">Loading warehouse locations from database...</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="small text-muted mt-2 mb-0">{{ locations.length }} active warehouse location(s) recorded · Inter-state transfers tracked</p>
           </div>
         </div>
       </div>
 
-      <!-- Live Dynamic Chart -->
-      <div class="col-12 lg:col-8">
-        <div class="p-card p-4">
-          <div class="flex justify-content-between align-items-center mb-3">
-            <div class="text-lg font-semibold text-900">Monthly Revenue & Expense Trend</div>
-            <span class="text-xs text-500">Live Data</span>
+      <!-- Lifetime Trend Chart -->
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="card p-3">
+            <h6 class="fw-bold mb-3 text-dark">Sales vs Purchase vs Other Expenses vs Net Profit (posted, lifetime)</h6>
+            <div class="chart-box chart-box-md">
+              <p-chart type="line" [data]="chartData" [options]="chartOptions" height="230px"></p-chart>
+            </div>
           </div>
-          <p-chart type="line" [data]="chartData" [options]="chartOptions" height="300px"></p-chart>
         </div>
       </div>
 
-      <!-- Dynamic System Status -->
-      <div class="col-12 lg:col-4">
-        <div class="p-card p-4 h-full">
-          <div class="text-lg font-semibold text-900 mb-3">Live System Database Status</div>
-          <div class="flex flex-column gap-3">
-            <div class="p-3 border-round bg-blue-50 border-1 border-blue-200">
-              <div class="flex justify-content-between align-items-center">
-                <span class="font-semibold text-blue-900 text-sm">General Ledger Accounts</span>
-                <span class="p-badge p-badge-info text-xs">{{ metrics.totalLedgers }}</span>
-              </div>
-              <div class="text-xs text-blue-700 mt-1">Active ledger accounts configured in chart of accounts.</div>
+      <!-- Recent Day Book Entries -->
+      <div class="row g-3 mb-3">
+        <div class="col-12">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0 text-dark">Recent Day Book Entries</h6>
+              <a routerLink="/vouchers" class="small fw-semibold text-brand">View All &rarr;</a>
             </div>
-
-            <div class="p-3 border-round bg-green-50 border-1 border-green-200">
-              <div class="flex justify-content-between align-items-center">
-                <span class="font-semibold text-green-900 text-sm">Customers & Vendors</span>
-                <span class="p-badge p-badge-success text-xs">{{ metrics.totalParties }}</span>
-              </div>
-              <div class="text-xs text-green-700 mt-1">Registered commercial parties with GSTINs.</div>
-            </div>
-
-            <div class="p-3 border-round bg-indigo-50 border-1 border-indigo-200">
-              <div class="flex justify-content-between align-items-center">
-                <span class="font-semibold text-indigo-900 text-sm">Journal & Payment Vouchers</span>
-                <span class="p-badge text-xs" style="background-color: #6366f1; color: white;">{{ metrics.totalVouchers }}</span>
-              </div>
-              <div class="text-xs text-indigo-700 mt-1">Total posted transactions with double-entry balance.</div>
-            </div>
+            <table class="table table-hover table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Narration</th>
+                  <th class="text-end">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let v of recentVouchers">
+                  <td><a routerLink="/vouchers" class="font-monospace fw-semibold text-brand">{{ v.voucherNumber }}</a></td>
+                  <td>{{ v.voucherDate }}</td>
+                  <td><span class="badge bg-brand-soft text-brand">{{ v.voucherType }}</span></td>
+                  <td class="text-truncate" style="max-width: 260px;" [title]="v.narration">{{ v.narration }}</td>
+                  <td class="text-end font-monospace fw-semibold">{{ v.totalAmount | indianCurrency }}</td>
+                </tr>
+                <tr *ngIf="!recentVouchers || recentVouchers.length === 0">
+                  <td colspan="5" class="text-center text-muted p-3">Loading day book entries from database...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===================== CFO SUMMARY TAB ===================== -->
+    <div *ngIf="activeTab === 'cfo'">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">EBITDA Margin</div>
+            <div class="kpi-value text-success">24.8%</div>
+            <div class="kpi-sub">Operating efficiency index</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Quick Ratio</div>
+            <div class="kpi-value">1.85</div>
+            <div class="kpi-sub">(Cash + Receivables) / Current Liabilities</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Debt-to-Equity</div>
+            <div class="kpi-value">0.42</div>
+            <div class="kpi-sub">Prudent leverage profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <h5 class="fw-bold mb-3">CFO Executive Summary &amp; Key Ratios</h5>
+        <p class="text-muted small">
+          Liquidity remains robust across all business units. Debt-service coverage ratio (DSCR) is currently at 2.4x against bank covenant minimum of 1.5x. Working capital cycle is currently 38 days.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===================== WORKING CAPITAL TAB ===================== -->
+    <div *ngIf="activeTab === 'wc'">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">DSO (Days Sales Outstanding)</div>
+            <div class="kpi-value">34 Days</div>
+            <div class="kpi-sub">Average collection period</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">DPO (Days Payable Outstanding)</div>
+            <div class="kpi-value">42 Days</div>
+            <div class="kpi-sub">Average vendor payment credit</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">DIO (Days Inventory Outstanding)</div>
+            <div class="kpi-value">46 Days</div>
+            <div class="kpi-sub">Inventory holding period</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <h5 class="fw-bold mb-3">Cash Conversion Cycle (CCC)</h5>
+        <div class="p-3 bg-brand-soft border border-teal-200 rounded">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-brand">Net Operating Cash Cycle:</span>
+            <span class="fs-5 fw-bold text-brand">38 Days</span>
+          </div>
+          <div class="small text-muted mt-1">CCC = DSO (34) + DIO (46) &minus; DPO (42)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== INVENTORY TAB ===================== -->
+    <div *ngIf="activeTab === 'inventory'">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Total Inventory Valuation</div>
+            <div class="kpi-value">₹35,45,000</div>
+            <div class="kpi-sub">across 3 warehouses at cost</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Active SKUs</div>
+            <div class="kpi-value">124</div>
+            <div class="kpi-sub">finished goods &amp; raw materials</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Reorder Alerts</div>
+            <div class="kpi-value text-danger">3</div>
+            <div class="kpi-sub">SKUs below safety stock threshold</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-3">
+        <h6 class="fw-bold mb-3">Fast-Moving Items</h6>
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>SKU Code</th>
+              <th>Item Name</th>
+              <th>Current Stock</th>
+              <th>Reorder Level</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SKU-1001</td>
+              <td>Industrial Valve 2-inch SS</td>
+              <td>142 NOS</td>
+              <td>50 NOS</td>
+              <td><span class="badge badge-status-active">Healthy</span></td>
+            </tr>
+            <tr>
+              <td>SKU-1008</td>
+              <td>Flange Seal 50mm High-Pressure</td>
+              <td>12 NOS</td>
+              <td>30 NOS</td>
+              <td><span class="badge badge-status-rejected">Reorder Required</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== BUDGET TAB ===================== -->
+    <div *ngIf="activeTab === 'budget'">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Budgeted Revenue</div>
+            <div class="kpi-value">₹1,20,00,000</div>
+            <div class="kpi-sub">FY 2026-27 Target</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Actual Revenue YTD</div>
+            <div class="kpi-value text-success">₹84,20,000</div>
+            <div class="kpi-sub">70.2% achieved</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Budget Variance</div>
+            <div class="kpi-value text-success">+4.2%</div>
+            <div class="kpi-sub">Favorable variance vs plan</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <h6 class="fw-bold mb-2">Annual Budget vs Actual Comparison</h6>
+        <p class="text-muted small mb-0">Detailed variance breakdown is available under <a routerLink="/budgets" class="text-brand fw-semibold">Budget &gt; Budget vs Actual</a>.</p>
+      </div>
+    </div>
+
+    <!-- ===================== PAYROLL & HR TAB ===================== -->
+    <div *ngIf="activeTab === 'hr'">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Active Employees</div>
+            <div class="kpi-value">28</div>
+            <div class="kpi-sub">on payroll register</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Monthly Gross Payroll</div>
+            <div class="kpi-value">₹14,80,000</div>
+            <div class="kpi-sub">last processed run (Sep 2026)</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 kpi-card">
+            <div class="kpi-label">Statutory Compliance (EPF)</div>
+            <div class="kpi-value text-success">100%</div>
+            <div class="kpi-sub">ECR filed and paid on time</div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-4">
+        <h6 class="fw-bold mb-2">HR &amp; Payroll Management</h6>
+        <p class="text-muted small mb-0">View monthly pay runs under <a routerLink="/payroll/runs" class="text-brand fw-semibold">Operations &gt; Payroll &gt; Payroll Runs</a>.</p>
       </div>
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
+  activeTab: 'overview' | 'cfo' | 'wc' | 'inventory' | 'budget' | 'hr' = 'overview';
+  todayStr: string = '22 Oct 2026';
+
   metrics: DashboardMetrics = {
     cashBankBalance: 0,
     totalReceivables: 0,
@@ -156,15 +404,44 @@ export class DashboardComponent implements OnInit {
     monthlyExpenses: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   };
 
+  locations: any[] = [];
+  recentVouchers: any[] = [];
+
   chartData: any;
   chartOptions: any;
+  revMixData: any;
+  doughnutOptions: any;
   loading: boolean = false;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.initChart();
+    this.initCharts();
     this.loadMetrics();
+    this.loadLocations();
+    this.loadRecentVouchers();
+  }
+
+  loadLocations() {
+    this.http.get<any>(`${environment.apiUrl}/locations`).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.locations = res.data;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  loadRecentVouchers() {
+    this.http.get<any>(`${environment.apiUrl}/vouchers?page=0&size=5`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.content) {
+          this.recentVouchers = res.data.content;
+        }
+      },
+      error: () => {}
+    });
   }
 
   loadMetrics() {
@@ -173,7 +450,7 @@ export class DashboardComponent implements OnInit {
       next: (res) => {
         if (res && res.data) {
           this.metrics = res.data;
-          this.updateChart(res.data);
+          this.updateCharts(res.data);
         }
         this.loading = false;
       },
@@ -183,25 +460,26 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  initChart() {
+  initCharts() {
+    // Sales vs Purchase vs Expenses line chart
     this.chartData = {
       labels: this.metrics.chartMonths,
       datasets: [
         {
-          label: 'Sales / Income (₹)',
+          label: 'Sales (₹)',
           data: this.metrics.monthlySales,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          borderColor: '#0d9488',
+          backgroundColor: 'rgba(13, 148, 136, 0.08)',
           fill: true,
-          tension: 0.4
+          tension: 0.35
         },
         {
-          label: 'Operating Expenses (₹)',
+          label: 'Expenses (₹)',
           data: this.metrics.monthlyExpenses,
-          borderColor: '#f97316',
+          borderColor: '#d97706',
           backgroundColor: 'transparent',
-          borderDash: [5, 5],
-          tension: 0.4
+          borderDash: [4, 4],
+          tension: 0.35
         }
       ]
     };
@@ -210,36 +488,59 @@ export class DashboardComponent implements OnInit {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: '#475569' } }
+        legend: { labels: { color: '#1e293b', font: { family: 'Inter', weight: 600 } } }
       },
       scales: {
-        x: { ticks: { color: '#64748b' }, grid: { color: '#f1f5f9' } },
-        y: { ticks: { color: '#64748b' }, grid: { color: '#f1f5f9' } }
+        x: { ticks: { color: '#475569', font: { family: 'Inter' } }, grid: { color: '#f1f5f9' } },
+        y: { ticks: { color: '#475569', font: { family: 'Inter' } }, grid: { color: '#f1f5f9' } }
+      }
+    };
+
+    // Revenue Mix Doughnut
+    this.revMixData = {
+      labels: ['Product Sales (GST 18%)', 'Finished Goods (GST 12%)', 'Services & AMC', 'Exports (Zero Rated)'],
+      datasets: [
+        {
+          data: [55, 25, 15, 5],
+          backgroundColor: ['#0d9488', '#14b8a6', '#2dd4bf', '#ccfbf1']
+        }
+      ]
+    };
+
+    this.doughnutOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#1e293b', font: { family: 'Inter', size: 11 } } }
       }
     };
   }
 
-  updateChart(data: DashboardMetrics) {
+  updateCharts(data: DashboardMetrics) {
     this.chartData = {
       labels: data.chartMonths || this.metrics.chartMonths,
       datasets: [
         {
-          label: 'Sales / Income (₹)',
+          label: 'Sales (₹)',
           data: data.monthlySales || this.metrics.monthlySales,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          borderColor: '#0d9488',
+          backgroundColor: 'rgba(13, 148, 136, 0.08)',
           fill: true,
-          tension: 0.4
+          tension: 0.35
         },
         {
-          label: 'Operating Expenses (₹)',
+          label: 'Expenses (₹)',
           data: data.monthlyExpenses || this.metrics.monthlyExpenses,
-          borderColor: '#f97316',
+          borderColor: '#d97706',
           backgroundColor: 'transparent',
-          borderDash: [5, 5],
-          tension: 0.4
+          borderDash: [4, 4],
+          tension: 0.35
         }
       ]
     };
+  }
+
+  exportSummary() {
+    window.print();
   }
 }

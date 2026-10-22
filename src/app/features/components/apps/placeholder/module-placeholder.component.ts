@@ -1,33 +1,43 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-module-placeholder',
   template: `
-    <div class="p-card p-4">
-      <div class="flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-        <div>
-          <div class="text-xs uppercase font-semibold text-500 mb-1">{{ section }}</div>
-          <h2 class="text-2xl font-bold text-900 m-0 flex align-items-center gap-2">
-            <i [class]="icon" class="text-primary text-xl"></i>
-            {{ title }}
-          </h2>
-          <p class="text-500 text-sm mt-1 mb-0">{{ description }}</p>
-        </div>
-        <button pButton label="+ New Entry" icon="pi pi-plus" class="p-button-primary p-button-sm"></button>
+    <div class="page-header">
+      <div>
+        <h3 class="mb-0">{{ title }}</h3>
+        <div class="subtitle">{{ description }}</div>
       </div>
+      <div class="io-toolbar">
+        <button type="button" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-download me-1"></i>Download Template
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-upload me-1"></i>Import
+        </button>
+        <button type="button" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus-lg me-1"></i>+ New Entry
+        </button>
+      </div>
+    </div>
 
-      <div class="border-1 surface-border border-round p-5 text-center surface-50 my-4">
-        <div class="inline-flex align-items-center justify-content-center bg-blue-50 border-circle w-4rem h-4rem mb-3">
-          <i [class]="icon" class="text-2xl text-blue-600"></i>
+    <div class="card p-4">
+      <div class="d-flex flex-column align-items-center justify-content-center text-center py-5">
+        <div class="d-inline-flex align-items-center justify-content-center bg-brand-soft rounded-circle mb-3" style="width: 4rem; height: 4rem; border: 1px solid var(--brand-100);">
+          <i [class]="icon" class="text-brand fs-2"></i>
         </div>
-        <h3 class="text-lg font-semibold text-900 mb-1">{{ title }}</h3>
-        <p class="text-500 text-sm max-w-28rem mx-auto mb-4">
-          No records found for active entity. Create a new record or import data to get started.
+        <h5 class="fw-bold mb-1 text-dark">{{ title }}</h5>
+        <p class="text-muted small max-w-28rem mx-auto mb-4" style="max-width: 480px;">
+          No active records found for the current period and entity. Click "+ New Entry" above or import in bulk using the standard CSV template.
         </p>
-        <div class="flex justify-content-center gap-2">
-          <button pButton label="Refresh Data" icon="pi pi-refresh" class="p-button-outlined p-button-sm"></button>
-          <button pButton label="Create New Record" icon="pi pi-plus" class="p-button-primary p-button-sm"></button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
+          </button>
+          <button type="button" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Create New Record
+          </button>
         </div>
       </div>
     </div>
@@ -36,8 +46,8 @@ import { ActivatedRoute } from '@angular/router';
 export class ModulePlaceholderComponent implements OnInit {
   title = 'Module';
   section = 'Operations';
-  icon = 'pi pi-folder';
-  description = 'Manage records and transactions';
+  icon = 'bi bi-folder2-open';
+  description = 'Manage business operations and accounting records';
 
   constructor(private route: ActivatedRoute) {}
 

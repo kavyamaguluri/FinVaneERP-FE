@@ -1,4 +1,4 @@
-﻿import { NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -10,8 +10,6 @@ import { AppComponent } from './app.component';
 // Layout Components
 import { AppLayoutComponent } from './layout/app.layout.component';
 import { AppTopbarComponent } from './layout/app.topbar.component';
-import { AppSidebarComponent } from './layout/app.sidebar.component';
-import { AppMenuComponent } from './layout/app.menu.component';
 
 // PrimeNG Modules
 import { ButtonModule } from 'primeng/button';
@@ -42,8 +40,6 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
     AppComponent,
     AppLayoutComponent,
     AppTopbarComponent,
-    AppSidebarComponent,
-    AppMenuComponent,
     DashboardComponent,
     ChartOfAccountsComponent,
     PartiesComponent,

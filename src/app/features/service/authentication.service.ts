@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -108,23 +108,23 @@ export class AuthenticationService {
     );
   }
 
-  private saveSession(data: any): void {
+  public saveSession(data: any): void {
     const session: UserSession = {
       id: data.id,
       username: data.username,
       email: data.email,
-      fullName: data.fullName,
+      fullName: data.fullName || data.username || 'User',
       role: data.role || 'USER',
       token: data.token,
       tenantId: data.tenantId || '1'
     };
 
     localStorage.setItem(this.USER_KEY, JSON.stringify(session));
-    if (data.token) {
-      localStorage.setItem(this.TOKEN_KEY, data.token);
+    if (session.token) {
+      localStorage.setItem(this.TOKEN_KEY, session.token);
     }
-    if (data.tenantId) {
-      this.setActiveTenant(data.tenantId);
+    if (session.tenantId) {
+      this.setActiveTenant(session.tenantId);
     }
     this.currentUserSubject.next(session);
   }
