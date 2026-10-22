@@ -13,6 +13,7 @@ export interface UserSession {
   role: 'ADMIN' | 'USER' | string;
   token?: string;
   tenantId?: string;
+  entityName?: string;
 }
 
 export interface RegisterPayload {
@@ -116,7 +117,8 @@ export class AuthenticationService {
       fullName: data.fullName || data.username || 'User',
       role: data.role || 'USER',
       token: data.token,
-      tenantId: data.tenantId || '1'
+      tenantId: data.tenantId || '1',
+      entityName: data.entityName || localStorage.getItem('finvane_active_entity_name') || undefined
     };
 
     localStorage.setItem(this.USER_KEY, JSON.stringify(session));

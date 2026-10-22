@@ -6,7 +6,7 @@ import { AuthenticationService, UserSession } from '../features/service/authenti
   selector: 'app-topbar',
   template: `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 sticky-top">
-      <a class="navbar-brand fw-bold" routerLink="/dashboard" (click)="closeAllMenus()">Fin Vane ERP</a>
+      <a class="navbar-brand fw-bold" routerLink="/dashboard" (click)="closeAllMenus()">FinVane ERP</a>
       <button class="navbar-toggler" type="button" (click)="toggleMobileNav($event)">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -177,7 +177,6 @@ import { AuthenticationService, UserSession } from '../features/service/authenti
 })
 export class AppTopbarComponent implements OnInit {
   currentUser: UserSession | null = null;
-  activeEntityName: string = 'FinVane Enterprise';
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
@@ -186,11 +185,26 @@ export class AppTopbarComponent implements OnInit {
     private authService: AuthenticationService,
     private router: Router,
     private elementRef: ElementRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
     this.authService.currentUser$.subscribe(u => this.currentUser = u);
+  }
+
+  get activeEntityName(): string {
+    const stored = localStorage.getItem('finvane_active_entity_name');
+    if (stored && stored.trim()) {
+      return stored.trim();
+    }
+    if (this.currentUser?.entityName && this.currentUser.entityName.trim()) {
+      return this.currentUser.entityName.trim();
+    }
+    const tenantId = this.currentUser?.tenantId || this.authService.getActiveTenant();
+    if (tenantId && tenantId !== 'default') {
+      return `Entity ${tenantId}`;
+    }
+    return 'Entity';
   }
 
   get displayName(): string {

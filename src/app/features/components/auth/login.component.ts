@@ -13,7 +13,7 @@ import { AuthenticationService } from '../../service/authentication.service';
             <div class="card p-4 border-0" style="border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.25); background: #ffffff;">
               <div class="text-center mb-3">
                 <div style="font-size: 2rem; color: #0d9488; line-height: 1;">◆</div>
-                <h3 class="mb-0" style="font-weight: 800; letter-spacing: -.02em;">Fin Vane ERP</h3>
+                <h3 class="mb-0" style="font-weight: 800; letter-spacing: -.02em;">FinVane ERP</h3>
                 <p class="text-muted small mb-0">Accounting ERP for Indian SMEs</p>
               </div>
 

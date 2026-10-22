@@ -25,7 +25,7 @@ import { TrialBalanceReport } from '../../../../api/accounts/trial-balance.model
     <div class="card p-4">
       <!-- Printable Report Header -->
       <div class="text-center mb-4">
-        <div class="text-muted small text-uppercase fw-bold letter-spacing-1">Fin Vane ERP</div>
+        <div class="text-muted small text-uppercase fw-bold letter-spacing-1">FinVane ERP</div>
         <h4 class="fw-bold mb-1 text-dark">TRIAL BALANCE</h4>
         <p class="text-muted small mb-0">As of: {{ asOfDate }} · Currency: INR (₹)</p>
       </div>
