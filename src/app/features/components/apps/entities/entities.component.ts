@@ -95,10 +95,9 @@ export interface BusinessEntity {
 
     <!-- VIEW MODE: FORM (FULL SCREEN - matching Express views/entities/form.ejs) -->
     <div *ngIf="viewMode === 'form'">
-      <!-- Page Header with Back button -->
+      <!-- Page Header -->
       <div class="page-header mb-3">
         <div>
-          <button type="button" class="btn btn-sm btn-outline-secondary mb-2 px-2 py-1" style="font-size: 0.82rem;" (click)="goBack()">&larr; Back</button>
           <h3 class="mb-0 fw-bold text-dark">{{ editing ? 'Edit Business' : 'Add a Business' }}</h3>
         </div>
       </div>
