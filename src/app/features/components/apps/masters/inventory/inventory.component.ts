@@ -81,7 +81,26 @@ export interface InventoryItem {
   `
 })
 export class InventoryComponent implements OnInit {
-  items: InventoryItem[] = [
+  activeTenantId: string = '1';
+  items: InventoryItem[] = [];
+  allItems: InventoryItem[] = [
+    {
+      "id": 20001,
+      "sku": "SVC-CONS-001",
+      "name": "Monthly Retainer - Advisory",
+      "itemType": "service",
+      "itemClass": "SRV",
+      "category": "Services",
+      "brand": "",
+      "hsnSac": "998311",
+      "currentStock": 0,
+      "reorderLevel": 0,
+      "purchasePrice": 0,
+      "salePrice": 45000,
+      "margin": 45000,
+      "marginPercent": 100,
+      "gstRate": 18
+    },
   {
     "id": 1,
     "sku": "SKU-STL-001",

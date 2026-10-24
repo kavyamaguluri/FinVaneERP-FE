@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthenticationService } from '../../../service/authentication.service';
 import { environment } from '../../../../../environments/environment';
 
 export interface BusinessEntity {
@@ -436,7 +437,8 @@ export class EntitiesComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private authService: AuthenticationService
   ) {}
 
   ngOnInit() {
@@ -486,17 +488,20 @@ export class EntitiesComponent implements OnInit {
 
   switchBusiness(entity: BusinessEntity) {
     this.loading = true;
+    const tenantId = entity.tenantId || String(entity.id);
+    this.currentTenantId = tenantId;
+    localStorage.setItem('finvane_active_tenant', tenantId);
+    localStorage.setItem('finvane_active_tenant_id', tenantId);
+    localStorage.setItem('finvane_active_entity_name', entity.name);
+    localStorage.setItem('finvane_active_business_type', entity.businessType || 'goods');
+
+    this.authService.setActiveTenant(tenantId);
+
     this.http.post<any>(`${environment.apiUrl}/entities/switch/${entity.id}`, {}).subscribe({
       next: () => {
-        this.currentTenantId = entity.tenantId || String(entity.id);
-        localStorage.setItem('finvane_active_tenant_id', this.currentTenantId);
-        localStorage.setItem('finvane_active_entity_name', entity.name);
         window.location.href = '/dashboard';
       },
       error: () => {
-        this.currentTenantId = entity.tenantId || String(entity.id);
-        localStorage.setItem('finvane_active_tenant_id', this.currentTenantId);
-        localStorage.setItem('finvane_active_entity_name', entity.name);
         window.location.href = '/dashboard';
       }
     });

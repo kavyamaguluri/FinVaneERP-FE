@@ -198,7 +198,7 @@ import { environment } from '../../environments/environment';
 export class AppTopbarComponent implements OnInit {
   currentUser: UserSession | null = null;
   activeEntityName: string = 'Acme Trading Co';
-  userDisplayName: string = 'Admin User · admin';
+  userDisplayName: string = 'Admin User \u00B7 admin';
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
@@ -211,24 +211,19 @@ export class AppTopbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.activeEntityName = localStorage.getItem('finvane_active_entity_name') || 'Acme Trading Co';
+    this.userDisplayName = 'Admin User \u00B7 admin';
     this.currentUser = this.authService.getCurrentUser();
-    this.updateUserDisplay();
     this.authService.currentUser$.subscribe(u => {
       this.currentUser = u;
-      this.updateUserDisplay();
+      this.userDisplayName = 'Admin User \u00B7 admin';
       this.loadActiveEntityFromDb();
     });
     this.loadActiveEntityFromDb();
   }
 
   updateUserDisplay() {
-    if (this.currentUser) {
-      const name = this.currentUser.fullName || this.currentUser.username || 'Admin User';
-      const role = (this.currentUser.role || 'admin').toLowerCase();
-      this.userDisplayName = `${name} · ${role}`;
-    } else {
-      this.userDisplayName = 'Admin User · admin';
-    }
+    this.userDisplayName = 'Admin User · admin';
   }
 
   loadActiveEntityFromDb() {

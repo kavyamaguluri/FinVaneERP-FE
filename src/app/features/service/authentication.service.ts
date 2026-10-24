@@ -58,11 +58,18 @@ export class AuthenticationService {
   }
 
   public getActiveTenant(): string {
-    return this.activeTenantSubject.value;
+    return localStorage.getItem('finvane_active_tenant') || localStorage.getItem('finvane_active_tenant_id') || this.activeTenantSubject.value || '1';
   }
 
   public setActiveTenant(tenantId: string): void {
     localStorage.setItem(this.TENANT_KEY, tenantId);
+    localStorage.setItem('finvane_active_tenant_id', tenantId);
+    const user = this.getCurrentUser();
+    if (user) {
+      user.tenantId = tenantId;
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+      this.currentUserSubject.next(user);
+    }
     this.activeTenantSubject.next(tenantId);
   }
 
