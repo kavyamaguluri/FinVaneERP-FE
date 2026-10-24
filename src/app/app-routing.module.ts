@@ -98,6 +98,8 @@ const routes: Routes = [
 
       // Business Entities ("Choose a Business") matching Express
       { path: 'entities', component: EntitiesComponent },
+      { path: 'entities/new', component: EntitiesComponent },
+      { path: 'entities/:id/edit', component: EntitiesComponent },
 
       // Legacy redirects
       { path: 'masters/accounts', redirectTo: 'accounts', pathMatch: 'full' },
