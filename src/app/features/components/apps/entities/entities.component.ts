@@ -33,293 +33,315 @@ export interface BusinessEntity {
 @Component({
   selector: 'app-entities',
   template: `
-    <div class="page-header d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <h3 class="mb-0 fw-bold">Choose a Business</h3>
-        <div class="subtitle text-muted small">Each business below has its own completely separate set of books &mdash; Chart of Accounts, Day Book, invoices, everything.</div>
-      </div>
-      <div class="io-toolbar">
-        <button type="button" class="btn btn-primary btn-sm" (click)="openAddModal()">+ Add Business</button>
-      </div>
-    </div>
-
-    <!-- Alerts -->
-    <div *ngIf="message" class="alert alert-success py-2 mb-3 d-flex justify-content-between align-items-center">
-      <span>{{ message }}</span>
-      <button type="button" class="btn-close btn-sm" (click)="message = ''"></button>
-    </div>
-    <div *ngIf="errorMessage" class="alert alert-danger py-2 mb-3 d-flex justify-content-between align-items-center">
-      <span>{{ errorMessage }}</span>
-      <button type="button" class="btn-close btn-sm" (click)="errorMessage = ''"></button>
-    </div>
-
-    <!-- Business Cards Grid matching Express picker.ejs exactly -->
-    <div class="row g-3">
-      <div *ngFor="let e of entities" class="col-md-4">
-        <div class="card p-3 h-100 shadow-sm border" [class.border-primary]="currentTenantId === (e.tenantId || '' + e.id)">
-          <div class="d-flex justify-content-between align-items-start mb-1">
-            <h5 class="mb-1 fw-bold text-dark">{{ e.name }}</h5>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="openEditModal(e)" title="Edit business details">&#9998;</button>
-          </div>
-          <div class="text-muted small mb-2">
-            {{ e.sector || 'Sector not set' }} &middot; <span class="text-capitalize">{{ e.businessType || 'goods' }}</span>
-          </div>
-          <div *ngIf="e.gstin" class="small text-muted mb-2 font-monospace">
-            GSTIN: <strong>{{ e.gstin }}</strong>
-          </div>
-          <div *ngIf="e.gstRegistered === 0" class="small text-secondary mb-2 fst-italic">
-            (Not registered under GST)
-          </div>
-
-          <div class="mt-auto pt-2">
-            <span *ngIf="currentTenantId === (e.tenantId || '' + e.id)" class="badge bg-primary-subtle text-primary-emphasis px-2 py-1">
-              Currently viewing
-            </span>
-            <button *ngIf="currentTenantId !== (e.tenantId || '' + e.id)"
-                    type="button"
-                    class="btn btn-outline-primary btn-sm w-100"
-                    (click)="switchBusiness(e)">
-              Switch to this business
-            </button>
-          </div>
+    <!-- VIEW MODE: LIST (Choose a Business) -->
+    <div *ngIf="viewMode === 'list'">
+      <div class="page-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h3 class="mb-0 fw-bold">Choose a Business</h3>
+          <div class="subtitle text-muted small">Each business below has its own completely separate set of books &mdash; Chart of Accounts, Day Book, invoices, everything.</div>
+        </div>
+        <div class="io-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" (click)="openAddBusiness()">+ Add Business</button>
         </div>
       </div>
 
-      <div *ngIf="entities.length === 0 && !loading" class="col-12">
-        <p class="text-muted">No businesses yet. <a href="javascript:void(0)" (click)="openAddModal()">Add one</a>.</p>
+      <!-- Alerts -->
+      <div *ngIf="message" class="alert alert-success py-2 mb-3 d-flex justify-content-between align-items-center">
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close btn-sm" (click)="message = ''"></button>
       </div>
-    </div>
-
-    <!-- Form Modal matching Express views/entities/form.ejs exactly -->
-    <p-dialog [(visible)]="showFormModal"
-              [modal]="true"
-              [style]="{ width: '780px', maxWidth: '95vw' }"
-              [header]="editing ? 'Edit Business' : 'Add a Business'"
-              [closable]="true"
-              (onHide)="onModalClose()">
-      
-      <div class="subtitle text-muted small mb-3">
-        {{ editing ? 'Update this business\'s KYC details.' : 'Creates a brand new, completely separate set of books. Your existing login can access it right away.' }}
+      <div *ngIf="errorMessage" class="alert alert-danger py-2 mb-3 d-flex justify-content-between align-items-center">
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="btn-close btn-sm" (click)="errorMessage = ''"></button>
       </div>
 
-      <div *ngIf="modalError" class="alert alert-danger py-2 mb-3">
-        {{ modalError }}
-      </div>
-
+      <!-- Business Cards Grid matching Express picker.ejs exactly -->
       <div class="row g-3">
-        <!-- Business Name * -->
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Business Name <span class="text-danger">*</span></label>
-          <input type="text"
-                 class="form-control"
-                 [(ngModel)]="currentForm.name"
-                 [class.is-invalid]="submitted && !currentForm.name?.trim()"
-                 placeholder="e.g. Acme Trading Co"
-                 required />
-          <div *ngIf="submitted && !currentForm.name?.trim()" class="invalid-feedback">Business name is required.</div>
-        </div>
-
-        <!-- Legal Name -->
-        <div class="col-md-6">
-          <label class="form-label">Legal Name</label>
-          <input type="text"
-                 class="form-control"
-                 [(ngModel)]="currentForm.legalName"
-                 placeholder="e.g. Acme Trading Co Pvt Ltd" />
-        </div>
-
-        <!-- Sector / Industry -->
-        <div class="col-md-6">
-          <label class="form-label">Sector / Industry</label>
-          <select class="form-select" [(ngModel)]="currentForm.sector">
-            <option value="">-- select --</option>
-            <option *ngFor="let s of sectors" [value]="s">{{ s }}</option>
-          </select>
-        </div>
-
-        <!-- What does this business deal in? * -->
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">What does this business deal in? <span class="text-danger">*</span></label>
-          <select class="form-select"
-                  [(ngModel)]="currentForm.businessType"
-                  [class.is-invalid]="submitted && !currentForm.businessType"
-                  required>
-            <option value="goods">Goods only (sells/stocks physical items)</option>
-            <option value="services">Services only (no inventory to track)</option>
-            <option value="both">Both goods and services</option>
-          </select>
-          <div class="form-text small">
-            Choosing &quot;Services only&quot; automatically turns off Inventory tracking for this business (Dashboard, P&amp;L, Balance Sheet) -- you can change this later from Chart of Accounts.
-          </div>
-        </div>
-
-        <!-- Constitution of Business -->
-        <div class="col-md-6">
-          <label class="form-label">Constitution of Business</label>
-          <select class="form-select" [(ngModel)]="currentForm.constitution">
-            <option value="">-- select --</option>
-            <option *ngFor="let c of constitutions" [value]="c.value">{{ c.label }}</option>
-          </select>
-          <div class="form-text small">
-            Determines the statutory financial statement format used under Statutory &gt; Financials -- Schedule III (Companies Act, 2013) with Notes to Accounts for a Company, or the standard format for everyone else.
-          </div>
-        </div>
-
-        <!-- Financial Year Starts -->
-        <div class="col-md-6">
-          <label class="form-label">Financial Year Starts</label>
-          <select class="form-select" [(ngModel)]="currentForm.fyStartMonth">
-            <option *ngFor="let m of months; let i = index" [value]="i + 1">{{ m }}</option>
-          </select>
-        </div>
-
-        <!-- PAN -->
-        <div class="col-md-6">
-          <label class="form-label">PAN</label>
-          <input type="text"
-                 class="form-control text-uppercase"
-                 [(ngModel)]="currentForm.pan"
-                 (input)="onPanInput()"
-                 maxlength="10"
-                 placeholder="e.g. AAAAA9999A" />
-        </div>
-
-        <!-- GST registration (NEW / REPLICATED FROM EXPRESS) -->
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">GST registration</label>
-          <select class="form-select" [(ngModel)]="currentForm.gstRegistered" (change)="onGstRegisteredChange()">
-            <option [ngValue]="1">Registered under GST</option>
-            <option [ngValue]="0">Not registered (no GST charged)</option>
-          </select>
-          <div class="form-text small">
-            If not registered, invoices, quotations and orders carry no GST, and GST fields and reports are hidden.
-          </div>
-        </div>
-
-        <!-- GSTIN * (shown only when registered under GST) -->
-        <div class="col-md-6" *ngIf="currentForm.gstRegistered !== 0">
-          <label class="form-label fw-semibold">GSTIN <span class="text-danger">*</span></label>
-          <input type="text"
-                 class="form-control text-uppercase"
-                 [(ngModel)]="currentForm.gstin"
-                 (input)="onGstinInput()"
-                 maxlength="15"
-                 [class.is-invalid]="submitted && currentForm.gstRegistered !== 0 && (!currentForm.gstin?.trim() || !isGstinValid(currentForm.gstin))"
-                 placeholder="e.g. 27AAAAA9999A1Z5"
-                 required />
-          <div *ngIf="submitted && currentForm.gstRegistered !== 0 && !currentForm.gstin?.trim()" class="invalid-feedback">
-            Enter the GSTIN, or choose "Not registered" if the business has no GST registration.
-          </div>
-          <div *ngIf="submitted && currentForm.gstRegistered !== 0 && currentForm.gstin?.trim() && !isGstinValid(currentForm.gstin)" class="invalid-feedback">
-            This GSTIN is not valid. Please check all 15 characters.
-          </div>
-          <div class="form-text small">15 characters. First 2 digits auto-fill State Code.</div>
-        </div>
-
-        <!-- State Code -->
-        <div class="col-md-6">
-          <label class="form-label">State Code</label>
-          <input type="text"
-                 class="form-control"
-                 [(ngModel)]="currentForm.stateCode"
-                 placeholder="e.g. 27 (Maharashtra)" />
-        </div>
-
-        <!-- Country -->
-        <div class="col-md-6">
-          <label class="form-label">Country</label>
-          <select class="form-select" [(ngModel)]="currentForm.country">
-            <option value="India">India</option>
-            <option value="United States">United States</option>
-            <option value="United Kingdom">United Kingdom</option>
-            <option value="United Arab Emirates">United Arab Emirates</option>
-            <option value="Singapore">Singapore</option>
-            <option value="Australia">Australia</option>
-            <option value="Canada">Canada</option>
-            <option value="Germany">Germany</option>
-          </select>
-          <div class="form-text small">Drives how dates and numbers are displayed across the app.</div>
-        </div>
-
-        <!-- Address -->
-        <div class="col-12">
-          <label class="form-label">Address</label>
-          <input type="text"
-                 class="form-control"
-                 [(ngModel)]="currentForm.address"
-                 placeholder="Full postal address" />
-        </div>
-
-        <!-- Company Logo Section -->
-        <div class="col-12">
-          <hr class="my-1">
-          <h6 class="mb-0 text-dark fw-bold">Company logo</h6>
-        </div>
-        <div class="col-12">
-          <div class="d-flex align-items-center gap-3 flex-wrap">
-            <div style="width:150px;height:80px;border:2px dashed #adb5bd;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8f9fa;color:#6c757d;font-size:12px;text-align:center">
-              <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" style="max-width:100%;max-height:100%" />
-              <span *ngIf="!logoPreview">Your logo<br>appears here</span>
+        <div *ngFor="let e of entities" class="col-md-4">
+          <div class="card p-3 h-100 shadow-sm border" [class.border-primary]="currentTenantId === (e.tenantId || '' + e.id)">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <h5 class="mb-1 fw-bold text-dark">{{ e.name }}</h5>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="openEditBusiness(e)" title="Edit business details">&#9998;</button>
             </div>
-            <div>
-              <label class="btn btn-outline-primary btn-sm mb-1" for="logoUpload">Upload logo</label>
-              <input type="file" id="logoUpload" accept="image/png,image/jpeg" class="d-none" (change)="onLogoSelected($event)" />
-              <div class="form-text small">PNG or JPG, under 1 MB. Printed on invoices and quotations.</div>
-              <button *ngIf="logoPreview" type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none" (click)="removeLogo()">Remove current logo</button>
+            <div class="text-muted small mb-2">
+              {{ e.sector || 'Sector not set' }} &middot; <span class="text-capitalize">{{ e.businessType || 'goods' }}</span>
+            </div>
+            <div *ngIf="e.gstin" class="small text-muted mb-2 font-monospace">
+              GSTIN: <strong>{{ e.gstin }}</strong>
+            </div>
+            <div *ngIf="e.gstRegistered === 0" class="small text-secondary mb-2 fst-italic">
+              (Not registered under GST)
+            </div>
+
+            <div class="mt-auto pt-2">
+              <span *ngIf="currentTenantId === (e.tenantId || '' + e.id)" class="badge bg-primary-subtle text-primary-emphasis px-2 py-1">
+                Currently viewing
+              </span>
+              <button *ngIf="currentTenantId !== (e.tenantId || '' + e.id)"
+                      type="button"
+                      class="btn btn-outline-primary btn-sm w-100"
+                      (click)="switchBusiness(e)">
+                Switch to this business
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Bank account -->
-        <div class="col-12">
-          <hr class="my-1">
-          <h6 class="mb-0 text-dark fw-bold">Bank account (printed on sales invoices)</h6>
-          <div class="form-text small">Optional. Customers use this to pay you.</div>
+        <div *ngIf="entities.length === 0 && !loading" class="col-12">
+          <p class="text-muted">No businesses yet. <a href="javascript:void(0)" (click)="openAddBusiness()">Add one</a>.</p>
         </div>
+      </div>
+    </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Bank name</label>
-          <input type="text" class="form-control" [(ngModel)]="currentForm.bankName" placeholder="e.g. HDFC Bank" />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Account holder name</label>
-          <input type="text" class="form-control" [(ngModel)]="currentForm.bankAccountName" placeholder="e.g. Acme Trading Co Pvt Ltd" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Account number</label>
-          <input type="text" class="form-control" [(ngModel)]="currentForm.bankAccountNo" placeholder="Account No" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">IFSC</label>
-          <input type="text" class="form-control text-uppercase" [(ngModel)]="currentForm.bankIfsc" placeholder="e.g. HDFC0000123" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Branch</label>
-          <input type="text" class="form-control" [(ngModel)]="currentForm.bankBranch" placeholder="Branch name" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">UPI ID</label>
-          <input type="text" class="form-control" [(ngModel)]="currentForm.upiId" placeholder="e.g. acme@hdfcbank" />
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Date of Commencement</label>
-          <input type="date" class="form-control" [(ngModel)]="currentForm.dateOfCommencement" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Date from Which Books Start</label>
-          <input type="date" class="form-control" [(ngModel)]="currentForm.booksStartDate" />
-          <div class="form-text small">No entry can be dated before this.</div>
+    <!-- VIEW MODE: FORM (FULL SCREEN - matching Express views/entities/form.ejs) -->
+    <div *ngIf="viewMode === 'form'">
+      <!-- Page Header with Back button -->
+      <div class="page-header mb-3">
+        <div>
+          <button type="button" class="btn btn-sm btn-outline-secondary mb-2 px-2 py-1" style="font-size: 0.82rem;" (click)="goBack()">&larr; Back</button>
+          <h3 class="mb-0 fw-bold text-dark">{{ editing ? 'Edit Business' : 'Add a Business' }}</h3>
+          <div class="subtitle text-muted small">
+            {{ editing ? 'Update this business\'s KYC details.' : 'Creates a brand new, completely separate set of books. Your existing login can access it right away.' }}
+          </div>
         </div>
       </div>
 
-      <ng-template pTemplate="footer">
-        <button type="button" class="btn btn-outline-secondary" (click)="showFormModal = false">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="saveBusiness()">
-          {{ editing ? 'Save Changes' : 'Create Business' }}
-        </button>
-      </ng-template>
-    </p-dialog>
+      <!-- Error alert -->
+      <div *ngIf="formError" class="alert alert-danger py-2 mb-3 d-flex justify-content-between align-items-center">
+        <span>{{ formError }}</span>
+        <button type="button" class="btn-close btn-sm" (click)="formError = ''"></button>
+      </div>
+
+      <!-- Full-Screen Card -->
+      <div class="card p-4 shadow-sm border-0 bg-white mb-4">
+        <form (ngSubmit)="saveBusiness()" novalidate>
+          <div class="row g-3">
+            <!-- Business Name * -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Business Name <span class="text-danger">*</span></label>
+              <input type="text"
+                     name="name"
+                     class="form-control"
+                     [(ngModel)]="currentForm.name"
+                     [class.is-invalid]="submitted && !currentForm.name?.trim()"
+                     placeholder="e.g. Acme Trading Co"
+                     required />
+              <div *ngIf="submitted && !currentForm.name?.trim()" class="invalid-feedback">Business name is required.</div>
+            </div>
+
+            <!-- Legal Name -->
+            <div class="col-md-6">
+              <label class="form-label">Legal Name</label>
+              <input type="text"
+                     name="legalName"
+                     class="form-control"
+                     [(ngModel)]="currentForm.legalName"
+                     placeholder="e.g. Acme Trading Co Pvt Ltd" />
+            </div>
+
+            <!-- Sector / Industry -->
+            <div class="col-md-6">
+              <label class="form-label">Sector / Industry</label>
+              <select name="sector" class="form-select" [(ngModel)]="currentForm.sector">
+                <option value="">-- select --</option>
+                <option *ngFor="let s of sectors" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+
+            <!-- What does this business deal in? * -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">What does this business deal in? <span class="text-danger">*</span></label>
+              <select name="businessType"
+                      class="form-select"
+                      [(ngModel)]="currentForm.businessType"
+                      [class.is-invalid]="submitted && !currentForm.businessType"
+                      required>
+                <option value="goods">Goods only (sells/stocks physical items)</option>
+                <option value="services">Services only (no inventory to track)</option>
+                <option value="both">Both goods and services</option>
+              </select>
+              <div class="form-text small">
+                Choosing &quot;Services only&quot; automatically turns off Inventory tracking for this business (Dashboard, P&amp;L, Balance Sheet) -- you can change this later from Chart of Accounts.
+              </div>
+            </div>
+
+            <!-- Constitution of Business -->
+            <div class="col-md-6">
+              <label class="form-label">Constitution of Business</label>
+              <select name="constitution" class="form-select" [(ngModel)]="currentForm.constitution">
+                <option value="">-- select --</option>
+                <option *ngFor="let c of constitutions" [value]="c.value">{{ c.label }}</option>
+              </select>
+              <div class="form-text small">
+                Determines the statutory financial statement format used under Statutory &gt; Financials -- Schedule III (Companies Act, 2013) with Notes to Accounts for a Company, or the standard format for everyone else.
+              </div>
+            </div>
+
+            <!-- Financial Year Starts -->
+            <div class="col-md-6">
+              <label class="form-label">Financial Year Starts</label>
+              <select name="fyStartMonth" class="form-select" [(ngModel)]="currentForm.fyStartMonth">
+                <option *ngFor="let m of months; let i = index" [value]="i + 1">{{ m }}</option>
+              </select>
+            </div>
+
+            <!-- PAN -->
+            <div class="col-md-6">
+              <label class="form-label">PAN</label>
+              <input type="text"
+                     name="pan"
+                     class="form-control text-uppercase"
+                     [(ngModel)]="currentForm.pan"
+                     (input)="onPanInput()"
+                     maxlength="10"
+                     placeholder="e.g. AAAAA9999A" />
+            </div>
+
+            <!-- GST registration (NEW / REPLICATED FROM EXPRESS) -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">GST registration</label>
+              <select name="gstRegistered"
+                      class="form-select"
+                      [(ngModel)]="currentForm.gstRegistered"
+                      (change)="onGstRegisteredChange()">
+                <option [ngValue]="1">Registered under GST</option>
+                <option [ngValue]="0">Not registered (no GST charged)</option>
+              </select>
+              <div class="form-text small">
+                If not registered, invoices, quotations and orders carry no GST, and GST fields and reports are hidden.
+              </div>
+            </div>
+
+            <!-- GSTIN * (shown only when registered under GST) -->
+            <div class="col-md-6" *ngIf="currentForm.gstRegistered !== 0">
+              <label class="form-label fw-semibold">GSTIN <span class="text-danger">*</span></label>
+              <input type="text"
+                     name="gstin"
+                     class="form-control text-uppercase"
+                     [(ngModel)]="currentForm.gstin"
+                     (input)="onGstinInput()"
+                     maxlength="15"
+                     [class.is-invalid]="submitted && currentForm.gstRegistered !== 0 && (!currentForm.gstin?.trim() || !isGstinValid(currentForm.gstin))"
+                     placeholder="e.g. 27AAAAA9999A1Z5"
+                     required />
+              <div *ngIf="submitted && currentForm.gstRegistered !== 0 && !currentForm.gstin?.trim()" class="invalid-feedback">
+                Enter the GSTIN, or choose "Not registered" if the business has no GST registration.
+              </div>
+              <div *ngIf="submitted && currentForm.gstRegistered !== 0 && currentForm.gstin?.trim() && !isGstinValid(currentForm.gstin)" class="invalid-feedback">
+                This GSTIN is not valid. Please check all 15 characters.
+              </div>
+              <div class="form-text small">15 characters. First 2 digits auto-fill State Code.</div>
+            </div>
+
+            <!-- State Code -->
+            <div class="col-md-6">
+              <label class="form-label">State Code</label>
+              <input type="text"
+                     name="stateCode"
+                     class="form-control"
+                     [(ngModel)]="currentForm.stateCode"
+                     placeholder="e.g. 27 (Maharashtra)" />
+            </div>
+
+            <!-- Country -->
+            <div class="col-md-6">
+              <label class="form-label">Country</label>
+              <select name="country" class="form-select" [(ngModel)]="currentForm.country">
+                <option value="India">India</option>
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="United Arab Emirates">United Arab Emirates</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Australia">Australia</option>
+                <option value="Canada">Canada</option>
+                <option value="Germany">Germany</option>
+              </select>
+              <div class="form-text small">Drives how dates and numbers are displayed across the app.</div>
+            </div>
+
+            <!-- Address -->
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <input type="text"
+                     name="address"
+                     class="form-control"
+                     [(ngModel)]="currentForm.address"
+                     placeholder="Full postal address" />
+            </div>
+
+            <!-- Company Logo Section -->
+            <div class="col-12">
+              <hr class="my-2">
+              <h6 class="mb-0 text-dark fw-bold">Company logo</h6>
+            </div>
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div style="width:150px;height:80px;border:2px dashed #adb5bd;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8f9fa;color:#6c757d;font-size:12px;text-align:center">
+                  <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" style="max-width:100%;max-height:100%" />
+                  <span *ngIf="!logoPreview">Your logo<br>appears here</span>
+                </div>
+                <div>
+                  <label class="btn btn-outline-primary btn-sm mb-1" for="logoUpload">Upload logo</label>
+                  <input type="file" id="logoUpload" accept="image/png,image/jpeg" class="d-none" (change)="onLogoSelected($event)" />
+                  <div class="form-text small">PNG or JPG, under 1 MB. Printed on invoices and quotations.</div>
+                  <button *ngIf="logoPreview" type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none" (click)="removeLogo()">Remove current logo</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bank account (printed on sales invoices) -->
+            <div class="col-12">
+              <hr class="my-2">
+              <h6 class="mb-0 text-dark fw-bold">Bank account (printed on sales invoices)</h6>
+              <div class="form-text small">Optional. Customers use this to pay you.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Bank name</label>
+              <input type="text" name="bankName" class="form-control" [(ngModel)]="currentForm.bankName" placeholder="e.g. HDFC Bank" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Account holder name</label>
+              <input type="text" name="bankAccountName" class="form-control" [(ngModel)]="currentForm.bankAccountName" placeholder="e.g. Acme Trading Co Pvt Ltd" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Account number</label>
+              <input type="text" name="bankAccountNo" class="form-control" [(ngModel)]="currentForm.bankAccountNo" placeholder="Account No" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">IFSC</label>
+              <input type="text" name="bankIfsc" class="form-control text-uppercase" [(ngModel)]="currentForm.bankIfsc" placeholder="e.g. HDFC0000123" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Branch</label>
+              <input type="text" name="bankBranch" class="form-control" [(ngModel)]="currentForm.bankBranch" placeholder="Branch name" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">UPI ID</label>
+              <input type="text" name="upiId" class="form-control" [(ngModel)]="currentForm.upiId" placeholder="e.g. acme@hdfcbank" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Date of Commencement</label>
+              <input type="date" name="dateOfCommencement" class="form-control" [(ngModel)]="currentForm.dateOfCommencement" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date from Which Books Start</label>
+              <input type="date" name="booksStartDate" class="form-control" [(ngModel)]="currentForm.booksStartDate" />
+              <div class="form-text small">No accounting entry can be dated before this (Chart of Accounts opening balances are exempt).</div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons matching Express -->
+          <div class="mt-4 pt-2">
+            <button type="submit" class="btn btn-primary me-2">
+              {{ editing ? 'Save Changes' : 'Create Business' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="goBack()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `
 })
 export class EntitiesComponent implements OnInit {
@@ -329,10 +351,10 @@ export class EntitiesComponent implements OnInit {
   message = '';
   errorMessage = '';
 
-  showFormModal = false;
+  viewMode: 'list' | 'form' = 'list';
   editing = false;
   submitted = false;
-  modalError = '';
+  formError = '';
   logoPreview: string | null = null;
   currentForm: Partial<BusinessEntity> = {};
 
@@ -425,9 +447,30 @@ export class EntitiesComponent implements OnInit {
     this.currentTenantId = localStorage.getItem('finvane_active_tenant_id') || '1';
     this.loadEntities();
 
-    // If navigated directly to /entities/new, open add modal immediately
-    if (this.router.url.includes('/entities/new')) {
-      this.openAddModal();
+    // Route detection for /entities/new or /entities/:id/edit
+    this.route.url.subscribe(() => {
+      this.checkRouteMode();
+    });
+  }
+
+  checkRouteMode() {
+    const url = this.router.url;
+    if (url.includes('/entities/new')) {
+      this.openAddBusiness(false);
+    } else if (url.includes('/edit')) {
+      const match = url.match(/\/entities\/(\d+)\/edit/);
+      if (match && match[1]) {
+        const id = Number(match[1]);
+        this.http.get<any>(`${environment.apiUrl}/entities/${id}`).subscribe({
+          next: (res) => {
+            if (res && res.data) {
+              this.openEditBusiness(res.data, false);
+            }
+          }
+        });
+      }
+    } else {
+      this.viewMode = 'list';
     }
   }
 
@@ -463,10 +506,10 @@ export class EntitiesComponent implements OnInit {
     });
   }
 
-  openAddModal() {
+  openAddBusiness(navigate: boolean = true) {
     this.editing = false;
     this.submitted = false;
-    this.modalError = '';
+    this.formError = '';
     this.logoPreview = null;
     this.currentForm = {
       businessType: 'goods',
@@ -475,27 +518,32 @@ export class EntitiesComponent implements OnInit {
       gstRegistered: 1,
       gstin: ''
     };
-    this.showFormModal = true;
+    this.viewMode = 'form';
+    if (navigate && !this.router.url.includes('/entities/new')) {
+      this.router.navigate(['/entities/new']);
+    }
   }
 
-  openEditModal(e: BusinessEntity) {
+  openEditBusiness(e: BusinessEntity, navigate: boolean = true) {
     this.editing = true;
     this.submitted = false;
-    this.modalError = '';
+    this.formError = '';
     this.logoPreview = e.logoUrl || null;
     this.currentForm = {
       ...e,
       gstRegistered: e.gstRegistered !== undefined && e.gstRegistered !== null ? Number(e.gstRegistered) : (e.gstin ? 1 : 0)
     };
-    this.showFormModal = true;
+    this.viewMode = 'form';
+    if (navigate) {
+      this.router.navigate([`/entities/${e.id}/edit`]);
+    }
   }
 
-  onModalClose() {
+  goBack() {
     this.submitted = false;
-    this.modalError = '';
-    if (this.router.url.includes('/entities/new')) {
-      this.router.navigate(['/entities']);
-    }
+    this.formError = '';
+    this.viewMode = 'list';
+    this.router.navigate(['/entities']);
   }
 
   onGstRegisteredChange() {
@@ -542,7 +590,7 @@ export class EntitiesComponent implements OnInit {
     if (!file) return;
 
     if (file.size > 1024 * 1024) {
-      this.modalError = 'Logo must be under 1 MB.';
+      this.formError = 'Logo must be under 1 MB.';
       return;
     }
 
@@ -561,28 +609,28 @@ export class EntitiesComponent implements OnInit {
 
   saveBusiness() {
     this.submitted = true;
-    this.modalError = '';
+    this.formError = '';
 
     // Validation 1: Business Name *
     if (!this.currentForm.name || !this.currentForm.name.trim()) {
-      this.modalError = 'Business name is required.';
+      this.formError = 'Business name is required.';
       return;
     }
 
     // Validation 2: What does this business deal in? *
     if (!this.currentForm.businessType) {
-      this.modalError = 'Please select what this business deals in.';
+      this.formError = 'Please select what this business deals in.';
       return;
     }
 
     // Validation 3: GST registration & GSTIN *
     if (this.currentForm.gstRegistered !== 0) {
       if (!this.currentForm.gstin || !this.currentForm.gstin.trim()) {
-        this.modalError = 'Enter the GSTIN, or choose "Not registered" if the business has no GST registration.';
+        this.formError = 'Enter the GSTIN, or choose "Not registered" if the business has no GST registration.';
         return;
       }
       if (!this.isGstinValid(this.currentForm.gstin)) {
-        this.modalError = 'This GSTIN is not valid. Please check all 15 characters (e.g. 27AAAAA9999A1Z5).';
+        this.formError = 'This GSTIN is not valid. Please check all 15 characters (e.g. 27AAAAA9999A1Z5).';
         return;
       }
     }
@@ -599,26 +647,25 @@ export class EntitiesComponent implements OnInit {
     if (this.editing && this.currentForm.id) {
       this.http.put<any>(`${environment.apiUrl}/entities/${this.currentForm.id}`, payload).subscribe({
         next: () => {
-          this.showFormModal = false;
+          this.viewMode = 'list';
           this.message = 'Business details updated successfully.';
+          this.router.navigate(['/entities']);
           this.loadEntities();
         },
         error: (err) => {
-          this.modalError = err.error?.message || err.message || 'Failed to update business.';
+          this.formError = err.error?.message || err.message || 'Failed to update business.';
         }
       });
     } else {
       this.http.post<any>(`${environment.apiUrl}/entities`, payload).subscribe({
-        next: (res) => {
-          this.showFormModal = false;
+        next: () => {
+          this.viewMode = 'list';
           this.message = 'Business created successfully.';
+          this.router.navigate(['/entities']);
           this.loadEntities();
-          if (this.router.url.includes('/entities/new')) {
-            this.router.navigate(['/entities']);
-          }
         },
         error: (err) => {
-          this.modalError = err.error?.message || err.message || 'Failed to create business.';
+          this.formError = err.error?.message || err.message || 'Failed to create business.';
         }
       });
     }
