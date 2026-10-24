@@ -100,9 +100,6 @@ export interface BusinessEntity {
         <div>
           <button type="button" class="btn btn-sm btn-outline-secondary mb-2 px-2 py-1" style="font-size: 0.82rem;" (click)="goBack()">&larr; Back</button>
           <h3 class="mb-0 fw-bold text-dark">{{ editing ? 'Edit Business' : 'Add a Business' }}</h3>
-          <div class="subtitle text-muted small">
-            {{ editing ? 'Update this business\'s KYC details.' : 'Creates a brand new, completely separate set of books. Your existing login can access it right away.' }}
-          </div>
         </div>
       </div>
 
