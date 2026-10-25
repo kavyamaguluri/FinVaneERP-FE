@@ -5,14 +5,16 @@
 })
 export class IndianCurrencyPipe implements PipeTransform {
 
-  transform(value: number | string | null | undefined): string {
-    if (value === null || value === undefined || value === '') return '₹0.00';
+  transform(value: number | string | null | undefined, decimals: number = 2): string {
+    if (value === null || value === undefined || value === '') return decimals === 0 ? '₹0' : '₹0.00';
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(num)) return '₹0.00';
+    if (isNaN(num)) return decimals === 0 ? '₹0' : '₹0.00';
 
     const isNegative = num < 0;
-    const absVal = Math.abs(num).toFixed(2);
-    const [intPart, decPart] = absVal.split('.');
+    const absVal = Math.abs(num).toFixed(decimals);
+    const dotIdx = absVal.indexOf('.');
+    const intPart = dotIdx === -1 ? absVal : absVal.substring(0, dotIdx);
+    const decPart = dotIdx === -1 ? '' : absVal.substring(dotIdx + 1);
 
     let formattedInt = '';
     if (intPart.length <= 3) {
@@ -33,6 +35,7 @@ export class IndianCurrencyPipe implements PipeTransform {
       formattedInt = restFormatted + ',' + lastThree;
     }
 
-    return (isNegative ? '-₹' : '₹') + formattedInt + '.' + decPart;
+    const prefix = isNegative ? '-₹' : '₹';
+    return decPart ? `${prefix}${formattedInt}.${decPart}` : `${prefix}${formattedInt}`;
   }
 }

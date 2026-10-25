@@ -180,7 +180,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Cash &amp; Bank</div>
-            <div class="kpi-value">{{ metrics.cashBankBalance | indianCurrency }}</div>
+            <div class="kpi-value">{{ metrics.cashBankBalance | indianCurrency:0 }}</div>
             <div class="kpi-sub">as of {{ toDisplayDate }}</div>
           </div>
         </div>
@@ -188,7 +188,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Receivables</div>
-            <div class="kpi-value">{{ metrics.totalReceivables | indianCurrency }}</div>
+            <div class="kpi-value">{{ metrics.totalReceivables | indianCurrency:0 }}</div>
             <div class="kpi-sub">from customers, as of {{ toDisplayDate }}</div>
           </div>
         </div>
@@ -196,7 +196,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Payables</div>
-            <div class="kpi-value">{{ metrics.totalPayables | indianCurrency }}</div>
+            <div class="kpi-value">{{ metrics.totalPayables | indianCurrency:0 }}</div>
             <div class="kpi-sub">to vendors, as of {{ toDisplayDate }}</div>
           </div>
         </div>
@@ -205,7 +205,7 @@ export interface DashboardMetrics {
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Net Working Capital</div>
             <div class="kpi-value" [ngClass]="{'text-danger': metrics.netWorkingCapital < 0}">
-              {{ metrics.netWorkingCapital | indianCurrency }}
+              {{ metrics.netWorkingCapital | indianCurrency:0 }}
             </div>
             <div class="kpi-sub">Current Assets &minus; Current Liabilities</div>
           </div>
@@ -217,7 +217,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Inventory Value</div>
-            <div class="kpi-value">{{ (metrics.inventoryValue || 0) | indianCurrency }}</div>
+            <div class="kpi-value">{{ (metrics.inventoryValue || 0) | indianCurrency:0 }}</div>
             <div class="kpi-sub">goods, at cost, all locations, as of {{ toDisplayDate }}</div>
           </div>
         </div>
@@ -343,20 +343,20 @@ export interface DashboardMetrics {
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Revenue</div>
-                  <div class="kpi-value">{{ (metrics.totalSales || 0) | indianCurrency }}</div>
+                  <div class="kpi-value">{{ (metrics.totalSales || 0) | indianCurrency:0 }}</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Net Profit</div>
-                  <div class="kpi-value" [ngClass]="metrics.netProfit >= 0 ? 'text-success' : 'text-danger'">{{ metrics.netProfit | indianCurrency }}</div>
+                  <div class="kpi-value" [ngClass]="metrics.netProfit >= 0 ? 'text-success' : 'text-danger'">{{ metrics.netProfit | indianCurrency:0 }}</div>
                   <div class="kpi-sub">60% margin</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Cash &amp; Bank</div>
-                  <div class="kpi-value" [ngClass]="{'text-danger': metrics.cashBankBalance < 0}">{{ metrics.cashBankBalance | indianCurrency }}</div>
+                  <div class="kpi-value" [ngClass]="{'text-danger': metrics.cashBankBalance < 0}">{{ metrics.cashBankBalance | indianCurrency:0 }}</div>
                 </div>
               </div>
               <div class="col-md-3">
@@ -398,7 +398,7 @@ export interface DashboardMetrics {
             <div class="kpi-sub">Avg. time to collect from customers</div>
             <div class="kpi-formula text-muted small mt-2">
               = (Receivables &divide; Sales) &times; Days<br>
-              = ({{ metrics.totalReceivables | indianCurrency }} &divide; {{ (activeTenantId === '2' ? 0 : metrics.totalSales) | indianCurrency }}) &times; {{ activityDays }}
+              = ({{ metrics.totalReceivables | indianCurrency:0 }} &divide; {{ (activeTenantId === '2' ? 0 : metrics.totalSales) | indianCurrency:0 }}) &times; {{ activityDays }}
             </div>
           </div>
         </div>
@@ -410,7 +410,7 @@ export interface DashboardMetrics {
             <div class="kpi-sub">Avg. time taken to pay vendors</div>
             <div class="kpi-formula text-muted small mt-2">
               = (Payables &divide; Purchases) &times; Days<br>
-              = ({{ metrics.totalPayables | indianCurrency }} &divide; {{ metrics.totalPurchases | indianCurrency }}) &times; {{ activityDays }}
+              = ({{ metrics.totalPayables | indianCurrency:0 }} &divide; {{ metrics.totalPurchases | indianCurrency:0 }}) &times; {{ activityDays }}
             </div>
           </div>
         </div>
@@ -422,7 +422,7 @@ export interface DashboardMetrics {
             <div class="kpi-sub">Avg. time stock sits before sale</div>
             <div class="kpi-formula text-muted small mt-2">
               = (Inventory Value &divide; COGS) &times; Days<br>
-              = ({{ metrics.inventoryValue | indianCurrency }} &divide; {{ (metrics.cogsInPeriod || 0) | indianCurrency }}) &times; {{ activityDays }}<br>
+              = ({{ metrics.inventoryValue | indianCurrency:0 }} &divide; {{ (metrics.cogsInPeriod || 0) | indianCurrency:0 }}) &times; {{ activityDays }}<br>
               COGS = FIFO cost of goods sold in period
             </div>
           </div>
@@ -553,7 +553,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Goods Revenue</div>
-            <div class="kpi-value">{{ (metrics.goodsRevenue || 0) | indianCurrency }}</div>
+            <div class="kpi-value">{{ (metrics.goodsRevenue || 0) | indianCurrency:0 }}</div>
           </div>
         </div>
         <div class="col-md-3">
@@ -581,7 +581,7 @@ export interface DashboardMetrics {
                   <td>{{ item.name }} <span class="text-muted small">({{ item.sku }})</span></td>
                   <td>{{ item.category || '&mdash;' }}</td>
                   <td class="text-end">{{ item.qtySold }}</td>
-                  <td class="text-end">{{ item.revenue | indianCurrency }}</td>
+                  <td class="text-end">{{ item.revenue | indianCurrency:0 }}</td>
                 </tr>
               </tbody>
             </table>
@@ -664,30 +664,30 @@ export interface DashboardMetrics {
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Headcount (as of {{ toDisplayDate }})</div>
             <div class="kpi-value">{{ metrics.headcountNow || 0 }}</div>
-            <div class="kpi-sub">Avg for period: {{ metrics.avgHeadcountPeriod || metrics.headcountNow || 0 }}</div>
+            <div class="kpi-sub">Avg for period: {{ metrics.avgHeadcountPeriod !== null && metrics.avgHeadcountPeriod !== undefined ? metrics.avgHeadcountPeriod : (metrics.headcountNow || 0) }}</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Attrition Rate</div>
-            <div class="kpi-value">{{ metrics.attritionRate !== null && metrics.attritionRate !== undefined ? metrics.attritionRate + '%' : '&mdash;' }}</div>
-            <div class="kpi-sub">{{ metrics.exitsInPeriod || 0 }} exits this period &middot; formula: Exits &divide; Avg Headcount &times; 100</div>
+            <div class="kpi-value">{{ metrics.attritionRate !== null && metrics.attritionRate !== undefined ? (metrics.attritionRate + '%') : '&mdash;' }}</div>
+            <div class="kpi-sub">{{ metrics.exitsInPeriod || 0 }} exit{{ (metrics.exitsInPeriod || 0) === 1 ? '' : 's' }} this period &middot; formula: Exits &divide; Avg Headcount &times; 100</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Periodical Payroll Cost</div>
-            <div class="kpi-value">{{ (metrics.periodicalPayrollCost || 0) | indianCurrency }}</div>
-            <div class="kpi-sub">{{ metrics.payrollRunCount || (activeTenantId === '2' ? 0 : 29) }} posted run(s) in period</div>
+            <div class="kpi-value">{{ (metrics.periodicalPayrollCost || 0) | indianCurrency:0 }}</div>
+            <div class="kpi-sub">{{ metrics.payrollRunCount || (activeTenantId === '2' ? 0 : 29) }} posted run{{ (metrics.payrollRunCount || (activeTenantId === '2' ? 0 : 29)) === 1 ? '' : 's' }} in period</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Avg Payroll Cost / Employee</div>
-            <div class="kpi-value">{{ metrics.avgPayrollCost ? (metrics.avgPayrollCost | indianCurrency) : '&mdash;' }}</div>
+            <div class="kpi-value">{{ metrics.avgPayrollCost ? (metrics.avgPayrollCost | indianCurrency:0) : '&mdash;' }}</div>
             <div class="kpi-sub">formula: Payroll Cost &divide; Avg Headcount</div>
           </div>
         </div>
