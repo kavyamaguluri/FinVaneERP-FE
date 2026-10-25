@@ -1,3 +1,8 @@
+
+import { BudgetListComponent } from './features/components/apps/budgets/budget-list.component';
+import { BudgetPlanComponent } from './features/components/apps/budgets/budget-plan.component';
+import { PayrollRunsComponent } from './features/components/apps/payroll/payroll-runs.component';
+import { PayrollReportComponent } from './features/components/apps/payroll/payroll-report.component';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -60,6 +65,10 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
 
 @NgModule({
   declarations: [
+    BudgetListComponent,
+    BudgetPlanComponent,
+    PayrollRunsComponent,
+    PayrollReportComponent,
     AppComponent,
     AppLayoutComponent,
     AppTopbarComponent,

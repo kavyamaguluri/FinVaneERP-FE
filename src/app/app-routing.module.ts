@@ -1,3 +1,8 @@
+
+import { BudgetListComponent } from './features/components/apps/budgets/budget-list.component';
+import { BudgetPlanComponent } from './features/components/apps/budgets/budget-plan.component';
+import { PayrollRunsComponent } from './features/components/apps/payroll/payroll-runs.component';
+import { PayrollReportComponent } from './features/components/apps/payroll/payroll-report.component';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
@@ -69,8 +74,8 @@ const routes: Routes = [
 
       // Operations: Production & Payroll
       { path: 'production', component: ModulePlaceholderComponent, data: { title: 'Production Orders', section: 'Operations', icon: 'bi bi-clipboard-check', description: 'Track manufacturing production orders and outputs' } },
-      { path: 'payroll/runs', component: ModulePlaceholderComponent, data: { title: 'Payroll Runs', section: 'Operations', icon: 'bi bi-cash-coin', description: 'Process monthly payroll runs, salaries, and disbursements' } },
-      { path: 'payroll/report', component: ModulePlaceholderComponent, data: { title: 'Payroll Report', section: 'Operations', icon: 'bi bi-file-earmark-text', description: 'View salary registers and deduction summaries' } },
+      { path: 'payroll/runs', component: PayrollRunsComponent },
+      { path: 'payroll/report', component: PayrollReportComponent },
 
       // Reports matching Express
       { path: 'reports/trial-balance', component: TrialBalanceComponent },
@@ -86,8 +91,8 @@ const routes: Routes = [
       { path: 'reports/epf', component: ModulePlaceholderComponent, data: { title: 'EPF / PF Report', section: 'Statutory', icon: 'bi bi-shield-check', description: 'Employee Provident Fund contribution report and ECR data' } },
 
       // Budget matching Express
-      { path: 'budgets/plan', component: ModulePlaceholderComponent, data: { title: 'Plan Budget', section: 'Budget', icon: 'bi bi-pencil-square', description: 'Prepare annual and monthly expense and revenue budgets' } },
-      { path: 'budgets', component: ModulePlaceholderComponent, data: { title: 'Budget vs Actual', section: 'Budget', icon: 'bi bi-bar-chart-steps', description: 'Analyze variances between budgeted targets and posted actuals' } },
+      { path: 'budgets/plan', component: BudgetPlanComponent },
+      { path: 'budgets', component: BudgetListComponent },
 
       // Corporate Finance matching Express
       { path: 'financial-model', component: FinancialModelComponent },
