@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthenticationService, UserSession } from '../features/service/authentication.service';
+import { AccountsService } from '../features/service/accounts/accounts.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -34,7 +35,8 @@ import { environment } from '../../environments/environment';
               <li><a class="dropdown-item" routerLink="/accounts/coa-mapping" (click)="closeAllMenus()"><i class="bi bi-diagram-3 me-2"></i>COA Mapping (Schedule III)</a></li>
               <li><a class="dropdown-item" routerLink="/accounts/sector-mapping" (click)="closeAllMenus()"><i class="bi bi-signpost-split me-2"></i>Sector Mapping</a></li>
               <li><a class="dropdown-item" routerLink="/parties" (click)="closeAllMenus()"><i class="bi bi-people me-2"></i>Customers &amp; Vendors</a></li>
-              <li><a class="dropdown-item" routerLink="/inventory" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Items &amp; Stock</a></li>
+              <li *ngIf="inventoryEnabled"><a class="dropdown-item" routerLink="/inventory" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Items &amp; Stock</a></li>
+              <li *ngIf="!inventoryEnabled"><a class="dropdown-item" routerLink="/inventory" (click)="closeAllMenus()"><i class="bi bi-wrench-adjustable me-2"></i>Services</a></li>
               <li><a class="dropdown-item" routerLink="/payroll/employees" (click)="closeAllMenus()"><i class="bi bi-person-badge me-2"></i>Employees</a></li>
             </ul>
           </li>
@@ -76,7 +78,7 @@ import { environment } from '../../environments/environment';
               </li>
 
               <!-- Inventory Submenu matching Express -->
-              <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'inventory'">
+              <li *ngIf="inventoryEnabled" class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'inventory'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('inventory', $event)">
                   <span><i class="bi bi-box-seam me-2"></i>Inventory</span>
                   <i class="bi bi-chevron-right"></i>
@@ -101,7 +103,7 @@ import { environment } from '../../environments/environment';
                 </ul>
               </li>
 
-              <li><a class="dropdown-item" routerLink="/inventory/direct-stock" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Direct Stock</a></li>
+              <li *ngIf="inventoryEnabled"><a class="dropdown-item" routerLink="/inventory/direct-stock" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Direct Stock</a></li>
 
               <!-- Payroll Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'payroll'">
@@ -202,12 +204,14 @@ export class AppTopbarComponent implements OnInit {
   openDropdown: string | null = null;
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
+  inventoryEnabled: boolean = true;
 
   constructor(
     private authService: AuthenticationService,
     private http: HttpClient,
     private router: Router,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private accountsService: AccountsService
   ) {}
 
   ngOnInit() {
@@ -220,6 +224,7 @@ export class AppTopbarComponent implements OnInit {
       this.loadActiveEntityFromDb();
     });
     this.loadActiveEntityFromDb();
+    this.accountsService.inventoryEnabled$.subscribe(enabled => { this.inventoryEnabled = enabled; });
   }
 
   updateUserDisplay() {
