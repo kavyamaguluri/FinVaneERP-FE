@@ -439,7 +439,7 @@ export class EntitiesComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthenticationService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.currentTenantId = localStorage.getItem('finvane_active_tenant_id') || '1';
