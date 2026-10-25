@@ -90,7 +90,7 @@ import { environment } from '../../environments/environment';
               </li>
 
               <!-- Production Submenu matching Express -->
-              <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'production'">
+              <li *ngIf="manufacturingEnabled" class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'production'">
                 <a class="dropdown-item dropdown-submenu-toggle" href="javascript:void(0)" (click)="toggleSubmenu('production', $event)">
                   <span><i class="bi bi-gear-wide-connected me-2"></i>Production</span>
                   <i class="bi bi-chevron-right"></i>
@@ -103,7 +103,7 @@ import { environment } from '../../environments/environment';
                 </ul>
               </li>
 
-              <li *ngIf="inventoryEnabled"><a class="dropdown-item" routerLink="/inventory/direct-stock" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Direct Stock</a></li>
+              <li><a class="dropdown-item" routerLink="/inventory/direct-stock" (click)="closeAllMenus()"><i class="bi bi-box-seam me-2"></i>Direct Stock</a></li>
 
               <!-- Payroll Submenu matching Express -->
               <li class="dropdown-submenu" [class.show-submenu]="openSubmenu === 'payroll'">
@@ -205,6 +205,7 @@ export class AppTopbarComponent implements OnInit {
   openSubmenu: string | null = null;
   mobileNavOpen: boolean = false;
   inventoryEnabled: boolean = true;
+  manufacturingEnabled: boolean = false;
 
   constructor(
     private authService: AuthenticationService,
