@@ -1,4 +1,14 @@
 
+import { QuotationsComponent } from './features/components/apps/operations/quotations/quotations.component';
+import { OrdersComponent } from './features/components/apps/operations/orders/orders.component';
+import { DirectStockComponent } from './features/components/apps/masters/inventory/direct-stock.component';
+import { ProductionComponent } from './features/components/apps/operations/production/production.component';
+import { FinancialsSchedule3Component } from './features/components/apps/statutory/financials-schedule3.component';
+import { Gstr1Component } from './features/components/apps/statutory/gstr1.component';
+import { Gstr2ReconciliationComponent } from './features/components/apps/statutory/gstr2-reconciliation.component';
+import { Gstr3bComponent } from './features/components/apps/statutory/gstr3b.component';
+import { EpfReportComponent } from './features/components/apps/statutory/epf-report.component';
+
 import { BudgetFormComponent } from './features/components/apps/budgets/budget-form.component';
 import { EmployeeFormComponent } from './features/components/apps/payroll/employee-form.component';
 import { PayrollRunFormComponent } from './features/components/apps/payroll/payroll-run-form.component';
@@ -60,8 +70,8 @@ const routes: Routes = [
 
       // Operations: Sales / Purchase matching Express
       { path: 'invoices', component: InvoicesComponent },
-      { path: 'quotations', component: ModulePlaceholderComponent, data: { title: 'Sales Quotations', section: 'Operations', icon: 'bi bi-file-earmark-text', description: 'Manage sales quotations and estimates' } },
-      { path: 'orders', component: ModulePlaceholderComponent, data: { title: 'Orders', section: 'Operations', icon: 'bi bi-cart-check', description: 'Manage Sales and Purchase Orders' } },
+      { path: 'quotations', component: QuotationsComponent },
+      { path: 'orders', component: OrdersComponent },
       { path: 'notes', component: NotesComponent },
 
       // Operations: Vouchers matching Express
@@ -70,14 +80,14 @@ const routes: Routes = [
 
       // Operations: Inventory & Locations matching Express
       { path: 'transfers', component: StockTransfersComponent },
-      { path: 'inventory/direct-stock', component: ModulePlaceholderComponent, data: { title: 'Direct Stock', section: 'Operations', icon: 'bi bi-box-seam', description: 'Direct stock entry and physical stock audit reconciliation' } },
+      { path: 'inventory/direct-stock', component: DirectStockComponent },
 
       // Operations: Banking & Assets matching Express
       { path: 'banking', component: BankingComponent },
       { path: 'assets/dashboard', component: FixedAssetsComponent },
 
       // Operations: Production & Payroll
-      { path: 'production', component: ModulePlaceholderComponent, data: { title: 'Production Orders', section: 'Operations', icon: 'bi bi-clipboard-check', description: 'Track manufacturing production orders and outputs' } },
+      { path: 'production', component: ProductionComponent },
       { path: 'payroll/runs', component: PayrollRunsComponent },
       { path: 'payroll/report', component: PayrollReportComponent },
 
@@ -88,11 +98,11 @@ const routes: Routes = [
       { path: 'reports/cash-flow', component: CashFlowComponent },
 
       // Statutory matching Express
-      { path: 'reports/financials', component: ModulePlaceholderComponent, data: { title: 'Financials (Schedule III)', section: 'Statutory', icon: 'bi bi-table', description: 'Full Schedule III balance sheet, P&L, notes, and cash flow' } },
-      { path: 'reports/gstr1', component: ModulePlaceholderComponent, data: { title: 'GSTR-1', section: 'Statutory', icon: 'bi bi-file-earmark-text', description: 'Outward supplies, B2B, B2CL, B2CS, and export summaries' } },
-      { path: 'compliance/gstr2-reconciliation', component: ModulePlaceholderComponent, data: { title: 'GSTR-2A/2B Reconciliation', section: 'Statutory', icon: 'bi bi-arrow-repeat', description: 'Reconcile purchase invoices with GST portal 2B data' } },
-      { path: 'reports/gstr3b', component: ModulePlaceholderComponent, data: { title: 'GSTR-3B', section: 'Statutory', icon: 'bi bi-file-earmark-check', description: 'Monthly summary return of outward supplies and input tax credit' } },
-      { path: 'reports/epf', component: ModulePlaceholderComponent, data: { title: 'EPF / PF Report', section: 'Statutory', icon: 'bi bi-shield-check', description: 'Employee Provident Fund contribution report and ECR data' } },
+      { path: 'reports/financials', component: FinancialsSchedule3Component },
+      { path: 'reports/gstr1', component: Gstr1Component },
+      { path: 'compliance/gstr2-reconciliation', component: Gstr2ReconciliationComponent },
+      { path: 'reports/gstr3b', component: Gstr3bComponent },
+      { path: 'reports/epf', component: EpfReportComponent },
 
       // Budget matching Express
       { path: 'budgets/plan', component: BudgetPlanComponent },

@@ -1,4 +1,14 @@
 
+import { QuotationsComponent } from './features/components/apps/operations/quotations/quotations.component';
+import { OrdersComponent } from './features/components/apps/operations/orders/orders.component';
+import { DirectStockComponent } from './features/components/apps/masters/inventory/direct-stock.component';
+import { ProductionComponent } from './features/components/apps/operations/production/production.component';
+import { FinancialsSchedule3Component } from './features/components/apps/statutory/financials-schedule3.component';
+import { Gstr1Component } from './features/components/apps/statutory/gstr1.component';
+import { Gstr2ReconciliationComponent } from './features/components/apps/statutory/gstr2-reconciliation.component';
+import { Gstr3bComponent } from './features/components/apps/statutory/gstr3b.component';
+import { EpfReportComponent } from './features/components/apps/statutory/epf-report.component';
+
 import { BudgetFormComponent } from './features/components/apps/budgets/budget-form.component';
 import { EmployeeFormComponent } from './features/components/apps/payroll/employee-form.component';
 import { PayrollRunFormComponent } from './features/components/apps/payroll/payroll-run-form.component';
@@ -69,6 +79,15 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
 
 @NgModule({
   declarations: [
+    QuotationsComponent,
+    OrdersComponent,
+    DirectStockComponent,
+    ProductionComponent,
+    FinancialsSchedule3Component,
+    Gstr1Component,
+    Gstr2ReconciliationComponent,
+    Gstr3bComponent,
+    EpfReportComponent,
     BudgetFormComponent,
     EmployeeFormComponent,
     PayrollRunFormComponent,
