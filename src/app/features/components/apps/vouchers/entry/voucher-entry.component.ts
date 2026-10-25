@@ -1,257 +1,231 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { VouchersService } from '../../../../service/accounts/vouchers.service';
-import { AccountsService } from '../../../../service/accounts/accounts.service';
-import { AccountLedger } from '../../../../api/accounts/account-ledger.model';
-import { VoucherRequest } from '../../../../api/accounts/voucher.model';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../../environments/environment';
+
+export interface VoucherLineRow {
+  accountId: string;
+  debit: number | null;
+  credit: number | null;
+}
 
 @Component({
   selector: 'app-voucher-entry',
   template: `
-    <!-- Page Header matching Express voucher view -->
-    <div class="page-header">
-      <div>
-        <h3 class="mb-0">New {{ voucherTypeTitle }}</h3>
-        <div class="subtitle">Post double-entry balanced transaction to the general ledger</div>
-      </div>
-      <div class="io-toolbar">
-        <a routerLink="/vouchers" class="btn btn-sm btn-outline-secondary">
-          &larr; Day Book (All Vouchers)
-        </a>
-      </div>
+    <div class="mb-3">
+      <a routerLink="/vouchers" class="btn btn-outline-secondary btn-sm">
+        &larr; Back
+      </a>
     </div>
 
-    <div class="card p-4">
-      <!-- Voucher Header Fields -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-3">
-          <label class="form-label">Voucher Type *</label>
-          <select [(ngModel)]="voucher.voucherType" (change)="onTypeChange()" class="form-select form-select-sm">
-            <option value="JOURNAL">Journal (JV)</option>
-            <option value="PAYMENT">Payment (PV)</option>
-            <option value="RECEIPT">Receipt (RV)</option>
-            <option value="CONTRA">Contra (CV)</option>
-          </select>
-        </div>
+    <h4 class="fw-bold mb-3">{{ pageTitle }}</h4>
 
-        <div class="col-md-3">
-          <label class="form-label">Voucher Date *</label>
-          <input type="date" [(ngModel)]="voucher.voucherDate" class="form-control form-control-sm" />
-        </div>
+    <div *ngIf="errorMessage" class="alert alert-danger py-2 mb-3">
+      {{ errorMessage }}
+    </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Reference / Cheque / Invoice No.</label>
-          <input type="text" [(ngModel)]="voucher.referenceNo" placeholder="Optional reference" class="form-control form-control-sm" />
-        </div>
-      </div>
-
-      <!-- Line Items Table -->
-      <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-semibold small text-muted text-uppercase">Accounting Line Entries (Dr / Cr)</span>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLine()">
-            <i class="bi bi-plus-lg me-1"></i>Add Line
-          </button>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle mb-0">
-            <thead>
-              <tr>
-                <th style="width: 35%">Account Ledger *</th>
-                <th style="width: 15%">Type *</th>
-                <th style="width: 20%" class="text-end">Amount (₹) *</th>
-                <th style="width: 25%">Line Narration</th>
-                <th style="width: 5%" class="text-center"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of voucher.items; let i = index">
-                <td>
-                  <select [(ngModel)]="item.ledgerId" class="form-select form-select-sm">
-                    <option *ngFor="let l of ledgers" [value]="l.id">{{ l.code }} - {{ l.name }}</option>
-                  </select>
-                </td>
-                <td>
-                  <select [(ngModel)]="item.entryType" (change)="recalculateTotals()" class="form-select form-select-sm fw-bold">
-                    <option value="DEBIT">Dr (Debit)</option>
-                    <option value="CREDIT">Cr (Credit)</option>
-                  </select>
-                </td>
-                <td>
-                  <input type="number"
-                         [(ngModel)]="item.amount"
-                         (input)="recalculateTotals()"
-                         class="form-control form-control-sm text-end font-monospace"
-                         placeholder="0.00" />
-                </td>
-                <td>
-                  <input type="text" [(ngModel)]="item.lineNarration" class="form-control form-control-sm" placeholder="Particulars" />
-                </td>
-                <td class="text-center">
-                  <button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeLine(i)" [disabled]="voucher.items.length <= 2">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- General Narration -->
-      <div class="mb-4">
-        <label class="form-label">General Narration</label>
-        <textarea rows="2" [(ngModel)]="voucher.narration" class="form-control form-control-sm" placeholder="Narration for this transaction"></textarea>
-      </div>
-
-      <!-- Totals & Balance Verification Footer -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center p-3 rounded mb-3" style="background: var(--bg); border: 1px solid var(--ink-100);">
-        <div class="d-flex gap-4">
-          <div>
-            <span class="small text-muted d-block">Total Debit:</span>
-            <span class="font-monospace fw-bold fs-5 text-dark">{{ totalDebit | indianCurrency }}</span>
+    <div class="card p-4 border bg-white shadow-sm">
+      <form (ngSubmit)="onSubmit()">
+        <div class="row mb-3 g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Date</label>
+            <input type="date" [(ngModel)]="voucherDate" name="voucherDate" class="form-control" required />
           </div>
-          <div>
-            <span class="small text-muted d-block">Total Credit:</span>
-            <span class="font-monospace fw-bold fs-5 text-dark">{{ totalCredit | indianCurrency }}</span>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Voucher Type</label>
+            <select [(ngModel)]="voucherType" name="voucherType" (change)="onTypeChange()" class="form-select">
+              <option value="receipt">Receipt</option>
+              <option value="payment">Payment</option>
+              <option value="contra">Contra</option>
+              <option value="journal">Journal</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Narration</label>
+            <input type="text" [(ngModel)]="narration" name="narration" class="form-control" placeholder="Optional notes about this voucher" />
           </div>
         </div>
 
-        <div class="d-flex align-items-center gap-3">
-          <span *ngIf="totalDebit === 0 && totalCredit === 0" class="badge bg-secondary text-white px-3 py-2">
-            Enter amounts
-          </span>
+        <table class="table mb-0" id="lines-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 55%;">ACCOUNT</th>
+              <th style="width: 20%;">DEBIT</th>
+              <th style="width: 20%;">CREDIT</th>
+              <th style="width: 5%;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ln of lines; let i = index">
+              <td>
+                <select [(ngModel)]="ln.accountId" [name]="'acc_' + i" class="form-select">
+                  <option value="">-- select --</option>
+                  <option *ngFor="let acc of accounts" [value]="acc.id">
+                    {{ acc.code }} - {{ acc.name }}
+                  </option>
+                </select>
+              </td>
+              <td>
+                <input type="number" step="0.01" [(ngModel)]="ln.debit" [name]="'dr_' + i" class="form-control" placeholder="0.00" (input)="onDebitChange(ln)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" [(ngModel)]="ln.credit" [name]="'cr_' + i" class="form-control" placeholder="0.00" (input)="onCreditChange(ln)" />
+              </td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="removeRow(i)" title="Remove this row">&times;</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <span *ngIf="totalDebit > 0 && isBalanced" class="badge badge-status-posted px-3 py-2">
-            <i class="bi bi-check-circle me-1"></i>Balanced
-          </span>
-
-          <span *ngIf="(totalDebit > 0 || totalCredit > 0) && !isBalanced" class="badge badge-status-rejected px-3 py-2">
-            <i class="bi bi-exclamation-triangle me-1"></i>Difference: {{ difference | indianCurrency }}
-          </span>
-
-          <button type="button"
-                  class="btn btn-primary"
-                  [disabled]="!isBalanced || submitting"
-                  (click)="submitVoucher()">
-            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
-            Post Voucher
-          </button>
+        <div class="mt-3 mb-3">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addRow()">+ Add row</button>
         </div>
-      </div>
+
+        <p class="text-muted small mb-4">
+          Add debit and credit lines that balance exactly (total debit = total credit). Leave unused rows blank. New vouchers require approval by a different user before they post to the ledger.
+        </p>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting" style="background-color: #00796b; border-color: #00796b;">
+            {{ submitting ? 'Submitting...' : 'Submit for approval' }}
+          </button>
+          <a routerLink="/vouchers" class="btn btn-link text-decoration-none">Cancel</a>
+        </div>
+      </form>
     </div>
   `
 })
 export class VoucherEntryComponent implements OnInit {
-  ledgers: AccountLedger[] = [];
+  voucherType: string = 'receipt';
+  pageTitle: string = 'New Receipt';
+  voucherDate: string = new Date().toISOString().slice(0, 10);
+  narration: string = '';
+
+  lines: VoucherLineRow[] = [
+    { accountId: '', debit: null, credit: null },
+    { accountId: '', debit: null, credit: null },
+    { accountId: '', debit: null, credit: null }
+  ];
+
+  accounts: any[] = [];
+  errorMessage: string = '';
   submitting: boolean = false;
 
-  totalDebit: number = 0;
-  totalCredit: number = 0;
-  isBalanced: boolean = false;
-  difference: number = 0;
-
-  voucher: VoucherRequest = {
-    voucherType: 'PAYMENT',
-    voucherDate: new Date().toISOString().substring(0, 10),
-    narration: '',
-    referenceNo: '',
-    items: []
-  };
-
-  constructor(
-    private vouchersService: VouchersService,
-    private accountsService: AccountsService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
+  constructor(private route: ActivatedRoute, private router: Router, private http: HttpClient) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const type = (params['type'] || '').toUpperCase();
-      if (type === 'RECEIPT') this.voucher.voucherType = 'RECEIPT';
-      else if (type === 'CONTRA') this.voucher.voucherType = 'CONTRA';
-      else if (type === 'JOURNAL') this.voucher.voucherType = 'JOURNAL';
-      else if (type === 'PAYMENT') this.voucher.voucherType = 'PAYMENT';
-    });
-
-    this.accountsService.getAllActiveLedgers().subscribe({
-      next: (res) => {
-        this.ledgers = res.data || [];
-        if (this.ledgers.length >= 2) {
-          this.voucher.items = [
-            { ledgerId: this.ledgers[0].id!, entryType: 'DEBIT', amount: 0, lineNarration: '' },
-            { ledgerId: this.ledgers[1].id!, entryType: 'CREDIT', amount: 0, lineNarration: '' }
-          ];
-        }
+      const t = (params['type'] || 'receipt').toLowerCase();
+      if (['receipt', 'payment', 'contra', 'journal'].includes(t)) {
+        this.voucherType = t;
       }
+      this.updateTitle();
     });
+    this.loadAccounts();
   }
 
-  get voucherTypeTitle(): string {
-    switch (this.voucher.voucherType) {
-      case 'RECEIPT': return 'Receipt Voucher';
-      case 'PAYMENT': return 'Payment Voucher';
-      case 'CONTRA': return 'Contra Voucher';
-      default: return 'Journal Voucher';
+  updateTitle() {
+    switch (this.voucherType) {
+      case 'receipt': this.pageTitle = 'New Receipt'; break;
+      case 'payment': this.pageTitle = 'New Payment'; break;
+      case 'contra': this.pageTitle = 'New Contra'; break;
+      case 'journal': this.pageTitle = 'New Journal'; break;
+      default: this.pageTitle = 'New Voucher';
     }
   }
 
   onTypeChange() {
-    this.recalculateTotals();
+    this.updateTitle();
   }
 
-  addLine() {
-    const defaultLedgerId = this.ledgers.length > 0 ? this.ledgers[0].id! : 1;
-    this.voucher.items.push({
-      ledgerId: defaultLedgerId,
-      entryType: 'DEBIT',
-      amount: 0,
-      lineNarration: ''
+  loadAccounts() {
+    this.http.get<any>(`${environment.apiBaseUrl}/accounts?page=0&size=200`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.content) {
+          this.accounts = res.data.content.map((a: any) => ({
+            id: a.id,
+            code: a.code,
+            name: a.name
+          }));
+        }
+      },
+      error: () => {}
     });
-    this.recalculateTotals();
   }
 
-  removeLine(index: number) {
-    if (this.voucher.items.length > 2) {
-      this.voucher.items.splice(index, 1);
-      this.recalculateTotals();
+  onDebitChange(ln: VoucherLineRow) {
+    if (ln.debit != null && ln.debit > 0) {
+      ln.credit = null;
     }
   }
 
-  recalculateTotals() {
-    this.totalDebit = 0;
-    this.totalCredit = 0;
-
-    for (const item of this.voucher.items) {
-      const amt = parseFloat(item.amount as any) || 0;
-      if (item.entryType === 'DEBIT') {
-        this.totalDebit += amt;
-      } else {
-        this.totalCredit += amt;
-      }
+  onCreditChange(ln: VoucherLineRow) {
+    if (ln.credit != null && ln.credit > 0) {
+      ln.debit = null;
     }
-
-    this.difference = Math.abs(this.totalDebit - this.totalCredit);
-    this.isBalanced = this.totalDebit > 0 && this.difference < 0.001;
   }
 
-  submitVoucher() {
-    if (!this.isBalanced) {
-      alert('Cannot post unbalanced voucher: Total Debit must equal Total Credit');
+  addRow() {
+    this.lines.push({ accountId: '', debit: null, credit: null });
+  }
+
+  removeRow(idx: number) {
+    if (this.lines.length > 1) {
+      this.lines.splice(idx, 1);
+    } else {
+      this.lines[0] = { accountId: '', debit: null, credit: null };
+    }
+  }
+
+  onSubmit() {
+    this.errorMessage = '';
+    const activeLines = this.lines.filter(l => l.accountId && ((l.debit || 0) > 0 || (l.credit || 0) > 0));
+
+    if (activeLines.length < 2) {
+      this.errorMessage = 'Please enter at least two accounting lines (Debit and Credit).';
+      return;
+    }
+
+    let totalDr = 0;
+    let totalCr = 0;
+    activeLines.forEach(l => {
+      totalDr += Number(l.debit || 0);
+      totalCr += Number(l.credit || 0);
+    });
+
+    if (Math.abs(totalDr - totalCr) > 0.01 || totalDr === 0) {
+      this.errorMessage = `Voucher is not balanced. Total Debit ₹${totalDr.toFixed(2)} must equal Total Credit ₹${totalCr.toFixed(2)}.`;
       return;
     }
 
     this.submitting = true;
-    this.vouchersService.createVoucher(this.voucher).subscribe({
-      next: (res) => {
-        alert('Voucher posted successfully: ' + (res.data?.voucherNumber || 'Success'));
+    const items = activeLines.map(l => {
+      const isDr = (l.debit || 0) > 0;
+      return {
+        ledgerId: Number(l.accountId),
+        entryType: isDr ? 'DEBIT' : 'CREDIT',
+        amount: isDr ? l.debit : l.credit,
+        lineNarration: this.narration
+      };
+    });
+
+    this.http.post<any>(`${environment.apiBaseUrl}/vouchers`, {
+      voucherType: this.voucherType.toUpperCase(),
+      voucherDate: this.voucherDate,
+      narration: this.narration,
+      totalAmount: totalDr,
+      items
+    }).subscribe({
+      next: () => {
+        this.submitting = false;
         this.router.navigate(['/vouchers']);
       },
       error: (err) => {
         this.submitting = false;
-        alert(err.message || 'Error posting voucher');
+        this.errorMessage = err?.error?.message || 'Failed to submit voucher.';
       }
     });
   }

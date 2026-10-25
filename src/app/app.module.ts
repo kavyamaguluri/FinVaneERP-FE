@@ -1,4 +1,11 @@
 
+import { PurchaseBillsComponent } from './features/components/apps/operations/invoices/purchase-bills.component';
+import { PurchaseBillFormComponent } from './features/components/apps/operations/invoices/purchase-bill-form.component';
+import { PurchaseBillRcmPaymentComponent } from './features/components/apps/operations/invoices/purchase-bill-rcm.component';
+import { InvoiceFormComponent } from './features/components/apps/operations/invoices/invoice-form.component';
+import { OrderFormComponent } from './features/components/apps/operations/orders/order-form.component';
+import { NoteFormComponent } from './features/components/apps/operations/notes/note-form.component';
+
 import { QuotationsComponent } from './features/components/apps/operations/quotations/quotations.component';
 import { OrdersComponent } from './features/components/apps/operations/orders/orders.component';
 import { DirectStockComponent } from './features/components/apps/masters/inventory/direct-stock.component';
@@ -79,6 +86,12 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
 
 @NgModule({
   declarations: [
+    PurchaseBillsComponent,
+    PurchaseBillFormComponent,
+    PurchaseBillRcmPaymentComponent,
+    InvoiceFormComponent,
+    OrderFormComponent,
+    NoteFormComponent,
     QuotationsComponent,
     OrdersComponent,
     DirectStockComponent,

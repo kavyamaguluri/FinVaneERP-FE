@@ -1,4 +1,11 @@
 
+import { PurchaseBillsComponent } from './features/components/apps/operations/invoices/purchase-bills.component';
+import { PurchaseBillFormComponent } from './features/components/apps/operations/invoices/purchase-bill-form.component';
+import { PurchaseBillRcmPaymentComponent } from './features/components/apps/operations/invoices/purchase-bill-rcm.component';
+import { InvoiceFormComponent } from './features/components/apps/operations/invoices/invoice-form.component';
+import { OrderFormComponent } from './features/components/apps/operations/orders/order-form.component';
+import { NoteFormComponent } from './features/components/apps/operations/notes/note-form.component';
+
 import { QuotationsComponent } from './features/components/apps/operations/quotations/quotations.component';
 import { OrdersComponent } from './features/components/apps/operations/orders/orders.component';
 import { DirectStockComponent } from './features/components/apps/masters/inventory/direct-stock.component';
@@ -70,9 +77,15 @@ const routes: Routes = [
 
       // Operations: Sales / Purchase matching Express
       { path: 'invoices', component: InvoicesComponent },
+      { path: 'invoices/new', component: InvoiceFormComponent },
+      { path: 'purchase-bills', component: PurchaseBillsComponent },
+      { path: 'purchase-bills/new', component: PurchaseBillFormComponent },
+      { path: 'purchase-bills/rcm-payment', component: PurchaseBillRcmPaymentComponent },
       { path: 'quotations', component: QuotationsComponent },
       { path: 'orders', component: OrdersComponent },
+      { path: 'orders/new', component: OrderFormComponent },
       { path: 'notes', component: NotesComponent },
+      { path: 'notes/new', component: NoteFormComponent },
 
       // Operations: Vouchers matching Express
       { path: 'vouchers', component: DayBookComponent },

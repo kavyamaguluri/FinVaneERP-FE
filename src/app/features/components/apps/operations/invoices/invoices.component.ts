@@ -27,8 +27,8 @@ export interface InvoiceRow {
       <div class="io-toolbar d-flex align-items-center gap-2 flex-wrap">
         <button type="button" class="btn btn-sm btn-outline-secondary" [class.active]="invoiceType === 'sales'" (click)="setType('sales')">Sales</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" [class.active]="invoiceType === 'purchase'" (click)="setType('purchase')">Purchase</button>
-        <button *ngIf="invoiceType === 'purchase'" type="button" class="btn btn-sm btn-success">Upload Purchase Bills (Excel)</button>
-        <button *ngIf="invoiceType === 'purchase'" type="button" class="btn btn-sm btn-primary">+ New Purchase Bill (RCM / ITC)</button>
+        <a *ngIf="invoiceType === 'purchase'" routerLink="/purchase-bills" class="btn btn-sm btn-success">Upload Purchase Bills (Excel)</a>
+        <a *ngIf="invoiceType === 'purchase'" routerLink="/purchase-bills/new" class="btn btn-sm btn-primary">+ New Purchase Bill (RCM / ITC)</a>
         <button type="button" class="btn btn-sm btn-outline-secondary" (click)="downloadTemplate()">Download Template</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" (click)="exportExcel()">Export Excel</button>
         <div class="d-flex align-items-center gap-2 mb-0">

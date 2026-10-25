@@ -38,7 +38,7 @@ export interface OrderRow {
         >
           Purchase Orders
         </button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="showNewModal = true">+ New {{ orderType === 'sales' ? 'Sales Order' : 'PO' }}</button>
+        <a [routerLink]="['/orders/new']" [queryParams]="{type: orderType}" class="btn btn-primary btn-sm" style="background-color: #00796b; border-color: #00796b;">+ New {{ orderType === 'sales' ? 'Sales Order' : 'PO' }}</a>
       </div>
     </div>
 
