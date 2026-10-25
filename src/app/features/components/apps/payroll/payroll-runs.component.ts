@@ -15,7 +15,7 @@ export interface PayrollRunRow {
         <h3 class="mb-0 fw-bold">Payroll Runs</h3>
       </div>
       <div>
-        <button type="button" class="btn btn-primary btn-sm">+ Run Payroll</button>
+        <a routerLink="/payroll/runs/new" class="btn btn-primary btn-sm">+ Run Payroll</a>
       </div>
     </div>
 

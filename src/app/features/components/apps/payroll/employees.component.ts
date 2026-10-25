@@ -23,7 +23,7 @@ export interface EmployeeRow {
         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="toggleExited()">
           {{ showExited ? 'Show Active Only' : 'Show Exited' }}
         </button>
-        <button type="button" class="btn btn-primary btn-sm">+ New Employee</button>
+        <a routerLink="/payroll/employees/new" class="btn btn-primary btn-sm">+ New Employee</a>
       </div>
     </div>
 
@@ -62,7 +62,7 @@ export interface EmployeeRow {
               <td>{{ e.dateOfJoining || '—' }}</td>
               <td *ngIf="showExited">{{ e.dateOfExit || '—' }}</td>
               <td class="text-nowrap text-end">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-1">Edit</button>
+                <a [routerLink]="['/payroll/employees', e.id, 'edit']" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
                 <button *ngIf="e.isActive" type="button" class="btn btn-sm btn-outline-danger me-1">Mark Exited</button>
                 <span *ngIf="!e.isActive" class="badge bg-secondary-subtle text-secondary-emphasis me-1">Exited</span>
                 <button type="button" class="btn btn-sm btn-outline-danger">Delete</button>

@@ -1,20 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-
-export interface BudgetRow {
-  id: number;
-  code: string;
-  name: string;
-  type: string;
-  amount: number;
-  actual: number;
-  variance: number;
-  variancePct: number | null;
-  notes: string;
-}
+import { ActivatedRoute, Router } from '@angular/router';
+import { BudgetEntry, BudgetService } from '../../../service/budget.service';
 
 @Component({
   selector: 'app-budget-list',
   template: `
+    <!-- Back Button matching Express -->
+    <div class="mb-3">
+      <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm">
+        &larr; Back
+      </a>
+    </div>
+
+    <!-- Page Header matching Express views/budgets/list.ejs -->
     <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-3">
       <div>
         <h3 class="mb-0 fw-bold">Budget vs Actual</h3>
@@ -22,7 +20,9 @@ export interface BudgetRow {
       </div>
       <div class="io-toolbar d-flex gap-2">
         <a routerLink="/budgets/plan" class="btn btn-outline-primary btn-sm">Plan Budget (by month)</a>
-        <button type="button" class="btn btn-primary btn-sm">+ New Budget Entry</button>
+        <a [routerLink]="['/budgets/new']" [queryParams]="{ from: fromDate, to: toDate }" class="btn btn-primary btn-sm">
+          + New Budget Entry
+        </a>
       </div>
     </div>
 
@@ -56,7 +56,7 @@ export interface BudgetRow {
       </div>
     </div>
 
-    <!-- Chart if rows exist -->
+    <!-- Chart if rows exist matching Express budgetVsActualChart -->
     <div class="row g-3 mb-3" *ngIf="rows.length > 0">
       <div class="col-12">
         <div class="card p-3 shadow-sm border-0 bg-white">
@@ -81,7 +81,7 @@ export interface BudgetRow {
               <th class="text-end">Variance</th>
               <th class="text-end">Variance %</th>
               <th>Notes</th>
-              <th></th>
+              <th class="text-end"></th>
             </tr>
           </thead>
           <tbody>
@@ -96,8 +96,8 @@ export interface BudgetRow {
               <td class="text-end">{{ r.variancePct !== null ? (r.variancePct | number:'1.1-1') + '%' : '—' }}</td>
               <td class="small text-muted">{{ r.notes || '—' }}</td>
               <td class="text-nowrap text-end">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-1">Edit</button>
-                <button type="button" class="btn btn-sm btn-outline-danger">Delete</button>
+                <a [routerLink]="['/budgets', r.id, 'edit']" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="onDelete(r.id, r.code, r.name)">Delete</button>
               </td>
             </tr>
             <tr *ngIf="rows.length === 0">
@@ -128,23 +128,48 @@ export class BudgetListComponent implements OnInit {
   toDate = '2026-10-24';
   activeTenantId = '1';
 
-  rows: BudgetRow[] = [];
+  rows: BudgetEntry[] = [];
   chartData: any;
-  chartOptions: any;
+  chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f1f5f9' } }
+    }
+  };
 
   totalBudget = 0;
   totalActual = 0;
 
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private budgetService: BudgetService
+  ) {}
+
   ngOnInit() {
     this.activeTenantId = localStorage.getItem('finvane_active_tenant_id') || '1';
-    if (this.activeTenantId === '2') {
-      this.fromDate = '2026-09-07';
-      this.toDate = '2026-10-24';
-    } else {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2026-10-22';
+    this.route.queryParams.subscribe(qp => {
+      if (qp['from']) this.fromDate = qp['from'];
+      if (qp['to']) this.toDate = qp['to'];
+      if (qp['granularity']) this.granularity = qp['granularity'];
+      this.loadBudgets();
+    });
+
+    if (!this.route.snapshot.queryParams['from']) {
+      if (this.activeTenantId === '2') {
+        this.fromDate = '2026-09-07';
+        this.toDate = '2026-10-24';
+      } else {
+        this.fromDate = '2026-04-01';
+        this.toDate = '2026-10-22';
+      }
+      this.loadBudgets();
     }
-    this.loadBudgets();
   }
 
   onGranularityChange() {
@@ -158,11 +183,17 @@ export class BudgetListComponent implements OnInit {
       this.fromDate = '2026-04-01';
       this.toDate = '2027-03-31';
     }
-    this.loadBudgets();
+    this.applyFilter();
   }
 
   applyFilter() {
-    this.loadBudgets();
+    this.router.navigate(['/budgets'], {
+      queryParams: {
+        from: this.fromDate,
+        to: this.toDate,
+        granularity: this.granularity
+      }
+    });
   }
 
   resetToToday() {
@@ -174,13 +205,39 @@ export class BudgetListComponent implements OnInit {
       this.fromDate = '2026-04-01';
       this.toDate = '2026-10-22';
     }
-    this.loadBudgets();
+    this.applyFilter();
   }
 
   loadBudgets() {
-    // Both 1.db and 2.db have 0 budget entries initially matching Express
-    this.rows = [];
-    this.totalBudget = 0;
-    this.totalActual = 0;
+    this.rows = this.budgetService.getBudgetsForPeriod(this.activeTenantId, this.fromDate, this.toDate);
+    this.totalBudget = this.rows.reduce((acc, r) => acc + r.amount, 0);
+    this.totalActual = this.rows.reduce((acc, r) => acc + r.actual, 0);
+
+    if (this.rows.length > 0) {
+      this.chartData = {
+        labels: this.rows.map(r => `${r.code} - ${r.name}`),
+        datasets: [
+          {
+            label: 'Budget',
+            data: this.rows.map(r => r.amount),
+            backgroundColor: '#94a3b8',
+            borderRadius: 6
+          },
+          {
+            label: 'Actual',
+            data: this.rows.map(r => r.actual),
+            backgroundColor: '#0d9488',
+            borderRadius: 6
+          }
+        ]
+      };
+    }
+  }
+
+  onDelete(id: number, code: string, name: string) {
+    if (confirm(`Delete the budget entry for ${code} — ${name}? This cannot be undone.`)) {
+      this.budgetService.deleteBudget(id);
+      this.loadBudgets();
+    }
   }
 }

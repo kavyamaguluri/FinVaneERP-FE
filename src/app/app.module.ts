@@ -1,4 +1,8 @@
 
+import { BudgetFormComponent } from './features/components/apps/budgets/budget-form.component';
+import { EmployeeFormComponent } from './features/components/apps/payroll/employee-form.component';
+import { PayrollRunFormComponent } from './features/components/apps/payroll/payroll-run-form.component';
+
 import { BudgetListComponent } from './features/components/apps/budgets/budget-list.component';
 import { BudgetPlanComponent } from './features/components/apps/budgets/budget-plan.component';
 import { PayrollRunsComponent } from './features/components/apps/payroll/payroll-runs.component';
@@ -65,6 +69,9 @@ import { HttpInterceptorService } from './features/service/http.interceptor.serv
 
 @NgModule({
   declarations: [
+    BudgetFormComponent,
+    EmployeeFormComponent,
+    PayrollRunFormComponent,
     BudgetListComponent,
     BudgetPlanComponent,
     PayrollRunsComponent,

@@ -1,4 +1,8 @@
 
+import { BudgetFormComponent } from './features/components/apps/budgets/budget-form.component';
+import { EmployeeFormComponent } from './features/components/apps/payroll/employee-form.component';
+import { PayrollRunFormComponent } from './features/components/apps/payroll/payroll-run-form.component';
+
 import { BudgetListComponent } from './features/components/apps/budgets/budget-list.component';
 import { BudgetPlanComponent } from './features/components/apps/budgets/budget-plan.component';
 import { PayrollRunsComponent } from './features/components/apps/payroll/payroll-runs.component';
@@ -93,6 +97,11 @@ const routes: Routes = [
       // Budget matching Express
       { path: 'budgets/plan', component: BudgetPlanComponent },
       { path: 'budgets', component: BudgetListComponent },
+      { path: 'budgets/new', component: BudgetFormComponent },
+      { path: 'budgets/:id/edit', component: BudgetFormComponent },
+      { path: 'payroll/employees/new', component: EmployeeFormComponent },
+      { path: 'payroll/employees/:id/edit', component: EmployeeFormComponent },
+      { path: 'payroll/runs/new', component: PayrollRunFormComponent },
 
       // Corporate Finance matching Express
       { path: 'financial-model', component: FinancialModelComponent },
