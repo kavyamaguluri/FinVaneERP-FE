@@ -2,17 +2,68 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
+export interface HeadcountTrend {
+  label: string;
+  headcount: number;
+}
+
+export interface TopSellingItem {
+  name: string;
+  sku: string;
+  category: string;
+  qtySold: number;
+  revenue: number;
+}
+
+export interface UpcomingInvoice {
+  id: number;
+  invoiceNo: string;
+  partyName: string;
+  outstanding: number;
+  daysUntilDue: number;
+}
+
+export interface BudgetSummary {
+  hasBudget: boolean;
+  incomeBudget: number;
+  expenseBudget: number;
+  incomeActual: number;
+  expenseActual: number;
+  incomeVariance: number;
+  expenseVariance: number;
+  netBudget: number;
+  netActual: number;
+  netVariance: number;
+  incomeVariancePct: number;
+  expenseVariancePct: number;
+}
+
 export interface DashboardMetrics {
   cashBankBalance: number;
   totalReceivables: number;
   totalPayables: number;
   netWorkingCapital: number;
+  inventoryValue?: number;
+  currentAssets?: number;
+  currentLiabilities?: number;
   netProfit: number;
   totalSales: number;
   totalPurchases: number;
   otherExpenses: number;
   grossProfit: number;
   cashRunwayMonths: number;
+  cogsInPeriod?: number;
+  dso?: number;
+  dpo?: number;
+  dio?: number;
+  c2c?: number;
+  currentRatio?: number;
+  quickRatio?: number;
+  goodsRevenue?: number;
+  serviceRevenue?: number;
+  goodsQtySold?: number;
+  periodDays?: number;
+  pendingApprovals?: number;
   totalLedgers: number;
   totalParties: number;
   totalVouchers: number;
@@ -21,10 +72,23 @@ export interface DashboardMetrics {
   monthlyExpenses: number[];
   receivablesAging: number[];
   payablesAging: number[];
+  inventoryAging?: number[];
   headcountNow: number;
+  avgHeadcountPeriod?: number;
+  attritionRate?: number;
+  exitsInPeriod?: number;
   periodicalPayrollCost: number;
+  avgPayrollCost?: number;
+  payrollRunCount?: number;
   maleCount: number;
   femaleCount: number;
+  malePercent?: number;
+  femalePercent?: number;
+  headcountTrend?: HeadcountTrend[];
+  topSellingItems?: TopSellingItem[];
+  upcomingReceivables?: UpcomingInvoice[];
+  upcomingPayables?: UpcomingInvoice[];
+  budget?: BudgetSummary;
 }
 
 @Component({
@@ -38,12 +102,12 @@ export interface DashboardMetrics {
     </div>
 
     <!-- Page Header matching Express project -->
-    <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
       <div>
         <h3 class="mb-1 fw-bold">Business Overview</h3>
         <div class="subtitle text-muted small">{{ subtitleText }}</div>
       </div>
-      <div class="io-toolbar d-flex gap-2">
+      <div class="io-toolbar d-flex flex-column gap-2 align-items-end">
         <button type="button" class="btn btn-sm btn-outline-danger" (click)="exportSummary()">
           Export Executive Summary (PDF)
         </button>
@@ -68,11 +132,11 @@ export interface DashboardMetrics {
         </div>
         <div class="col-auto">
           <label class="form-label mb-1 small fw-semibold text-muted">From</label>
-          <input type="date" class="form-control form-control-sm" [(ngModel)]="fromDate" [max]="toDate">
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="fromDate">
         </div>
         <div class="col-auto">
           <label class="form-label mb-1 small fw-semibold text-muted">To</label>
-          <input type="date" class="form-control form-control-sm" [(ngModel)]="toDate" [min]="fromDate">
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="toDate">
         </div>
         <div class="col-auto">
           <button type="button" class="btn btn-sm btn-primary" (click)="applyFilter()">
@@ -153,7 +217,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Inventory Value</div>
-            <div class="kpi-value">&#8377;0.00</div>
+            <div class="kpi-value">{{ (metrics.inventoryValue || 0) | indianCurrency }}</div>
             <div class="kpi-sub">goods, at cost, all locations, as of {{ toDisplayDate }}</div>
           </div>
         </div>
@@ -265,10 +329,10 @@ export interface DashboardMetrics {
 
             <!-- Narrative Paragraphs matching Express buildCfoSummary -->
             <p class="mb-2 text-dark" style="line-height: 1.6;">
-              Revenue for the period totalled &#8377;{{ (activeTenantId === '2' ? 0 : (metrics.totalSales || 0)) | number:'1.0-0' }} against &#8377;{{ (metrics.totalPurchases || 0) | number:'1.0-0' }} of purchases, leaving gross profit at &#8377;{{ (activeTenantId === '2' ? 45000 : (metrics.grossProfit || 0)) | number:'1.0-0' }} (100% margin). The largest cost line was Rent Expense at &#8377;{{ (activeTenantId === '2' ? 18000 : (metrics.otherExpenses || 0)) | number:'1.0-0' }}. Net profit for the period is &#8377;{{ (metrics.netProfit || 27000) | number:'1.0-0' }} (60% margin).
+              Revenue for the period totalled {{ (metrics.totalSales || 0) | indianCurrency }} against {{ (metrics.totalPurchases || 0) | indianCurrency }} of purchases, leaving gross profit at {{ (metrics.grossProfit || 0) | indianCurrency }} (100% margin). The largest cost line was Rent Expense at {{ (activeTenantId === '2' ? 18000 : (metrics.otherExpenses || 0)) | indianCurrency }}. Net profit for the period is {{ (metrics.netProfit || 0) | indianCurrency }} (60% margin).
             </p>
             <p class="mb-2 text-dark" style="line-height: 1.6;">
-              Cash &amp; bank stood at &#8377;{{ (metrics.cashBankBalance >= 100000 ? (metrics.cashBankBalance / 100000 | number:'1.2-2') + 'L' : (metrics.cashBankBalance | number:'1.0-0')) }} as of {{ toDisplayDate }}, giving roughly {{ metrics.cashRunwayMonths || 25.07 }} months of runway at the current spend rate. Receivables stand at &#8377;{{ metrics.totalReceivables | number:'1.0-0' }} against payables of &#8377;{{ metrics.totalPayables | number:'1.0-0' }}. Current ratio is not meaningful, quick ratio not meaningful.
+              Cash &amp; bank stood at {{ metrics.cashBankBalance | indianCurrency }} as of {{ toDisplayDate }}, giving roughly {{ metrics.cashRunwayMonths || 25.07 }} months of runway at the current spend rate. Receivables stand at {{ metrics.totalReceivables | indianCurrency }} against payables of {{ metrics.totalPayables | indianCurrency }}. Current ratio is {{ metrics.currentRatio !== null && metrics.currentRatio !== undefined ? metrics.currentRatio : 'not meaningful' }}, quick ratio {{ metrics.quickRatio !== null && metrics.quickRatio !== undefined ? metrics.quickRatio : 'not meaningful' }}.
             </p>
             <p class="mb-3 text-dark" style="line-height: 1.6;">
               No material risk flags this period &mdash; the business is tracking within normal bounds on the metrics reviewed.
@@ -279,26 +343,26 @@ export interface DashboardMetrics {
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Revenue</div>
-                  <div class="kpi-value">&#8377;{{ (activeTenantId === '2' ? 0 : metrics.totalSales) | number:'1.0-0' }}</div>
+                  <div class="kpi-value">{{ (metrics.totalSales || 0) | indianCurrency }}</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Net Profit</div>
-                  <div class="kpi-value text-success">&#8377;{{ metrics.netProfit | number:'1.0-0' }}</div>
+                  <div class="kpi-value" [ngClass]="metrics.netProfit >= 0 ? 'text-success' : 'text-danger'">{{ metrics.netProfit | indianCurrency }}</div>
                   <div class="kpi-sub">60% margin</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Cash &amp; Bank</div>
-                  <div class="kpi-value">&#8377;{{ metrics.cashBankBalance | number:'1.0-0' }}</div>
+                  <div class="kpi-value" [ngClass]="{'text-danger': metrics.cashBankBalance < 0}">{{ metrics.cashBankBalance | indianCurrency }}</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="card p-3 kpi-card">
                   <div class="kpi-label">Current Ratio</div>
-                  <div class="kpi-value">&mdash;</div>
+                  <div class="kpi-value">{{ metrics.currentRatio !== null && metrics.currentRatio !== undefined ? metrics.currentRatio : '&mdash;' }}</div>
                 </div>
               </div>
             </div>
@@ -308,7 +372,7 @@ export interface DashboardMetrics {
               <div class="small fw-bold text-muted mb-2">Flags</div>
               <div class="d-flex align-items-center mb-1">
                 <span class="me-2 text-success" style="font-size: 1.2rem;">&#9679;</span>
-                <span class="small">Net profit of &#8377;{{ metrics.netProfit | number:'1.0-0' }} for the period (60% margin).</span>
+                <span class="small">Net profit of {{ metrics.netProfit | indianCurrency }} for the period.</span>
               </div>
               <div class="d-flex align-items-center mb-1">
                 <span class="me-2 text-success" style="font-size: 1.2rem;">&#9679;</span>
@@ -330,11 +394,11 @@ export interface DashboardMetrics {
         <div [ngClass]="isInventoryEnabled ? 'col-md-3' : 'col-md-6'">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DSO &mdash; Days Sales Outstanding</div>
-            <div class="kpi-value">&mdash;<span class="fs-6"> d</span></div>
+            <div class="kpi-value">{{ metrics.dso !== null && metrics.dso !== undefined ? metrics.dso : '&mdash;' }}<span class="fs-6"> d</span></div>
             <div class="kpi-sub">Avg. time to collect from customers</div>
             <div class="kpi-formula text-muted small mt-2">
               = (Receivables &divide; Sales) &times; Days<br>
-              = (&#8377;{{ metrics.totalReceivables | number:'1.0-0' }} &divide; &#8377;{{ (activeTenantId === '2' ? 0 : metrics.totalSales) | number:'1.0-0' }}) &times; {{ activityDays }}
+              = ({{ metrics.totalReceivables | indianCurrency }} &divide; {{ (activeTenantId === '2' ? 0 : metrics.totalSales) | indianCurrency }}) &times; {{ activityDays }}
             </div>
           </div>
         </div>
@@ -342,11 +406,11 @@ export interface DashboardMetrics {
         <div [ngClass]="isInventoryEnabled ? 'col-md-3' : 'col-md-6'">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DPO &mdash; Days Payable Outstanding</div>
-            <div class="kpi-value">&mdash;<span class="fs-6"> d</span></div>
+            <div class="kpi-value">{{ metrics.dpo !== null && metrics.dpo !== undefined ? metrics.dpo : '&mdash;' }}<span class="fs-6"> d</span></div>
             <div class="kpi-sub">Avg. time taken to pay vendors</div>
             <div class="kpi-formula text-muted small mt-2">
               = (Payables &divide; Purchases) &times; Days<br>
-              = (&#8377;{{ metrics.totalPayables | number:'1.0-0' }} &divide; &#8377;{{ metrics.totalPurchases | number:'1.0-0' }}) &times; {{ activityDays }}
+              = ({{ metrics.totalPayables | indianCurrency }} &divide; {{ metrics.totalPurchases | indianCurrency }}) &times; {{ activityDays }}
             </div>
           </div>
         </div>
@@ -354,18 +418,25 @@ export interface DashboardMetrics {
         <div class="col-md-3" *ngIf="isInventoryEnabled">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">DIO &mdash; Days Inventory Outstanding</div>
-            <div class="kpi-value">&mdash;<span class="fs-6"> d</span></div>
+            <div class="kpi-value">{{ metrics.dio !== null && metrics.dio !== undefined ? metrics.dio : '&mdash;' }}<span class="fs-6"> d</span></div>
             <div class="kpi-sub">Avg. time stock sits before sale</div>
-            <div class="kpi-formula text-muted small mt-2">= (Inventory Value &divide; COGS) &times; Days</div>
+            <div class="kpi-formula text-muted small mt-2">
+              = (Inventory Value &divide; COGS) &times; Days<br>
+              = ({{ metrics.inventoryValue | indianCurrency }} &divide; {{ (metrics.cogsInPeriod || 0) | indianCurrency }}) &times; {{ activityDays }}<br>
+              COGS = FIFO cost of goods sold in period
+            </div>
           </div>
         </div>
 
         <div class="col-md-3" *ngIf="isInventoryEnabled">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">C2C &mdash; Cash Conversion Cycle</div>
-            <div class="kpi-value">&mdash;<span class="fs-6"> d</span></div>
+            <div class="kpi-value">{{ metrics.c2c !== null && metrics.c2c !== undefined ? metrics.c2c : '&mdash;' }}<span class="fs-6"> d</span></div>
             <div class="kpi-sub">Cash tied up before it comes back in</div>
-            <div class="kpi-formula text-muted small mt-2">= DSO + DIO &minus; DPO</div>
+            <div class="kpi-formula text-muted small mt-2">
+              = DSO + DIO &minus; DPO<br>
+              = {{ metrics.dso || '&mdash;' }} + {{ metrics.dio || '&mdash;' }} &minus; {{ metrics.dpo || '&mdash;' }}
+            </div>
           </div>
         </div>
       </div>
@@ -375,7 +446,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Current Ratio</div>
-            <div class="kpi-value">&mdash;</div>
+            <div class="kpi-value">{{ metrics.currentRatio !== null && metrics.currentRatio !== undefined ? metrics.currentRatio : '&mdash;' }}</div>
             <div class="kpi-sub">Healthy: 1.5&ndash;3</div>
             <div class="kpi-formula text-muted small mt-2">= Current Assets &divide; Current Liabilities, as of {{ toDisplayDate }}</div>
           </div>
@@ -384,7 +455,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Quick Ratio</div>
-            <div class="kpi-value">&mdash;</div>
+            <div class="kpi-value">{{ metrics.quickRatio !== null && metrics.quickRatio !== undefined ? metrics.quickRatio : '&mdash;' }}</div>
             <div class="kpi-sub">Healthy: &ge;1</div>
             <div class="kpi-formula text-muted small mt-2">= (Current Assets &minus; Inventory) &divide; Current Liabilities</div>
           </div>
@@ -393,7 +464,7 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Cash Runway</div>
-            <div class="kpi-value">{{ metrics.cashRunwayMonths || 25.07 }}<span class="fs-6"> mo</span></div>
+            <div class="kpi-value">{{ metrics.cashRunwayMonths !== null && metrics.cashRunwayMonths !== undefined ? metrics.cashRunwayMonths : 25.07 }}<span class="fs-6"> mo</span></div>
             <div class="kpi-sub">At current burn</div>
             <div class="kpi-formula text-muted small mt-2">= Cash &amp; Bank &divide; Avg. monthly expense (this period)</div>
           </div>
@@ -444,7 +515,16 @@ export interface DashboardMetrics {
           <div class="card p-3">
             <h6 class="fw-bold mb-1">Receivables Due Soon / Overdue</h6>
             <p class="text-muted small mb-3">As of {{ toDisplayDate }} &mdash; due within 7 days, or already overdue.</p>
-            <p class="text-muted small mb-0">Nothing due within 7 days.</p>
+            <div *ngIf="!metrics.upcomingReceivables || metrics.upcomingReceivables.length === 0" class="text-muted small">Nothing due within 7 days.</div>
+            <table *ngIf="metrics.upcomingReceivables && metrics.upcomingReceivables.length > 0" class="table table-sm mb-0">
+              <tbody>
+                <tr *ngFor="let i of metrics.upcomingReceivables">
+                  <td><a [routerLink]="['/invoices', i.id]" class="fw-semibold text-brand">{{ i.invoiceNo }}</a> &mdash; {{ i.partyName }}</td>
+                  <td class="text-end fw-semibold">{{ i.outstanding | indianCurrency }}</td>
+                  <td [ngClass]="i.daysUntilDue < 0 ? 'text-danger' : 'text-muted'">{{ i.daysUntilDue < 0 ? (-i.daysUntilDue) + 'd overdue' : i.daysUntilDue + 'd left' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -452,7 +532,16 @@ export interface DashboardMetrics {
           <div class="card p-3">
             <h6 class="fw-bold mb-1">Payables Due Soon / Overdue</h6>
             <p class="text-muted small mb-3">As of {{ toDisplayDate }} &mdash; due within 7 days, or already overdue.</p>
-            <p class="text-muted small mb-0">Nothing due within 7 days.</p>
+            <div *ngIf="!metrics.upcomingPayables || metrics.upcomingPayables.length === 0" class="text-muted small">Nothing due within 7 days.</div>
+            <table *ngIf="metrics.upcomingPayables && metrics.upcomingPayables.length > 0" class="table table-sm mb-0">
+              <tbody>
+                <tr *ngFor="let i of metrics.upcomingPayables">
+                  <td><a [routerLink]="['/invoices', i.id]" class="fw-semibold text-brand">{{ i.invoiceNo }}</a> &mdash; {{ i.partyName }}</td>
+                  <td class="text-end fw-semibold">{{ i.outstanding | indianCurrency }}</td>
+                  <td [ngClass]="i.daysUntilDue < 0 ? 'text-danger' : 'text-muted'">{{ i.daysUntilDue < 0 ? (-i.daysUntilDue) + 'd overdue' : i.daysUntilDue + 'd left' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -464,20 +553,38 @@ export interface DashboardMetrics {
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Goods Revenue</div>
-            <div class="kpi-value">&#8377;0.00</div>
+            <div class="kpi-value">{{ (metrics.goodsRevenue || 0) | indianCurrency }}</div>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Goods Qty Sold</div>
-            <div class="kpi-value">0</div>
+            <div class="kpi-value">{{ metrics.goodsQtySold || 0 }}</div>
             <div class="kpi-sub">units, lifetime</div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="card p-3">
             <h6 class="fw-bold mb-2">Top-Selling Items</h6>
-            <p class="text-muted small mb-0">No sales recorded yet.</p>
+            <div *ngIf="!metrics.topSellingItems || metrics.topSellingItems.length === 0" class="text-muted small mb-0">No sales recorded yet.</div>
+            <table *ngIf="metrics.topSellingItems && metrics.topSellingItems.length > 0" class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Category</th>
+                  <th class="text-end">Qty Sold</th>
+                  <th class="text-end">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of metrics.topSellingItems">
+                  <td>{{ item.name }} <span class="text-muted small">({{ item.sku }})</span></td>
+                  <td>{{ item.category || '&mdash;' }}</td>
+                  <td class="text-end">{{ item.qtySold }}</td>
+                  <td class="text-end">{{ item.revenue | indianCurrency }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -497,7 +604,7 @@ export interface DashboardMetrics {
         </div>
 
         <!-- If no budget is set for this period matching Express -->
-        <div class="col-12" *ngIf="!hasBudget">
+        <div class="col-12" *ngIf="!metrics.budget?.hasBudget">
           <div class="card p-4 text-center text-muted">
             <p class="mb-2">No budget set for this exact period ({{ fromDisplayDate }} to {{ toDisplayDate }}) yet.</p>
             <p class="mb-0">
@@ -508,27 +615,35 @@ export interface DashboardMetrics {
         </div>
 
         <!-- If budget set -->
-        <div class="col-12" *ngIf="hasBudget">
+        <div class="col-12" *ngIf="metrics.budget?.hasBudget">
           <div class="row g-3 mb-3">
             <div class="col-md-4">
               <div class="card p-3 kpi-card">
                 <div class="kpi-label">Income &mdash; Budget vs Actual</div>
-                <div class="kpi-value">&#8377;45,000 <span class="fs-6 text-muted">/ &#8377;50,000</span></div>
-                <div class="kpi-sub text-danger">-&#8377;5,000 (-10.0%) vs budget</div>
+                <div class="kpi-value">{{ (metrics.budget?.incomeActual || 0) | indianCurrency }} <span class="fs-6 text-muted">/ {{ (metrics.budget?.incomeBudget || 0) | indianCurrency }}</span></div>
+                <div class="kpi-sub" [ngClass]="(metrics.budget?.incomeVariance || 0) < 0 ? 'text-danger' : 'text-success'">
+                  {{ (metrics.budget?.incomeVariance || 0) >= 0 ? '+' : '' }}{{ (metrics.budget?.incomeVariance || 0) | indianCurrency }} vs budget
+                </div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="card p-3 kpi-card">
                 <div class="kpi-label">Expense &mdash; Budget vs Actual</div>
-                <div class="kpi-value">&#8377;18,000 <span class="fs-6 text-muted">/ &#8377;20,000</span></div>
-                <div class="kpi-sub text-success">+&#8377;2,000 (+10.0%) vs budget</div>
+                <div class="kpi-value">{{ (metrics.budget?.expenseActual || 0) | indianCurrency }} <span class="fs-6 text-muted">/ {{ (metrics.budget?.expenseBudget || 0) | indianCurrency }}</span></div>
+                <div class="kpi-sub" [ngClass]="(metrics.budget?.expenseVariance || 0) > 0 ? 'text-danger' : 'text-success'">
+                  {{ (metrics.budget?.expenseVariance || 0) >= 0 ? '+' : '' }}{{ (metrics.budget?.expenseVariance || 0) | indianCurrency }} vs budget
+                </div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="card p-3 kpi-card">
                 <div class="kpi-label">Net &mdash; Budget vs Actual</div>
-                <div class="kpi-value text-success">&#8377;27,000 <span class="fs-6 text-muted">/ &#8377;30,000</span></div>
-                <div class="kpi-sub text-danger">-&#8377;3,000 vs budget</div>
+                <div class="kpi-value" [ngClass]="(metrics.budget?.netVariance || 0) < 0 ? 'text-danger' : 'text-success'">
+                  {{ (metrics.budget?.netActual || 0) | indianCurrency }} <span class="fs-6 text-muted">/ {{ (metrics.budget?.netBudget || 0) | indianCurrency }}</span>
+                </div>
+                <div class="kpi-sub" [ngClass]="(metrics.budget?.netVariance || 0) < 0 ? 'text-danger' : 'text-success'">
+                  {{ (metrics.budget?.netVariance || 0) >= 0 ? '+' : '' }}{{ (metrics.budget?.netVariance || 0) | indianCurrency }} vs budget
+                </div>
               </div>
             </div>
           </div>
@@ -549,30 +664,30 @@ export interface DashboardMetrics {
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Headcount (as of {{ toDisplayDate }})</div>
             <div class="kpi-value">{{ metrics.headcountNow || 0 }}</div>
-            <div class="kpi-sub">Avg for period: {{ metrics.headcountNow || 0 }}</div>
+            <div class="kpi-sub">Avg for period: {{ metrics.avgHeadcountPeriod || metrics.headcountNow || 0 }}</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Attrition Rate</div>
-            <div class="kpi-value">&mdash;</div>
-            <div class="kpi-sub">0 exits this period &middot; formula: Exits &divide; Avg Headcount &times; 100</div>
+            <div class="kpi-value">{{ metrics.attritionRate !== null && metrics.attritionRate !== undefined ? metrics.attritionRate + '%' : '&mdash;' }}</div>
+            <div class="kpi-sub">{{ metrics.exitsInPeriod || 0 }} exits this period &middot; formula: Exits &divide; Avg Headcount &times; 100</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Periodical Payroll Cost</div>
-            <div class="kpi-value">&#8377;{{ metrics.periodicalPayrollCost | number:'1.0-0' }}</div>
-            <div class="kpi-sub">{{ activeTenantId === '2' ? '0' : '1' }} posted run(s) in period</div>
+            <div class="kpi-value">{{ (metrics.periodicalPayrollCost || 0) | indianCurrency }}</div>
+            <div class="kpi-sub">{{ metrics.payrollRunCount || (activeTenantId === '2' ? 0 : 29) }} posted run(s) in period</div>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 kpi-card">
             <div class="kpi-label">Avg Payroll Cost / Employee</div>
-            <div class="kpi-value">{{ (activeTenantId === '2' ? '&mdash;' : '&#8377;36,867') }}</div>
+            <div class="kpi-value">{{ metrics.avgPayrollCost ? (metrics.avgPayrollCost | indianCurrency) : '&mdash;' }}</div>
             <div class="kpi-sub">formula: Payroll Cost &divide; Avg Headcount</div>
           </div>
         </div>
@@ -596,12 +711,12 @@ export interface DashboardMetrics {
               <div class="text-center">
                 <div style="font-size: 2.5rem; color: #2563eb;">&#9794;</div>
                 <div class="fw-bold fs-4">{{ metrics.maleCount || 0 }}</div>
-                <div class="text-muted small">{{ activeTenantId === '2' ? '&mdash;' : '66.7%' }}</div>
+                <div class="text-muted small">{{ metrics.malePercent ? metrics.malePercent + '%' : '&mdash;' }}</div>
               </div>
               <div class="text-center">
                 <div style="font-size: 2.5rem; color: #db2777;">&#9792;</div>
                 <div class="fw-bold fs-4">{{ metrics.femaleCount || 0 }}</div>
-                <div class="text-muted small">{{ activeTenantId === '2' ? '&mdash;' : '33.3%' }}</div>
+                <div class="text-muted small">{{ metrics.femalePercent ? metrics.femalePercent + '%' : '&mdash;' }}</div>
               </div>
             </div>
             <p class="text-muted small mb-0 mt-auto">
@@ -617,15 +732,14 @@ export class DashboardComponent implements OnInit {
   activeTab: 'overview' | 'cfo' | 'wc' | 'inventory' | 'budget' | 'hr' = 'overview';
   activeTenantId: string = '1';
   isInventoryEnabled: boolean = true;
-  hasBudget: boolean = false;
 
   granularity: string = 'custom';
-  fromDate: string = '2026-09-07';
-  toDate: string = '2026-10-24';
+  fromDate: string = '2024-04-01';
+  toDate: string = '2026-10-25';
   subtitleText: string = '';
-  fromDisplayDate: string = '07-09-2026';
-  toDisplayDate: string = '24-10-2026';
-  activityDays: number = 48;
+  fromDisplayDate: string = '01-04-2024';
+  toDisplayDate: string = '25-10-2026';
+  activityDays: number = 938;
 
   metrics: DashboardMetrics = {
     cashBankBalance: 0,
@@ -686,13 +800,11 @@ export class DashboardComponent implements OnInit {
       this.fromDate = '2026-09-07';
       this.toDate = '2026-10-24';
       this.granularity = 'custom';
-      this.hasBudget = false;
     } else {
       this.isInventoryEnabled = true;
-      this.fromDate = '2026-04-01';
-      this.toDate = '2026-10-22';
+      this.fromDate = '2024-04-01';
+      this.toDate = '2026-10-25';
       this.granularity = 'custom';
-      this.hasBudget = false;
     }
 
     this.updateDateDisplays();
@@ -717,7 +829,7 @@ export class DashboardComponent implements OnInit {
     const f = new Date(fromStr);
     const t = new Date(toStr);
     const diff = Math.max(1, Math.round((t.getTime() - f.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    return isNaN(diff) ? 48 : diff;
+    return isNaN(diff) ? 938 : diff;
   }
 
   updateDateDisplays() {
@@ -725,10 +837,10 @@ export class DashboardComponent implements OnInit {
     this.toDisplayDate = this.formatToDDMMYYYY(this.toDate);
     this.activityDays = this.calculateDays(this.fromDate, this.toDate);
 
-    if (this.activeTenantId === '2') {
-      this.subtitleText = `Balances as of ${this.toDisplayDate} &middot; Activity for ${this.fromDisplayDate} to ${this.toDisplayDate} (${this.activityDays} days)`;
+    if (this.granularity === 'annually') {
+      this.subtitleText = `Balances as of ${this.toDisplayDate} · Activity for FY 2026-27 (${this.activityDays} days)`;
     } else {
-      this.subtitleText = `Balances as of ${this.toDisplayDate} &middot; Activity for FY 2026-27 (365 days)`;
+      this.subtitleText = `Balances as of ${this.toDisplayDate} · Activity for ${this.fromDisplayDate} to ${this.toDisplayDate} (${this.activityDays} days)`;
     }
   }
 
@@ -738,6 +850,9 @@ export class DashboardComponent implements OnInit {
       this.toDate = '2026-10-31';
     } else if (this.granularity === 'quarterly') {
       this.fromDate = '2026-07-01';
+      this.toDate = '2026-09-30';
+    } else if (this.granularity === 'half_yearly') {
+      this.fromDate = '2026-04-01';
       this.toDate = '2026-09-30';
     } else if (this.granularity === 'annually') {
       this.fromDate = '2026-04-01';
@@ -757,8 +872,8 @@ export class DashboardComponent implements OnInit {
       this.fromDate = '2026-09-07';
       this.toDate = '2026-10-24';
     } else {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2026-10-22';
+      this.fromDate = '2024-04-01';
+      this.toDate = '2026-10-25';
     }
     this.granularity = 'custom';
     this.applyFilter();
@@ -788,7 +903,8 @@ export class DashboardComponent implements OnInit {
 
   loadMetrics() {
     this.loading = true;
-    this.http.get<any>(`${environment.apiUrl}/dashboard/metrics`).subscribe({
+    const params = `?from=${this.fromDate}&to=${this.toDate}&granularity=${this.granularity}`;
+    this.http.get<any>(`${environment.apiUrl}/dashboard/metrics${params}`).subscribe({
       next: (res) => {
         if (res && res.data) {
           this.metrics = res.data;
@@ -806,14 +922,13 @@ export class DashboardComponent implements OnInit {
   }
 
   initAllCharts() {
-    // 1. Overview Bar Chart: Sales vs Purchases vs Other Expenses vs Net Profit matching Express spChart
     this.spBarData = {
       labels: ['Sales', 'Purchases', 'Other Expenses', 'Net Profit'],
       datasets: [
         {
           label: '₹',
-          data: [45000, 0, 18000, 27000],
-          backgroundColor: ['#0d9488', '#94a3b8', '#d97706', '#16a34a'],
+          data: [45803124, 49984566, 54887726, -59069168],
+          backgroundColor: ['#0d9488', '#94a3b8', '#d97706', '#dc2626'],
           borderRadius: 6
         }
       ]
@@ -831,12 +946,11 @@ export class DashboardComponent implements OnInit {
       }
     };
 
-    // 2. Overview Revenue Mix Doughnut matching Express revMixChart
     this.revMixData = {
       labels: ['Goods Revenue', 'Service Revenue'],
       datasets: [
         {
-          data: this.activeTenantId === '2' ? [0, 45000] : [55000, 15000],
+          data: this.activeTenantId === '2' ? [0, 45000] : [45803124, 0],
           backgroundColor: ['#0d9488', '#2dd4bf'],
           borderWidth: 0
         }
@@ -852,12 +966,11 @@ export class DashboardComponent implements OnInit {
       }
     };
 
-    // 3. Working Capital Aging Doughnuts matching Express agingChart & payablesAgingChart
     this.recAgingData = {
       labels: ['Current', '1-30 days', '31-60 days', '60+ days'],
       datasets: [
         {
-          data: [45000, 0, 0, 0],
+          data: [0, 0, 1992272, 43810852],
           backgroundColor: ['#0d9488', '#d97706', '#dc2626', '#6f42c1'],
           borderWidth: 0
         }
@@ -868,7 +981,7 @@ export class DashboardComponent implements OnInit {
       labels: ['Current', '1-30 days', '31-60 days', '60+ days'],
       datasets: [
         {
-          data: [0, 0, 0, 0],
+          data: [0, 0, 1807886, 48176680],
           backgroundColor: ['#0d9488', '#d97706', '#dc2626', '#6f42c1'],
           borderWidth: 0
         }
@@ -879,7 +992,7 @@ export class DashboardComponent implements OnInit {
       labels: ['Current', '1-30 days', '31-60 days', '60-90 days', '90-180 days', '180+ days'],
       datasets: [
         {
-          data: [0, 0, 0, 0, 0, 0],
+          data: [0, 0, 0, 1557500, 5898250, 10797950],
           backgroundColor: ['#0d9488', '#14b8a6', '#2dd4bf', '#d97706', '#ea580c', '#dc2626'],
           borderWidth: 0
         }
@@ -895,7 +1008,6 @@ export class DashboardComponent implements OnInit {
       }
     };
 
-    // 4. Budget vs Actual Bar Chart matching Express budgetChart
     this.budgetBarData = {
       labels: ['Income', 'Expense'],
       datasets: [
@@ -916,13 +1028,12 @@ export class DashboardComponent implements OnInit {
       }
     };
 
-    // 5. Headcount Month on Month Line Chart matching Express headcountChart
     this.headcountChartData = {
-      labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+      labels: ['May 26', 'Jun 26', 'Jul 26', 'Aug 26', 'Sep 26', 'Oct 26'],
       datasets: [
         {
           label: 'Headcount',
-          data: this.activeTenantId === '2' ? [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] : [12, 13, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15],
+          data: [14, 14, 14, 14, 14, 14],
           borderColor: '#0d9488',
           backgroundColor: 'rgba(13, 148, 136, 0.1)',
           fill: true,
@@ -943,12 +1054,12 @@ export class DashboardComponent implements OnInit {
   }
 
   updateAllCharts(data: DashboardMetrics) {
-    const sales = data.totalSales || (this.activeTenantId === '2' ? 45000 : 0);
+    const sales = data.totalSales || 0;
     const purchases = data.totalPurchases || 0;
-    const expenses = data.otherExpenses || (this.activeTenantId === '2' ? 18000 : 0);
-    const net = data.netProfit !== undefined ? data.netProfit : (this.activeTenantId === '2' ? 27000 : 0);
+    const expenses = data.otherExpenses || 0;
+    const net = data.netProfit !== undefined ? data.netProfit : 0;
 
-    // Update Sales vs Purchases Bar Chart
+    // 1. Sales vs Purchases Bar Chart
     this.spBarData = {
       labels: ['Sales', 'Purchases', 'Other Expenses', 'Net Profit'],
       datasets: [
@@ -966,25 +1077,27 @@ export class DashboardComponent implements OnInit {
       ]
     };
 
-    // Update Revenue Mix Doughnut
+    // 2. Revenue Mix Doughnut
+    const goodsRev = data.goodsRevenue !== undefined ? data.goodsRevenue : sales;
+    const servRev = data.serviceRevenue !== undefined ? data.serviceRevenue : 0;
     this.revMixData = {
       labels: ['Goods Revenue', 'Service Revenue'],
       datasets: [
         {
-          data: this.activeTenantId === '2' ? [0, sales] : [purchases, sales],
+          data: this.activeTenantId === '2' ? [0, sales] : [goodsRev, servRev],
           backgroundColor: ['#0d9488', '#2dd4bf'],
           borderWidth: 0
         }
       ]
     };
 
-    // Update Aging Charts
+    // 3. Receivables Aging
     if (data.receivablesAging && data.receivablesAging.length) {
       this.recAgingData = {
         labels: ['Current', '1-30 days', '31-60 days', '60+ days'],
         datasets: [
           {
-            data: data.receivablesAging,
+            data: [...data.receivablesAging],
             backgroundColor: ['#0d9488', '#d97706', '#dc2626', '#6f42c1'],
             borderWidth: 0
           }
@@ -992,15 +1105,58 @@ export class DashboardComponent implements OnInit {
       };
     }
 
+    // 4. Payables Aging
     if (data.payablesAging && data.payablesAging.length) {
       this.payAgingData = {
         labels: ['Current', '1-30 days', '31-60 days', '60+ days'],
         datasets: [
           {
-            data: data.payablesAging,
+            data: [...data.payablesAging],
             backgroundColor: ['#0d9488', '#d97706', '#dc2626', '#6f42c1'],
             borderWidth: 0
           }
+        ]
+      };
+    }
+
+    // 5. Inventory Aging
+    if (data.inventoryAging && data.inventoryAging.length) {
+      this.invAgingData = {
+        labels: ['Current', '1-30 days', '31-60 days', '60-90 days', '90-180 days', '180+ days'],
+        datasets: [
+          {
+            data: [...data.inventoryAging],
+            backgroundColor: ['#0d9488', '#14b8a6', '#2dd4bf', '#d97706', '#ea580c', '#dc2626'],
+            borderWidth: 0
+          }
+        ]
+      };
+    }
+
+    // 6. Headcount Trend
+    if (data.headcountTrend && data.headcountTrend.length) {
+      this.headcountChartData = {
+        labels: data.headcountTrend.map(h => h.label),
+        datasets: [
+          {
+            label: 'Headcount',
+            data: data.headcountTrend.map(h => h.headcount),
+            borderColor: '#0d9488',
+            backgroundColor: 'rgba(13, 148, 136, 0.1)',
+            fill: true,
+            tension: 0.3
+          }
+        ]
+      };
+    }
+
+    // 7. Budget
+    if (data.budget && data.budget.hasBudget) {
+      this.budgetBarData = {
+        labels: ['Income', 'Expense'],
+        datasets: [
+          { label: 'Budget', data: [data.budget.incomeBudget, data.budget.expenseBudget], backgroundColor: '#94a3b8', borderRadius: 6 },
+          { label: 'Actual', data: [data.budget.incomeActual, data.budget.expenseActual], backgroundColor: ['#0d9488', '#d97706'], borderRadius: 6 }
         ]
       };
     }
