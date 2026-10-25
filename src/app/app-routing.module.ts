@@ -97,6 +97,7 @@ const routes: Routes = [
 
       // Operations: Banking & Assets matching Express
       { path: 'banking', component: BankingComponent },
+      { path: 'assets', component: FixedAssetsComponent },
       { path: 'assets/dashboard', component: FixedAssetsComponent },
 
       // Operations: Production & Payroll
