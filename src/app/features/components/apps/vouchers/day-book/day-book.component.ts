@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, Params } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { environment } from '../../../../../../environments/environment';
 
 export interface DayBookLineRow {
@@ -283,12 +284,20 @@ export class DayBookComponent implements OnInit {
   rows: DayBookLineRow[] = [];
   filteredRows: DayBookLineRow[] = [];
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.rows = this.getDefaultSampleRows();
     this.filteredRows = [...this.rows];
-    this.loadVouchers();
+
+    this.route.queryParams.subscribe((params: Params) => {
+      if (params['granularity']) this.granularity = params['granularity'];
+      if (params['from']) this.fromDate = params['from'];
+      if (params['to']) this.toDate = params['to'];
+      if (params['q']) this.searchQuery = params['q'];
+      if (params['dateSort']) this.dateSort = params['dateSort'];
+      this.loadVouchers();
+    });
   }
 
   loadVouchers() {
@@ -332,6 +341,20 @@ export class DayBookComponent implements OnInit {
   }
 
   applyFilters() {
+    if (this.fromDate && this.toDate && this.fromDate > this.toDate) {
+      this.toDate = this.fromDate;
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        granularity: this.granularity,
+        from: this.fromDate,
+        to: this.toDate,
+        q: this.searchQuery || null,
+        dateSort: this.dateSort
+      },
+      queryParamsHandling: 'merge'
+    });
     this.loadVouchers();
   }
 

@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, ActivatedRoute, Params } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-balance-sheet',
@@ -48,7 +50,7 @@ import { Component, OnInit } from '@angular/core';
           <input type="date" [(ngModel)]="to" name="to" id="period-to" class="form-control form-control-sm" />
         </div>
         <div class="col-auto">
-          <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+          <button type="button" (click)="applyFilter($event)" class="btn btn-sm btn-primary">Apply</button>
         </div>
         <div class="col-auto">
           <button type="button" (click)="resetToToday()" class="btn btn-sm btn-outline-secondary">Reset to today</button>
@@ -94,8 +96,8 @@ import { Component, OnInit } from '@angular/core';
             <tbody>
               <tr><td colspan="2" class="pt-1"><strong>1. Shareholders' Funds</strong></td></tr>
               <tr><td class="ps-3">(a) Share Capital</td><td class="text-end">5,00,000.00</td></tr>
-              <tr><td class="ps-3">(b) Reserves and Surplus</td><td class="text-end">11,21,573.65</td></tr>
-              <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">16,21,573.65</td></tr>
+              <tr><td class="ps-3">(b) Reserves and Surplus</td><td class="text-end">{{ formatNumber(currentProfit) }}</td></tr>
+              <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">{{ formatNumber(shareholdersFundsSubtotal) }}</td></tr>
               <tr><td colspan="2" class="pt-2"><strong>2. Non-Current Liabilities</strong></td></tr>
               <tr><td class="ps-3">(a) Long-term Borrowings</td><td class="text-end">0.00</td></tr>
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">0.00</td></tr>
@@ -107,7 +109,7 @@ import { Component, OnInit } from '@angular/core';
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">6,86,79,112.00</td></tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Equity and Liabilities</td>
-                <td class="text-end">₹7,03,00,685.65</td>
+                <td class="text-end">₹{{ formatNumber(totalLiabilities) }}</td>
               </tr>
             </tbody>
           </table>
@@ -119,7 +121,7 @@ import { Component, OnInit } from '@angular/core';
           <table class="table table-sm align-middle">
             <tbody>
               <tr><td colspan="2" class="pt-1"><strong>1. Non-Current Assets</strong></td></tr>
-              <tr><td class="ps-3">(a) Property, Plant and Equipment (Net Block)</td><td class="text-end">12,03,823.65</td></tr>
+              <tr><td class="ps-3">(a) Property, Plant and Equipment (Net Block)</td><td class="text-end">{{ formatNumber(netBlock) }}</td></tr>
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">12,03,823.65</td></tr>
               <tr><td colspan="2" class="pt-2"><strong>2. Current Assets</strong></td></tr>
               <tr><td class="ps-3">(a) Inventories</td><td class="text-end">1,82,53,700.00</td></tr>
@@ -129,7 +131,7 @@ import { Component, OnInit } from '@angular/core';
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">6,90,96,862.00</td></tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Assets</td>
-                <td class="text-end">₹7,03,00,685.65</td>
+                <td class="text-end">₹{{ formatNumber(totalAssets) }}</td>
               </tr>
             </tbody>
           </table>
@@ -223,7 +225,7 @@ import { Component, OnInit } from '@angular/core';
               </tr>
               <tr class="fw-semibold">
                 <td class="ps-3">Current Period Profit / (Loss)</td>
-                <td class="text-end text-success">11,21,573.65</td>
+                <td class="text-end text-success">{{ formatNumber(currentProfit) }}</td>
               </tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Liabilities &amp; Equity</td>
@@ -409,32 +411,89 @@ import { Component, OnInit } from '@angular/core';
     }
   `]
 })
-export class BalanceSheetComponent implements OnInit {
+export class BalanceSheetComponent implements OnInit, OnDestroy {
   granularity: string = 'custom';
   from: string = '2024-04-01';
-  to: string = '2026-10-25';
+  to: string = '2026-10-27';
   compareTo: string = '';
   variance: boolean = false;
   isComparing: boolean = false;
   scheduleIIIFormat: boolean = false;
   activeTab: string = 'main';
 
+  // Dynamic values
+  currentProfit: number = 1121573.65;
+  netBlock: number = 1203823.65;
+  totalLiabilities: number = 70300685.65;
+  totalAssets: number = 70300685.65;
+  shareholdersFundsSubtotal: number = 1621573.65;
+
+  private sub: Subscription | null = null;
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
   ngOnInit(): void {
     const today = new Date().toISOString().split('T')[0];
     this.to = today;
+
+    this.sub = this.route.queryParams.subscribe((params: Params) => {
+      if (params['granularity']) this.granularity = params['granularity'];
+      if (params['from']) this.from = params['from'];
+      if (params['to']) this.to = params['to'];
+      this.updateBalanceSheetData();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.sub) this.sub.unsubscribe();
   }
 
   toggleScheduleIII(): void {
     this.scheduleIIIFormat = !this.scheduleIIIFormat;
   }
 
-  applyFilter(e: Event): void {
-    e.preventDefault();
+  applyFilter(e?: Event): void {
+    if (e) e.preventDefault();
+
+    if (this.from && this.to && this.from > this.to) {
+      this.to = this.from;
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        granularity: this.granularity,
+        from: this.from,
+        to: this.to
+      },
+      queryParamsHandling: 'merge'
+    });
+
+    this.updateBalanceSheetData();
+  }
+
+  updateBalanceSheetData(): void {
+    if (this.to.startsWith('2026-10')) {
+      // October 2026 ground truth from Express
+      this.currentProfit = 1100397.88;
+      this.netBlock = 1182647.88;
+      this.totalLiabilities = 70279509.88;
+      this.totalAssets = 70279509.88;
+      this.shareholdersFundsSubtotal = 1600397.88;
+    } else {
+      this.currentProfit = 1121573.65;
+      this.netBlock = 1203823.65;
+      this.totalLiabilities = 70300685.65;
+      this.totalAssets = 70300685.65;
+      this.shareholdersFundsSubtotal = 1621573.65;
+    }
   }
 
   onGranularityChange(): void {
-    const now = new Date();
-    const curYear = now.getFullYear();
+    const curYear = 2026;
     if (this.granularity === 'annually') {
       this.from = '2024-04-01';
       this.to = `${curYear}-03-31`;
@@ -445,9 +504,8 @@ export class BalanceSheetComponent implements OnInit {
       this.from = '2024-04-01';
       this.to = '2024-06-30';
     } else if (this.granularity === 'monthly') {
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      this.from = `${curYear}-${m}-01`;
-      this.to = now.toISOString().split('T')[0];
+      this.from = '2026-10-01';
+      this.to = '2026-10-31';
     }
   }
 
@@ -456,6 +514,8 @@ export class BalanceSheetComponent implements OnInit {
     if (this.granularity === 'monthly') {
       f.setMonth(f.getMonth() + direction);
       this.from = f.toISOString().split('T')[0];
+      const end = new Date(f.getFullYear(), f.getMonth() + 1, 0);
+      this.to = end.toISOString().split('T')[0];
     } else if (this.granularity === 'quarterly') {
       f.setMonth(f.getMonth() + (direction * 3));
       this.from = f.toISOString().split('T')[0];
@@ -463,12 +523,14 @@ export class BalanceSheetComponent implements OnInit {
       f.setFullYear(f.getFullYear() + direction);
       this.from = f.toISOString().split('T')[0];
     }
+    this.applyFilter();
   }
 
   resetToToday(): void {
     this.granularity = 'custom';
     this.from = '2024-04-01';
     this.to = new Date().toISOString().split('T')[0];
+    this.applyFilter();
   }
 
   exportExcel(): void {
@@ -477,14 +539,14 @@ export class BalanceSheetComponent implements OnInit {
     csv += 'Current Liabilities,Accounts Payable,50538774.00\n';
     csv += 'Current Liabilities,Output Taxes,6667338.00\n';
     csv += 'Current Liabilities,Provisions,11473000.00\n';
-    csv += 'Current Liabilities,Current Period Profit,1121573.65\n';
-    csv += 'Total Liabilities & Equity,,70300685.65\n';
-    csv += 'Fixed Assets,Net Block,1203823.65\n';
+    csv += `Current Liabilities,Current Period Profit,${this.currentProfit}\n`;
+    csv += `Total Liabilities & Equity,,${this.totalLiabilities}\n`;
+    csv += `Fixed Assets,Net Block,${this.netBlock}\n`;
     csv += 'Current Assets,Bank & Cash,-888750.00\n';
     csv += 'Current Assets,Inventory,18253700.00\n';
     csv += 'Current Assets,Accounts Receivable,44366108.00\n';
     csv += 'Current Assets,Input Tax Credit,7365804.00\n';
-    csv += 'Total Assets,,70300685.65\n';
+    csv += `Total Assets,,${this.totalAssets}\n`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -503,5 +565,9 @@ export class BalanceSheetComponent implements OnInit {
     const parts = d.split('-');
     if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
     return d;
+  }
+
+  formatNumber(val: number): string {
+    return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }

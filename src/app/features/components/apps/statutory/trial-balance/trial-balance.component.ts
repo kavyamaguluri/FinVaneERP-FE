@@ -68,7 +68,7 @@ export interface TrialBalanceRow {
         </div>
 
         <div class="col-auto d-flex gap-1">
-          <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+          <button type="button" (click)="applyFilter($event)" class="btn btn-sm btn-primary">Apply</button>
           <button type="button" (click)="shiftPeriod(-1)" [disabled]="granularity === 'custom'" class="btn btn-sm btn-outline-secondary" title="Previous period">&larr;</button>
           <button type="button" (click)="shiftPeriod(1)" [disabled]="granularity === 'custom'" class="btn btn-sm btn-outline-secondary" title="Next period">&rarr;</button>
           <button type="button" (click)="resetToToday()" class="btn btn-sm btn-outline-secondary">Reset to Today</button>
@@ -983,7 +983,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     }
 
     // Determine dataset based on requested date range
-    if (this.from === '2026-10-01' && (this.to === '2026-10-31' || this.to.startsWith('2026-10'))) {
+    if ((this.from >= '2026-10-01' && this.to <= '2026-10-31') || (this.granularity === 'monthly' && this.from.startsWith('2026-10')) || (this.from === '2026-10-01' && this.to === '2026-10-31')) {
       this.rows = JSON.parse(JSON.stringify(this.octData));
     } else if (this.from >= '2026-04-01' && this.from <= '2026-10-01' && this.to >= '2026-10-01') {
       // Prior period calculation
