@@ -154,7 +154,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
   private octData: TrialBalanceRow[] = [
   {
     "code": "3000",
-    "name": "Owner&#39;s Capital",
+    "name": "Owner's Capital",
     "primaryGroupName": "Capital Account",
     "secondaryGroupName": "—",
     "openingDr": 0,
@@ -168,7 +168,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "3900",
     "name": "Profit and Loss Account",
     "primaryGroupName": "Capital Account",
-    "secondaryGroupName": "Profit &amp; Loss Account",
+    "secondaryGroupName": "Profit & Loss Account",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -192,7 +192,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2200",
     "name": "Output CGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 2068830,
     "debit": 0,
@@ -204,7 +204,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2201",
     "name": "Output SGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 2068830,
     "debit": 0,
@@ -216,7 +216,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2202",
     "name": "Output IGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 2529678,
     "debit": 0,
@@ -228,7 +228,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2210",
     "name": "CGST Payable under RCM",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -240,7 +240,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2211",
     "name": "SGST Payable under RCM",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -252,7 +252,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2212",
     "name": "IGST Payable under RCM / Import",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -264,7 +264,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2301",
     "name": "TDS Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -540,7 +540,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
   private allTimeData: TrialBalanceRow[] = [
   {
     "code": "3000",
-    "name": "Owner&#39;s Capital",
+    "name": "Owner's Capital",
     "primaryGroupName": "Capital Account",
     "secondaryGroupName": "—",
     "openingDr": 0,
@@ -554,7 +554,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "3900",
     "name": "Profit and Loss Account",
     "primaryGroupName": "Capital Account",
-    "secondaryGroupName": "Profit &amp; Loss Account",
+    "secondaryGroupName": "Profit & Loss Account",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -578,7 +578,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2200",
     "name": "Output CGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -590,7 +590,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2201",
     "name": "Output SGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -602,7 +602,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2202",
     "name": "Output IGST Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -614,7 +614,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2210",
     "name": "CGST Payable under RCM",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -626,7 +626,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2211",
     "name": "SGST Payable under RCM",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -638,7 +638,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2212",
     "name": "IGST Payable under RCM / Import",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -650,7 +650,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
     "code": "2301",
     "name": "TDS Payable",
     "primaryGroupName": "Current Liabilities",
-    "secondaryGroupName": "Duties &amp; Taxes",
+    "secondaryGroupName": "Duties & Taxes",
     "openingDr": 0,
     "openingCr": 0,
     "debit": 0,
@@ -992,6 +992,11 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
       this.rows = JSON.parse(JSON.stringify(this.allTimeData));
     }
 
+    this.rows.forEach(r => {
+      r.name = r.name.replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+      r.primaryGroupName = r.primaryGroupName.replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+      r.secondaryGroupName = (r.secondaryGroupName || '').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    });
     this.filterRows();
   }
 
@@ -1019,6 +1024,7 @@ export class TrialBalanceComponent implements OnInit, OnDestroy {
   }
 
   onGranularityChange(): void {
+    setTimeout(() => this.applyFilter(), 0);
     const today = new Date();
     const curYear = today.getFullYear();
     const curMonth = today.getMonth(); // 0-indexed

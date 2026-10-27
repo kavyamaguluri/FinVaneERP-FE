@@ -75,7 +75,7 @@ import { Subscription } from 'rxjs';
       <table class="table align-middle">
         <tbody>
           <tr class="fw-bold table-light">
-            <td>Opening Cash &amp; Bank Balance (as on {{ formatDate(from) }})</td>
+            <td>Opening Cash & Bank Balance (as on {{ formatDate(from) }})</td>
             <td class="text-end">0.00</td>
           </tr>
           <tr class="fw-bold">
@@ -155,20 +155,20 @@ import { Subscription } from 'rxjs';
             <td class="text-end pt-3 text-danger">-8,88,750.00</td>
           </tr>
           <tr class="fw-bold table-light">
-            <td class="pt-2">Closing Cash &amp; Bank Balance (as on {{ formatDate(to) }})</td>
+            <td class="pt-2">Closing Cash & Bank Balance (as on {{ formatDate(to) }})</td>
             <td class="text-end pt-2">-8,88,750.00</td>
           </tr>
         </tbody>
       </table>
       <p class="small text-success mb-0 mt-2">
-        ✓ Reconciles with the actual change in Cash &amp; Bank balance (₹-8,88,750.00) for this period.
+        ✓ Reconciles with the actual change in Cash & Bank balance (₹-8,88,750.00) for this period.
       </p>
     </div>
 
     <!-- Direct Method Card -->
     <div *ngIf="method === 'direct'">
       <div class="card p-3 mb-3 d-flex flex-row justify-content-between align-items-center">
-        <div><span class="text-muted small">Opening Cash &amp; Bank Balance (as on {{ formatDate(from) }})</span></div>
+        <div><span class="text-muted small">Opening Cash & Bank Balance (as on {{ formatDate(from) }})</span></div>
         <div class="fw-bold">₹0.00</div>
       </div>
 
@@ -195,7 +195,7 @@ import { Subscription } from 'rxjs';
             <tr class="table-light"><th>Date</th><th>Voucher</th><th>Against</th><th>Narration</th><th class="text-end">Amount</th></tr>
           </thead>
           <tbody>
-            <tr><td>15-05-2026</td><td>PMT-012</td><td>Fixed Assets - Gross Block</td><td>Purchase of computer equipment &amp; furniture</td><td class="text-end text-danger">-12,03,823.65</td></tr>
+            <tr><td>15-05-2026</td><td>PMT-012</td><td>Fixed Assets - Gross Block</td><td>Purchase of computer equipment & furniture</td><td class="text-end text-danger">-12,03,823.65</td></tr>
           </tbody>
         </table>
         <p class="text-end fw-bold mb-0">Total: ₹-12,03,823.65</p>
@@ -217,9 +217,9 @@ import { Subscription } from 'rxjs';
 
       <div class="card p-4">
         <h5 class="text-end">Net Increase / (Decrease) in Cash: ₹-8,88,750.00</h5>
-        <h6 class="text-end text-muted">Closing Cash &amp; Bank Balance (as on {{ formatDate(to) }}): ₹-8,88,750.00</h6>
+        <h6 class="text-end text-muted">Closing Cash & Bank Balance (as on {{ formatDate(to) }}): ₹-8,88,750.00</h6>
         <p class="small text-success mb-0 text-end">
-          ✓ Reconciles with the actual change in Cash &amp; Bank balance (₹-8,88,750.00) for this period.
+          ✓ Reconciles with the actual change in Cash & Bank balance (₹-8,88,750.00) for this period.
         </p>
       </div>
       <p class="small text-muted mt-2">Direct method figures are only as complete as the cash/bank journal entries recorded &mdash; invoice payments not yet posted as receipts against Bank/Cash won't appear here.</p>

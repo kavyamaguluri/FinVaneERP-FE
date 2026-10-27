@@ -7,8 +7,8 @@ import { Subscription } from 'rxjs';
   template: `
     <div class="page-header no-print">
       <div>
-        <h3 class="mb-0">Profit &amp; Loss</h3>
-        <div class="subtitle">Trading Account (Gross Profit) and P&amp;L Account (Net Profit), grouped by primary/secondary group</div>
+        <h3 class="mb-0">Profit & Loss</h3>
+        <div class="subtitle">Trading Account (Gross Profit) and P&L Account (Net Profit), grouped by primary/secondary group</div>
       </div>
       <div class="io-toolbar">
         <button type="button" (click)="exportExcel()" class="btn btn-sm btn-outline-secondary">
@@ -84,10 +84,10 @@ import { Subscription } from 'rxjs';
     <!-- Nav Tabs: Profit & Loss vs Annexure -->
     <ul class="nav nav-tabs mb-3 no-print" *ngIf="!scheduleIIIFormat">
       <li class="nav-item">
-        <button type="button" class="nav-link" [class.active]="activeTab === 'main'" (click)="activeTab = 'main'">Profit &amp; Loss</button>
+        <button type="button" class="nav-link" [class.active]="activeTab === 'main'" (click)="activeTab = 'main'">Profit & Loss</button>
       </li>
       <li class="nav-item">
-        <button type="button" class="nav-link" [class.active]="activeTab === 'annexure'" (click)="activeTab = 'annexure'">Annexure to Profit &amp; Loss</button>
+        <button type="button" class="nav-link" [class.active]="activeTab === 'annexure'" (click)="activeTab = 'annexure'">Annexure to Profit & Loss</button>
       </li>
     </ul>
 
@@ -177,7 +177,7 @@ import { Subscription } from 'rxjs';
       <!-- Profit & Loss Account -->
       <div class="col-md-6">
         <div class="card p-3">
-          <h5>Profit &amp; Loss Account</h5>
+          <h5>Profit & Loss Account</h5>
           <table class="table table-sm align-middle mb-2">
             <thead>
               <tr class="table-light">
@@ -207,11 +207,11 @@ import { Subscription } from 'rxjs';
                 <td class="text-end">1,75,000.00</td>
               </tr>
               <tr>
-                <td class="ps-3">Telephone &amp; Internet Expense</td>
+                <td class="ps-3">Telephone & Internet Expense</td>
                 <td class="text-end">1,78,750.00</td>
               </tr>
               <tr>
-                <td class="ps-3">Marketing &amp; Advertising Expense</td>
+                <td class="ps-3">Marketing & Advertising Expense</td>
                 <td class="text-end">1,73,500.00</td>
               </tr>
               <tr>
@@ -250,7 +250,7 @@ import { Subscription } from 'rxjs';
 
     <!-- Annexure View -->
     <div *ngIf="!scheduleIIIFormat && activeTab === 'annexure'" class="row g-3">
-      <div class="col-12"><h5 class="mb-0">Annexure to Profit &amp; Loss</h5><div class="subtitle">Primary Group as header, Secondary Group subtotals as body</div></div>
+      <div class="col-12"><h5 class="mb-0">Annexure to Profit & Loss</h5><div class="subtitle">Primary Group as header, Secondary Group subtotals as body</div></div>
       <div class="col-md-6">
         <div class="card p-3">
           <h6>Trading Account</h6>
@@ -270,7 +270,7 @@ import { Subscription } from 'rxjs';
       </div>
       <div class="col-md-6">
         <div class="card p-3">
-          <h6>Profit &amp; Loss Account</h6>
+          <h6>Profit & Loss Account</h6>
           <table class="table table-sm align-middle">
             <thead>
               <tr class="table-light"><th>Secondary Group</th><th class="text-end">Amount</th></tr>
@@ -278,7 +278,7 @@ import { Subscription } from 'rxjs';
             <tbody>
               <tr class="table-light"><td colspan="2"><strong>Indirect Expenses</strong></td></tr>
               <tr><td class="ps-3">Salary Expense</td><td class="text-end">₹1,14,73,000.00</td></tr>
-              <tr><td class="ps-3">Operating &amp; Admin Expenses</td><td class="text-end">₹9,25,750.00</td></tr>
+              <tr><td class="ps-3">Operating & Admin Expenses</td><td class="text-end">₹9,25,750.00</td></tr>
               <tr><td class="ps-3">Depreciation Expense</td><td class="text-end">₹5,75,176.35</td></tr>
               <tr class="fw-bold border-top border-dark"><td>Net Profit / (Loss)</td><td class="text-end text-success">₹11,21,573.65</td></tr>
             </tbody>

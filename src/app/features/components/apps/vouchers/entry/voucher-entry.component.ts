@@ -9,15 +9,16 @@ export interface VoucherLineRow {
   credit: number | null;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  payment: 'Payment',
+  receipt: 'Receipt',
+  contra: 'Contra',
+  journal: 'Journal'
+};
+
 @Component({
   selector: 'app-voucher-entry',
   template: `
-    <div class="mb-3">
-      <a routerLink="/vouchers" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
-
     <h4 class="fw-bold mb-3">{{ pageTitle }}</h4>
 
     <div *ngIf="errorMessage" class="alert alert-danger py-2 mb-3">
@@ -35,8 +36,8 @@ export interface VoucherLineRow {
           <div class="col-md-4">
             <label class="form-label small fw-semibold">Voucher Type</label>
             <select [(ngModel)]="voucherType" name="voucherType" (change)="onTypeChange()" class="form-select">
-              <option value="receipt">Receipt</option>
               <option value="payment">Payment</option>
+              <option value="receipt">Receipt</option>
               <option value="contra">Contra</option>
               <option value="journal">Journal</option>
             </select>
@@ -44,7 +45,7 @@ export interface VoucherLineRow {
 
           <div class="col-md-4">
             <label class="form-label small fw-semibold">Narration</label>
-            <input type="text" [(ngModel)]="narration" name="narration" class="form-control" placeholder="Optional notes about this voucher" />
+            <input type="text" [(ngModel)]="narration" name="narration" class="form-control" />
           </div>
         </div>
 
@@ -68,10 +69,10 @@ export interface VoucherLineRow {
                 </select>
               </td>
               <td>
-                <input type="number" step="0.01" [(ngModel)]="ln.debit" [name]="'dr_' + i" class="form-control" placeholder="0.00" (input)="onDebitChange(ln)" />
+                <input type="number" step="0.01" [(ngModel)]="ln.debit" [name]="'dr_' + i" class="form-control" (input)="onDebitChange(ln)" />
               </td>
               <td>
-                <input type="number" step="0.01" [(ngModel)]="ln.credit" [name]="'cr_' + i" class="form-control" placeholder="0.00" (input)="onCreditChange(ln)" />
+                <input type="number" step="0.01" [(ngModel)]="ln.credit" [name]="'cr_' + i" class="form-control" (input)="onCreditChange(ln)" />
               </td>
               <td class="text-end">
                 <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="removeRow(i)" title="Remove this row">&times;</button>
@@ -99,9 +100,9 @@ export interface VoucherLineRow {
   `
 })
 export class VoucherEntryComponent implements OnInit {
-  voucherType: string = 'receipt';
-  pageTitle: string = 'New Receipt';
-  voucherDate: string = new Date().toISOString().slice(0, 10);
+  voucherType: string = 'payment';
+  pageTitle: string = 'New Voucher';
+  voucherDate: string = '';
   narration: string = '';
 
   lines: VoucherLineRow[] = [
@@ -113,32 +114,30 @@ export class VoucherEntryComponent implements OnInit {
   accounts: any[] = [];
   errorMessage: string = '';
   submitting: boolean = false;
+  hasExplicitTypeQuery: boolean = false;
 
   constructor(private route: ActivatedRoute, private router: Router, private http: HttpClient) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const t = (params['type'] || 'receipt').toLowerCase();
-      if (['receipt', 'payment', 'contra', 'journal'].includes(t)) {
-        this.voucherType = t;
+      const rawType = params['type'];
+      if (rawType && ['receipt', 'payment', 'contra', 'journal'].includes(rawType.toLowerCase())) {
+        this.voucherType = rawType.toLowerCase();
+        this.hasExplicitTypeQuery = true;
+        this.pageTitle = 'New ' + TYPE_LABELS[this.voucherType];
+      } else {
+        this.voucherType = 'payment';
+        this.hasExplicitTypeQuery = false;
+        this.pageTitle = 'New Voucher';
       }
-      this.updateTitle();
     });
     this.loadAccounts();
   }
 
-  updateTitle() {
-    switch (this.voucherType) {
-      case 'receipt': this.pageTitle = 'New Receipt'; break;
-      case 'payment': this.pageTitle = 'New Payment'; break;
-      case 'contra': this.pageTitle = 'New Contra'; break;
-      case 'journal': this.pageTitle = 'New Journal'; break;
-      default: this.pageTitle = 'New Voucher';
-    }
-  }
-
   onTypeChange() {
-    this.updateTitle();
+    if (this.hasExplicitTypeQuery) {
+      this.pageTitle = 'New ' + (TYPE_LABELS[this.voucherType] || 'Voucher');
+    }
   }
 
   loadAccounts() {
@@ -214,7 +213,7 @@ export class VoucherEntryComponent implements OnInit {
 
     this.http.post<any>(`${environment.apiBaseUrl}/vouchers`, {
       voucherType: this.voucherType.toUpperCase(),
-      voucherDate: this.voucherDate,
+      voucherDate: this.voucherDate || new Date().toISOString().slice(0, 10),
       narration: this.narration,
       totalAmount: totalDr,
       items

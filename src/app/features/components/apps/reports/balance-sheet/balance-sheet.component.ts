@@ -144,7 +144,7 @@ import { Subscription } from 'rxjs';
       <!-- Liabilities & Equity -->
       <div class="col-md-6">
         <div class="card p-3">
-          <h5>Liabilities &amp; Equity</h5>
+          <h5>Liabilities & Equity</h5>
           <table class="table table-sm align-middle mb-2">
             <thead>
               <tr class="table-light">
@@ -162,7 +162,7 @@ import { Subscription } from 'rxjs';
                 <td class="text-end">5,00,000.00</td>
               </tr>
               <tr>
-                <td class="ps-3 text-muted small">Profit &amp; Loss Account</td>
+                <td class="ps-3 text-muted small">Profit & Loss Account</td>
                 <td></td>
               </tr>
               <tr>
@@ -180,7 +180,7 @@ import { Subscription } from 'rxjs';
                 <td class="text-end">5,05,38,774.00</td>
               </tr>
               <tr>
-                <td class="ps-3 text-muted small">Duties &amp; Taxes</td>
+                <td class="ps-3 text-muted small">Duties & Taxes</td>
                 <td></td>
               </tr>
               <tr>
@@ -228,7 +228,7 @@ import { Subscription } from 'rxjs';
                 <td class="text-end text-success">{{ formatNumber(currentProfit) }}</td>
               </tr>
               <tr class="fw-bold border-top border-dark">
-                <td>Total Liabilities &amp; Equity</td>
+                <td>Total Liabilities & Equity</td>
                 <td class="text-end text-brand">₹7,03,00,685.65</td>
               </tr>
             </tbody>
@@ -316,7 +316,7 @@ import { Subscription } from 'rxjs';
               </tr>
             </tbody>
           </table>
-          <p class="text-muted small mb-0">Stock-in-Hand is shown at its FIFO-computed valuation as of {{ formatDate(to) }} (purchases are expensed directly, so this figure is injected here rather than read off the ledger &mdash; same figure as the P&amp;L's Closing Stock).</p>
+          <p class="text-muted small mb-0">Stock-in-Hand is shown at its FIFO-computed valuation as of {{ formatDate(to) }} (purchases are expensed directly, so this figure is injected here rather than read off the ledger &mdash; same figure as the P&L's Closing Stock).</p>
         </div>
       </div>
     </div>
@@ -326,7 +326,7 @@ import { Subscription } from 'rxjs';
       <div class="col-12"><h5 class="mb-0">Annexure to Balance Sheet</h5><div class="subtitle">Primary Group as header, Secondary Group subtotals as body</div></div>
       <div class="col-md-6">
         <div class="card p-3">
-          <h6>Liabilities &amp; Equity</h6>
+          <h6>Liabilities & Equity</h6>
           <table class="table table-sm align-middle">
             <thead>
               <tr class="table-light"><th>Secondary Group</th><th class="text-end">Amount</th></tr>
@@ -334,12 +334,12 @@ import { Subscription } from 'rxjs';
             <tbody>
               <tr class="table-light"><td colspan="2"><strong>Capital Account</strong></td></tr>
               <tr><td class="ps-3">Owner's Capital</td><td class="text-end">₹5,00,000.00</td></tr>
-              <tr><td class="ps-3">Profit &amp; Loss Account</td><td class="text-end">₹0.00</td></tr>
+              <tr><td class="ps-3">Profit & Loss Account</td><td class="text-end">₹0.00</td></tr>
               <tr class="table-light"><td colspan="2"><strong>Current Liabilities</strong></td></tr>
               <tr><td class="ps-3">Sundry Creditors</td><td class="text-end">₹5,05,38,774.00</td></tr>
-              <tr><td class="ps-3">Duties &amp; Taxes</td><td class="text-end">₹66,67,338.00</td></tr>
+              <tr><td class="ps-3">Duties & Taxes</td><td class="text-end">₹66,67,338.00</td></tr>
               <tr><td class="ps-3">Provisions</td><td class="text-end">₹1,14,73,000.00</td></tr>
-              <tr class="fw-bold border-top border-dark"><td>Total Liabilities &amp; Equity</td><td class="text-end text-brand">₹7,03,00,685.65</td></tr>
+              <tr class="fw-bold border-top border-dark"><td>Total Liabilities & Equity</td><td class="text-end text-brand">₹7,03,00,685.65</td></tr>
             </tbody>
           </table>
         </div>
