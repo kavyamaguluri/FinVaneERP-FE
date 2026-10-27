@@ -99,6 +99,9 @@ const routes: Routes = [
       { path: 'banking', component: BankingComponent },
       { path: 'assets', component: FixedAssetsComponent },
       { path: 'assets/dashboard', component: FixedAssetsComponent },
+      { path: 'assets/new', component: FixedAssetsComponent },
+      { path: 'assets/depreciation/schedule', component: FixedAssetsComponent },
+      { path: 'assets/depreciation/run', component: FixedAssetsComponent },
 
       // Operations: Production & Payroll
       { path: 'production', component: ProductionComponent },

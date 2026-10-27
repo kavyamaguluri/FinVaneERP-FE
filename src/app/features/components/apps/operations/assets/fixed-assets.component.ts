@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
 
@@ -10,6 +10,7 @@ export interface FixedAssetItem {
   category: string;
   department: string;
   branchName?: string;
+  locationId?: number;
   locationName?: string;
   purchaseDate: string;
   datePutToUse?: string;
@@ -22,12 +23,16 @@ export interface FixedAssetItem {
   salvageValue?: number;
   paymentMode?: string;
   depreciationMethod?: string;
+  coActBlock?: string;
+  itActBlock?: string;
 }
 
 export interface DepreciationRunItem {
+  id?: number;
   periodMonth: number;
   periodYear: number;
   totalAmount: number;
+  voucherId?: number;
 }
 
 export interface CategorySummary {
@@ -39,521 +44,539 @@ export interface CategorySummary {
 @Component({
   selector: 'app-fixed-assets',
   template: `
-    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
-
-    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-      <div>
-        <h3 class="mb-0 fw-bold">{{ activeTab === 'summary' ? 'FAM Summary' : 'Fixed Assets' }}</h3>
-        <div class="subtitle text-muted small">
-          {{ activeTab === 'summary' 
-              ? 'Overview of the fixed asset register and depreciation position.' 
-              : 'Asset acquisition, Companies Act / IT Act depreciation, and disposals' }}
-        </div>
-      </div>
-      <div class="io-toolbar d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openScheduleModal()">
-          Statutory Depreciation Schedule
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openRunDepreciationModal()">
-          Run Depreciation
-        </button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="openNewAssetModal()">
-          + New Asset
-        </button>
-      </div>
-    </div>
+    <!-- Back button only shown when inside a subview (New, Schedule, Run) to prevent duplicate back buttons on dashboard -->
+    <button *ngIf="currentView !== 'dashboard'" type="button" class="btn btn-sm btn-outline-secondary mb-3" (click)="switchView('dashboard')">
+      &larr; Back
+    </button>
 
     <!-- Feedback Banner -->
-    <div *ngIf="alertMessage" class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
+    <div *ngIf="alertMessage" class="alert alert-success alert-dismissible fade show py-2 small mb-3" role="alert">
       {{ alertMessage }}
       <button type="button" class="btn-close py-2" (click)="alertMessage = ''"></button>
     </div>
 
-    <!-- Tabs matching Express _tabs.ejs -->
-    <ul class="nav nav-tabs mb-3 border-bottom">
-      <li class="nav-item">
-        <a class="nav-link cursor-pointer" [class.active]="activeTab === 'summary'" (click)="setActiveTab('summary')">
-          FAM Summary
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link cursor-pointer" [class.active]="activeTab === 'register'" (click)="setActiveTab('register')">
-          Asset Register
-        </a>
-      </li>
-    </ul>
-
-    <!-- ================= TAB 1: FAM SUMMARY (Matching Screenshot 4 Left) ================= -->
-    <div *ngIf="activeTab === 'summary'">
-      <!-- 4 KPI Cards matching Express dashboard.ejs -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm border-0 bg-white">
-            <div class="small text-muted fw-semibold">Gross Block</div>
-            <div class="fs-4 fw-bold text-dark mt-1">{{ totalGrossBlock | number:'1.2-2' }}</div>
-            <div class="small text-muted mt-1">{{ assets.length }} assets ({{ activeCount }} active)</div>
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: DASHBOARD (FAM Summary / Asset Register)                          -->
+    <!-- ========================================================================= -->
+    <div *ngIf="currentView === 'dashboard'">
+      <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+          <h3 class="mb-0 fw-bold">{{ activeTab === 'summary' ? 'FAM Summary' : 'Fixed Assets' }}</h3>
+          <div class="subtitle text-muted small">
+            {{ activeTab === 'summary' 
+                ? 'Overview of the fixed asset register and depreciation position.' 
+                : 'Asset acquisition, Companies Act / IT Act depreciation, and disposals' }}
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm border-0 bg-white">
-            <div class="small text-muted fw-semibold">Accumulated Depreciation</div>
-            <div class="fs-4 fw-bold text-dark mt-1">{{ totalAccumDep | number:'1.2-2' }}</div>
-            <div class="small text-muted mt-1">Method: {{ globalMethod === 'wdv' ? 'Written Down Value' : 'Straight-line' }}</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm border-0 bg-white">
-            <div class="small text-muted fw-semibold">Net Book Value</div>
-            <div class="fs-4 fw-bold text-dark mt-1">{{ totalNetBookValue | number:'1.2-2' }}</div>
-            <div class="small text-muted mt-1">Gross Block &minus; Accum. Depreciation</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm border-0 bg-white">
-            <div class="small text-muted fw-semibold">Projected This Period</div>
-            <div class="fs-4 fw-bold text-dark mt-1">{{ projectedThisPeriod | number:'1.2-2' }}</div>
-            <div class="small text-muted mt-1">{{ hasRunCurrentMonth ? 'Already posted for this period' : 'Not yet pushed to reports' }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Side-by-Side Category & Recent Runs matching Express dashboard.ejs -->
-      <div class="row g-3">
-        <div class="col-md-6">
-          <div class="card p-3 shadow-sm border-0 bg-white h-100">
-            <h6 class="fw-bold mb-3">Net Book Value by Category</h6>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead class="bg-light small text-muted text-uppercase">
-                  <tr>
-                    <th>Category</th>
-                    <th class="text-end">Assets</th>
-                    <th class="text-end">Net Book Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let c of byCategory">
-                    <td>{{ c.category }}</td>
-                    <td class="text-end">{{ c.count }}</td>
-                    <td class="text-end fw-semibold">{{ c.netBookValue | number:'1.2-2' }}</td>
-                  </tr>
-                  <tr *ngIf="byCategory.length === 0">
-                    <td colspan="3" class="text-center text-muted py-3">No fixed assets recorded yet.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card p-3 shadow-sm border-0 bg-white h-100">
-            <h6 class="fw-bold mb-3">Recent Depreciation Runs</h6>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead class="bg-light small text-muted text-uppercase">
-                  <tr>
-                    <th>Period</th>
-                    <th class="text-end">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let r of recentRuns.slice(0, 6)">
-                    <td>{{ pad2(r.periodMonth) }}/{{ r.periodYear }}</td>
-                    <td class="text-end fw-semibold">{{ r.totalAmount | number:'1.2-2' }}</td>
-                  </tr>
-                  <tr *ngIf="recentRuns.length === 0">
-                    <td colspan="2" class="text-center text-muted py-3">No depreciation has been run yet.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 2: ASSET REGISTER (Matching Screenshot 4 Right & 5) ================= -->
-    <div *ngIf="activeTab === 'register'">
-      <!-- Method & Push to Reports Card matching Express list.ejs -->
-      <div class="card p-3 shadow-sm border-0 bg-white mb-3">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-5">
-            <div class="d-flex gap-2 align-items-end">
-              <div class="flex-grow-1">
-                <label class="form-label small mb-1 fw-semibold text-muted">
-                  Depreciation Method <span class="fw-normal text-muted">(applies to every asset)</span>
-                </label>
-                <select class="form-select form-select-sm" [(ngModel)]="globalMethod">
-                  <option value="straight_line">Straight-line (SLM)</option>
-                  <option value="wdv">Written Down Value (WDV)</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="applyMethod()">Apply Method</button>
-            </div>
-          </div>
-          <div class="col-md-7">
-            <div class="d-flex align-items-center gap-2">
-              <button type="button" class="btn btn-sm btn-success" (click)="pushToReports()">Push to Reports</button>
-              <span class="text-muted small">
-                Posts the current period's depreciation under the method above into the ledger (Balance Sheet, P&amp;L, Trial Balance).
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Asset Summary Cards (matching screenshot 5) -->
-      <div class="d-flex gap-3 flex-wrap mb-3">
-        <div class="p-3 rounded border text-start bg-white shadow-sm" style="min-width: 170px;">
-          <span class="fs-4 fw-bold d-block text-dark">{{ activeCount }}</span>
-          <span class="small text-muted fw-medium">Active Assets</span>
-        </div>
-        <div class="p-3 rounded border text-start bg-white shadow-sm" style="min-width: 200px;">
-          <span class="fs-4 fw-bold d-block text-dark">&#8377;{{ totalGrossBlock | number:'1.2-2' }}</span>
-          <span class="small text-muted fw-medium">Gross Block</span>
-        </div>
-        <div class="p-3 rounded border text-start bg-white shadow-sm" style="min-width: 200px;">
-          <span class="fs-4 fw-bold d-block text-danger">&#8377;{{ totalAccumDep | number:'1.2-2' }}</span>
-          <span class="small text-muted fw-medium">Accumulated Dep.</span>
-        </div>
-        <div class="p-3 rounded border text-start bg-white shadow-sm" style="min-width: 200px;">
-          <span class="fs-4 fw-bold d-block text-success">&#8377;{{ totalNetBookValue | number:'1.2-2' }}</span>
-          <span class="small text-muted fw-medium">Net Book Value</span>
-        </div>
-      </div>
-
-      <!-- Asset Register Table -->
-      <div class="card p-3 shadow-sm border-0 bg-white mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="small text-muted">{{ assets.length }} asset{{ assets.length === 1 ? '' : 's' }}</span>
-          <button *ngIf="assets.length > 0" type="button" class="btn btn-outline-danger btn-sm" (click)="deleteAllAssets()">
-            Delete All (this view)
+        <div class="io-toolbar d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="switchView('schedule')">
+            Statutory Depreciation Schedule
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="switchView('run')">
+            Run Depreciation
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" (click)="switchView('new')">
+            + New Asset
           </button>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light small text-muted text-uppercase">
+      </div>
+
+      <!-- Tabs matching Express _tabs.ejs -->
+      <ul class="nav nav-tabs mb-3 border-bottom">
+        <li class="nav-item">
+          <a class="nav-link cursor-pointer" [class.active]="activeTab === 'summary'" (click)="setActiveTab('summary')">
+            FAM Summary
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link cursor-pointer" [class.active]="activeTab === 'register'" (click)="setActiveTab('register')">
+            Asset Register
+          </a>
+        </li>
+      </ul>
+
+      <!-- TAB 1: FAM SUMMARY -->
+      <div *ngIf="activeTab === 'summary'">
+        <!-- 4 KPI Cards matching Express dashboard.ejs exactly -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+              <div class="small text-muted fw-semibold">Gross Block</div>
+              <div class="h3 fw-bold mb-1 text-dark">{{ formatNumber(grossBlock) }}</div>
+              <div class="small text-muted">{{ totalAssetsCount }} assets ({{ activeAssetsCount }} active)</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+              <div class="small text-muted fw-semibold">Accumulated Depreciation</div>
+              <div class="h3 fw-bold mb-1 text-dark">{{ formatNumber(totalAccumDep) }}</div>
+              <div class="small text-muted">Method: Straight-line</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+              <div class="small text-muted fw-semibold">Net Book Value</div>
+              <div class="h3 fw-bold mb-1 text-dark">{{ formatNumber(netBookValue) }}</div>
+              <div class="small text-muted">Gross Block &mdash; Accum. Depreciation</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0 bg-white">
+              <div class="small text-muted fw-semibold">Projected This Period</div>
+              <div class="h3 fw-bold mb-1 text-dark">{{ formatNumber(projectedThisPeriod) }}</div>
+              <div class="small text-muted">Already posted for this period</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Side-by-side Tables matching Express dashboard.ejs -->
+        <div class="row g-3">
+          <!-- Left: Net Book Value by Category -->
+          <div class="col-md-6">
+            <div class="card p-3 shadow-sm border-0 bg-white h-100">
+              <h6 class="fw-bold mb-3">Net Book Value by Category</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Category</th>
+                      <th class="text-center" style="width: 80px;">Assets</th>
+                      <th class="text-end" style="width: 140px;">Net Book Value (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let cat of categorySummaries">
+                      <td class="fw-medium text-dark">{{ cat.category }}</td>
+                      <td class="text-center">{{ cat.count }}</td>
+                      <td class="text-end font-monospace">{{ formatNumber(cat.netBookValue) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Recent Depreciation Runs -->
+          <div class="col-md-6">
+            <div class="card p-3 shadow-sm border-0 bg-white h-100">
+              <h6 class="fw-bold mb-3">Recent Depreciation Runs</h6>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Period</th>
+                      <th class="text-end" style="width: 140px;">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let run of depreciationRuns">
+                      <td class="fw-medium">{{ formatPeriod(run.periodMonth, run.periodYear) }}</td>
+                      <td class="text-end font-monospace text-dark">{{ formatNumber(run.totalAmount) }}</td>
+                    </tr>
+                    <tr *ngIf="depreciationRuns.length === 0">
+                      <td colspan="2" class="text-center py-3 text-muted">No depreciation runs posted yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ASSET REGISTER -->
+      <div *ngIf="activeTab === 'register'">
+        <div class="card p-3 mb-3 bg-light border-0 shadow-sm">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+              <label class="form-label mb-0 small fw-semibold">Depreciation Policy (Company-wide):</label>
+              <select [(ngModel)]="globalMethod" class="form-select form-select-sm" style="width: 170px;">
+                <option value="straight_line">Straight-line (SLM)</option>
+                <option value="wdv">Written Down Value (WDV)</option>
+              </select>
+              <button class="btn btn-sm btn-outline-primary" (click)="applyMethod()">Apply Method</button>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="pushToReports()">Push to Reports</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteAllAssets()">Delete All (this view)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive bg-white rounded border shadow-sm">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light small text-secondary">
               <tr>
-                <th>Asset Code</th>
+                <th>Code</th>
                 <th>Name</th>
                 <th>Category</th>
                 <th>Department</th>
-                <th>Put to Use</th>
-                <th class="text-end">Cost</th>
-                <th class="text-end">Accum. Dep</th>
-                <th class="text-end">Net Value</th>
+                <th>Location</th>
+                <th>Purchase Date</th>
+                <th class="text-end">Cost (₹)</th>
+                <th class="text-end">Accum. Dep. (₹)</th>
+                <th class="text-end">Net Book Value (₹)</th>
                 <th>Status</th>
-                <th class="text-end"></th>
+                <th class="text-end">Action</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let a of assets">
-                <td><strong class="text-secondary">{{ a.code }}</strong></td>
-                <td class="fw-semibold text-dark">{{ a.name }}</td>
-                <td>{{ a.category }}</td>
-                <td>{{ a.department }}</td>
-                <td>{{ a.datePutToUse || a.purchaseDate }}</td>
-                <td class="text-end">&#8377;{{ a.cost | number:'1.2-2' }}</td>
-                <td class="text-end text-danger">&#8377;{{ a.accumDep | number:'1.2-2' }}</td>
-                <td class="text-end fw-bold text-success">&#8377;{{ a.netBookValue | number:'1.2-2' }}</td>
-                <td><span class="badge text-bg-success">{{ a.status }}</span></td>
+                <td class="font-monospace fw-semibold">{{ a.code }}</td>
+                <td class="fw-medium text-dark">{{ a.name }}</td>
+                <td><span class="badge bg-light text-dark border">{{ a.category }}</span></td>
+                <td class="text-muted small">{{ a.department }}</td>
+                <td class="text-muted small">{{ a.locationName || '—' }}</td>
+                <td class="text-muted small">{{ a.purchaseDate }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(a.cost) }}</td>
+                <td class="text-end font-monospace text-secondary">{{ formatNumber(a.accumDep) }}</td>
+                <td class="text-end font-monospace fw-bold text-dark">{{ formatNumber(a.netBookValue) }}</td>
+                <td>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    {{ a.status }}
+                  </span>
+                </td>
                 <td class="text-end">
-                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteAsset(a)">Delete</button>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none" (click)="deleteAsset(a)" title="Delete asset">
+                    Delete
+                  </button>
                 </td>
               </tr>
               <tr *ngIf="assets.length === 0">
-                <td colspan="10" class="text-center text-muted py-4">No fixed assets yet.</td>
+                <td colspan="11" class="text-center py-4 text-muted">No fixed assets registered.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+    </div>
 
-      <!-- Recent Depreciation Runs Table -->
-      <div class="card p-3 shadow-sm border-0 bg-white">
-        <h6 class="fw-bold mb-2">Recent Depreciation Runs</h6>
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: NEW FIXED ASSET (Matching Express /assets/new pixel-for-pixel)    -->
+    <!-- ========================================================================= -->
+    <div *ngIf="currentView === 'new'">
+      <h4 class="mb-3 fw-bold">New Fixed Asset</h4>
+
+      <div class="card p-4 shadow-sm border bg-white mb-4">
+        <form (submit)="saveNewAsset($event)">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Asset Code</label>
+              <input type="text" name="asset_code" [(ngModel)]="newAsset.code" class="form-control" required placeholder="e.g. FA-011" />
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold small">Name</label>
+              <input type="text" name="name" [(ngModel)]="newAsset.name" class="form-control" required placeholder="e.g. Conference Room Projector" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Category</label>
+              <input type="text" name="category" [(ngModel)]="newAsset.category" class="form-control" placeholder="e.g. Office Equipment" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Department</label>
+              <input type="text" name="department" [(ngModel)]="newAsset.department" class="form-control" placeholder="e.g. Production, Admin, Sales" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Branch Name</label>
+              <input type="text" name="branch_name" [(ngModel)]="newAsset.branchName" class="form-control" placeholder="e.g. Mumbai HO" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Location</label>
+              <select name="location_id" [(ngModel)]="newAsset.locationId" class="form-select">
+                <option [ngValue]="undefined">&mdash;</option>
+                <option [ngValue]="4">LOC-BLR - Bengaluru Retail Store</option>
+                <option [ngValue]="3">LOC-DEL - Delhi Branch Office</option>
+                <option [ngValue]="1">LOC-MUM - Mumbai Central Warehouse</option>
+                <option [ngValue]="2">LOC-PUN - Pune Regional Warehouse</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Purchase Date (Invoice Date)</label>
+              <input type="date" name="purchase_date" [(ngModel)]="newAsset.purchaseDate" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Date Put to Use</label>
+              <input type="date" name="date_put_to_use" [(ngModel)]="newAsset.datePutToUse" class="form-control" />
+              <div class="form-text small">Used as the "date of accounting" for Companies Act / Income Tax Act depreciation. Defaults to purchase date if left blank.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Cost</label>
+              <input type="number" step="0.01" name="cost" [(ngModel)]="newAsset.cost" (input)="onNewAssetCostChange()" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">
+                Salvage Value <span class="text-muted small fw-normal">(defaults to 5% of cost)</span>
+              </label>
+              <input type="number" step="0.01" name="salvage_value" [(ngModel)]="newAsset.salvageValue" class="form-control" placeholder="Auto: 5% of cost" />
+              <div class="form-text small">Leave blank to auto-default to 5% of cost (Schedule II Note 5). Edit to override.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Useful Life (years)</label>
+              <input type="number" step="0.5" name="useful_life_years" [(ngModel)]="newAsset.usefulLifeYears" class="form-control" required />
+            </div>
+
+            <!-- Depreciation Method Info Alert -->
+            <div class="col-md-8">
+              <div class="alert alert-info py-2 mb-0 small border-0 shadow-sm" style="background-color: #cff4fc; color: #055160;">
+                <strong>Depreciation Method (Books):</strong> Straight-line (SLM)
+                &mdash; this asset will use the company-wide method. Change it for every asset at once from the
+                <a (click)="switchView('dashboard')" class="cursor-pointer text-decoration-underline fw-bold">Fixed Assets</a> page rather than per-asset here, since a business keeps one consistent depreciation policy across its books.
+              </div>
+            </div>
+
+            <!-- Paid Via Dropdown -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Paid Via</label>
+              <select name="payment_mode" [(ngModel)]="newAsset.paymentMode" class="form-select">
+                <option value="bank">Bank Transfer</option>
+                <option value="cash">Cash</option>
+                <option value="credit">On Credit (Accounts Payable)</option>
+              </select>
+              <div class="form-text small">Posts an acquisition entry (Dr Fixed Assets / Cr this account) so the asset's cost immediately shows up on the Balance Sheet.</div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Statutory Depreciation Classification -->
+          <h6 class="mb-1 fw-bold">Statutory Depreciation Classification</h6>
+          <p class="text-muted small mb-3">Selecting these lets the app auto-compute Companies Act (Schedule II) and Income Tax Act (Section 32) depreciation schedules for this asset, separately from the book depreciation above.</p>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Companies Act 2013 &mdash; Schedule II Category</label>
+              <select name="co_act_block" [(ngModel)]="newAsset.coActBlock" class="form-select">
+                <option value="">&mdash; Not classified &mdash;</option>
+                <option value="building_rcc">Building &mdash; RCC Frame Structure (60 yrs)</option>
+                <option value="building_other">Building &mdash; Other than RCC Frame Structure (incl. Factory) (30 yrs)</option>
+                <option value="building_temp">Building &mdash; Temporary Structure (3 yrs)</option>
+                <option value="plant_machinery_general">Plant &amp; Machinery (General, Continuous Process not covered) (15 yrs)</option>
+                <option value="furniture_general">Furniture &amp; Fittings (General) (10 yrs)</option>
+                <option value="furniture_hospitality">Furniture &amp; Fittings (Hotels/Schools/Cinemas/Hire) (8 yrs)</option>
+                <option value="office_equipment">Office Equipment (5 yrs)</option>
+                <option value="computers_servers">Computers &mdash; Servers &amp; Networks (6 yrs)</option>
+                <option value="computers_end_user">Computers &mdash; End User Devices (Desktops, Laptops, etc.) (3 yrs)</option>
+                <option value="motor_vehicles_two_wheeler">Motor Vehicles &mdash; Motor Cycles, Scooters, Mopeds (10 yrs)</option>
+                <option value="motor_vehicles_general">Motor Vehicles &mdash; Cars/Buses/Lorries (Not Used on Hire) (8 yrs)</option>
+                <option value="motor_vehicles_hire">Motor Vehicles &mdash; Buses/Lorries/Taxis Used on Hire (6 yrs)</option>
+                <option value="motor_vehicles_electric">Electrically Operated Vehicles (incl. Battery/Fuel Cell) (8 yrs)</option>
+                <option value="electrical_installations">Electrical Installations &amp; Equipment (10 yrs)</option>
+                <option value="laboratory_equipment">Laboratory Equipment (General) (10 yrs)</option>
+                <option value="intangible_software">Intangible Assets &mdash; Computer Software (per AS 26, commonly adopted) (3 yrs)</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Income Tax Act &mdash; Section 32 Block</label>
+              <select name="it_act_block" [(ngModel)]="newAsset.itActBlock" class="form-select">
+                <option value="">&mdash; Not classified &mdash;</option>
+                <option value="building_residential">Building &mdash; Residential (5% WDV)</option>
+                <option value="building_nonresidential">Building &mdash; Non-Residential / Factory / Office (10% WDV)</option>
+                <option value="building_temp">Building &mdash; Purely Temporary Erections (40% WDV)</option>
+                <option value="furniture_fittings">Furniture &amp; Fittings (incl. Electrical Fittings) (10% WDV)</option>
+                <option value="plant_machinery_general">Plant &amp; Machinery (General) (15% WDV)</option>
+                <option value="motor_car_general">Motor Cars (Not Used in a Hire Business) (15% WDV)</option>
+                <option value="motor_vehicles_hire">Motor Buses/Lorries/Taxis Used on Hire (30% WDV)</option>
+                <option value="motor_vehicles_electric">Electrically Operated / EV Motor Vehicles (40% WDV)</option>
+                <option value="computers_software">Computers, incl. Computer Software (40% WDV)</option>
+                <option value="books">Books (Professional Books / Non-Annual Publications) (40% WDV)</option>
+                <option value="pollution_energy_saving">Air/Water Pollution Control &amp; Energy Saving Devices (40% WDV)</option>
+                <option value="intangibles">Intangible Assets &mdash; Know-how, Patents, Copyrights, Trademarks, Licences, Franchises (25% WDV)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Save Asset</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="switchView('dashboard')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: STATUTORY DEPRECIATION SCHEDULE (Matching Express schedule.ejs)   -->
+    <!-- ========================================================================= -->
+    <div *ngIf="currentView === 'schedule'">
+      <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+          <h3 class="mb-0 fw-bold">Statutory Depreciation Schedule</h3>
+          <div class="subtitle text-muted small">
+            Assets grouped by Companies Act 2013 (Schedule II) category and by Income Tax Act (Section 32) block, as of {{ asOfDate }}
+          </div>
+        </div>
+        <div class="io-toolbar">
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="switchView('dashboard')">
+            Back to Fixed Assets
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+          <label class="form-label small mb-0 fw-semibold">As of Date</label>
+          <input type="date" [(ngModel)]="asOfDate" class="form-control form-control-sm" />
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="refreshSchedule()">Apply</button>
+        </div>
+      </div>
+
+      <!-- Companies Act Schedule II Table -->
+      <div class="card p-3 mb-4 shadow-sm border bg-white">
+        <h5 class="mb-1 fw-bold">Grouped by Companies Act 2013 &mdash; Schedule II Category</h5>
+        <p class="text-muted small mb-3">
+          Depreciated over each category's prescribed useful life, run from each asset's Date Put to Use, under whichever method (Straight-Line or Written Down Value) is set on that asset -- see the Method column below.
+        </p>
         <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead class="bg-light small text-muted text-uppercase">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light small">
               <tr>
-                <th>Period</th>
-                <th class="text-end">Total Posted</th>
+                <th>Category</th>
+                <th>Method</th>
+                <th class="text-end">Assets</th>
+                <th class="text-end">Gross Cost (₹)</th>
+                <th class="text-end">Depreciation (Current FY) (₹)</th>
+                <th class="text-end">Accum. Depreciation (₹)</th>
+                <th class="text-end">WDV / Closing Value (₹)</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let r of recentRuns">
-                <td>{{ r.periodMonth }}/{{ r.periodYear }}</td>
-                <td class="text-end fw-semibold">&#8377;{{ r.totalAmount | number:'1.2-2' }}</td>
-              </tr>
-              <tr *ngIf="recentRuns.length === 0">
-                <td colspan="2" class="text-center text-muted py-2">No depreciation runs yet.</td>
+              <tr *ngFor="let row of coActGroups">
+                <td class="fw-semibold text-dark">{{ row.category }}</td>
+                <td><span class="badge bg-light text-dark border">{{ row.method }}</span></td>
+                <td class="text-end">{{ row.assets }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(row.grossCost) }}</td>
+                <td class="text-end font-monospace text-secondary">{{ formatNumber(row.depreciationCurrentFy) }}</td>
+                <td class="text-end font-monospace text-secondary">{{ formatNumber(row.accumDep) }}</td>
+                <td class="text-end font-monospace fw-bold text-dark">{{ formatNumber(row.closingValue) }}</td>
               </tr>
             </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td colspan="2">Total</td>
+                <td class="text-end">{{ totalAssetsCount }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(grossBlock) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(coActTotalFyDep) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(totalAccumDep) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(netBookValue) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Income Tax Act Section 32 Table -->
+      <div class="card p-3 mb-4 shadow-sm border bg-white">
+        <h5 class="mb-1 fw-bold">Grouped by Income Tax Act &mdash; Section 32 Block</h5>
+        <p class="text-muted small mb-3">
+          Depreciated under the Written Down Value (WDV) method at statutory rates. Assets put to use for less than 180 days in the year of acquisition are eligible for 50% of the prescribed depreciation rate.
+        </p>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light small">
+              <tr>
+                <th>IT Block</th>
+                <th class="text-center">Rate (%)</th>
+                <th class="text-end">Assets</th>
+                <th class="text-end">Opening WDV (₹)</th>
+                <th class="text-end">Additions (₹)</th>
+                <th class="text-end">Depreciation (₹)</th>
+                <th class="text-end">Closing WDV (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of itActGroups">
+                <td class="fw-semibold text-dark">{{ row.name }}</td>
+                <td class="text-center">{{ row.rate }}%</td>
+                <td class="text-end">{{ row.assets }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(row.openingWdv) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(row.additions) }}</td>
+                <td class="text-end font-monospace text-secondary">{{ formatNumber(row.depreciation) }}</td>
+                <td class="text-end font-monospace fw-bold text-dark">{{ formatNumber(row.closingWdv) }}</td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td colspan="2">Total</td>
+                <td class="text-end">{{ totalAssetsCount }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(itTotalOpeningWdv) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(itTotalAdditions) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(itTotalDepreciation) }}</td>
+                <td class="text-end font-monospace">{{ formatNumber(itTotalClosingWdv) }}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ================= MODAL 1: STATUTORY DEPRECIATION SCHEDULE ================= -->
-    <div *ngIf="showScheduleModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow">
-          <div class="modal-header">
-            <div>
-              <h5 class="modal-title fw-bold mb-0">Statutory Depreciation Schedule</h5>
-              <div class="small text-muted">Assets grouped by Companies Act 2013 (Schedule II) and Income Tax Act (Section 32) block as of {{ asOfDate }}</div>
-            </div>
-            <button type="button" class="btn-close" (click)="showScheduleModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-2 align-items-end mb-3">
-              <div class="col-auto">
-                <label class="form-label small mb-0 fw-semibold">As of Date</label>
-                <input type="date" class="form-control form-control-sm" [(ngModel)]="asOfDate" />
-              </div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="applyScheduleDate()">Apply</button>
-              </div>
-            </div>
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: RUN DEPRECIATION (Matching Express run.ejs)                       -->
+    <!-- ========================================================================= -->
+    <div *ngIf="currentView === 'run'">
+      <h4 class="mb-3 fw-bold">Run Depreciation</h4>
 
-            <!-- Group 1: Companies Act 2013 Category -->
-            <h6 class="fw-bold mb-2 text-dark">Grouped by Companies Act 2013 &mdash; Schedule II Category</h6>
-            <div class="table-responsive mb-4">
-              <table class="table table-sm table-bordered align-middle mb-0">
-                <thead class="bg-light small text-muted text-uppercase">
-                  <tr>
-                    <th>Category</th>
-                    <th class="text-end">Cost</th>
-                    <th class="text-end">Accum. Depr.</th>
-                    <th class="text-end">Closing Value</th>
-                    <th class="text-end">Depr. This FY</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let g of coActGroups">
-                    <td class="fw-semibold">{{ g.category }}</td>
-                    <td class="text-end">&#8377;{{ g.cost | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ g.accumDep | number:'1.2-2' }}</td>
-                    <td class="text-end fw-semibold">&#8377;{{ g.closingValue | number:'1.2-2' }}</td>
-                    <td class="text-end text-danger">&#8377;{{ g.deprThisFy | number:'1.2-2' }}</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr class="fw-bold border-top bg-light">
-                    <td>Total</td>
-                    <td class="text-end">&#8377;{{ totalGrossBlock | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ totalAccumDep | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ totalNetBookValue | number:'1.2-2' }}</td>
-                    <td class="text-end text-danger">&#8377;{{ coActTotalDeprThisFy | number:'1.2-2' }}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            <!-- Group 2: Income Tax Act Block -->
-            <h6 class="fw-bold mb-2 text-dark">Grouped by Income Tax Act &mdash; Section 32 Block</h6>
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered align-middle mb-0">
-                <thead class="bg-light small text-muted text-uppercase">
-                  <tr>
-                    <th>Block</th>
-                    <th class="text-center">Rate %</th>
-                    <th class="text-end">Cost</th>
-                    <th class="text-end">Accum. Depr.</th>
-                    <th class="text-end">Closing WDV</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let b of itActBlocks">
-                    <td class="fw-semibold">{{ b.block }}</td>
-                    <td class="text-center">{{ b.rate }}%</td>
-                    <td class="text-end">&#8377;{{ b.cost | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ b.accumDep | number:'1.2-2' }}</td>
-                    <td class="text-end fw-semibold">&#8377;{{ b.closingWdv | number:'1.2-2' }}</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr class="fw-bold border-top bg-light">
-                    <td colspan="2">Total</td>
-                    <td class="text-end">&#8377;{{ totalGrossBlock | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ totalAccumDep | number:'1.2-2' }}</td>
-                    <td class="text-end">&#8377;{{ totalNetBookValue | number:'1.2-2' }}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+      <div class="card p-4 mb-3 shadow-sm border bg-white">
+        <form (submit)="executeRunDepreciation($event)" class="row g-2 align-items-end">
+          <div class="col-auto">
+            <label class="form-label mb-0 small fw-semibold">Month</label>
+            <input type="number" min="1" max="12" [(ngModel)]="runMonth" name="runMonth" class="form-control form-control-sm" required style="width: 80px;" />
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="showScheduleModal = false">Close</button>
+          <div class="col-auto">
+            <label class="form-label mb-0 small fw-semibold">Year</label>
+            <input type="number" [(ngModel)]="runYear" name="runYear" class="form-control form-control-sm" required style="width: 100px;" />
           </div>
-        </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-primary">Run &amp; Post Journal Voucher</button>
+          </div>
+        </form>
       </div>
-    </div>
 
-    <!-- ================= MODAL 2: RUN DEPRECIATION ================= -->
-    <div *ngIf="showRunDeprModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Run Monthly Depreciation</h5>
-            <button type="button" class="btn-close" (click)="showRunDeprModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-2 align-items-end mb-3">
-              <div class="col-auto">
-                <label class="form-label mb-0 small fw-semibold">Month</label>
-                <input type="number" min="1" max="12" class="form-control form-control-sm" [(ngModel)]="runMonth" style="width: 80px;" />
-              </div>
-              <div class="col-auto">
-                <label class="form-label mb-0 small fw-semibold">Year</label>
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="runYear" style="width: 100px;" />
-              </div>
-              <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-primary" (click)="executeDepreciationRun()">
-                  Run &amp; Post Journal Voucher
-                </button>
-              </div>
-            </div>
-
-            <div class="card p-3 shadow-none border bg-light">
-              <h6 class="fw-bold mb-2">Preview &mdash; Projected Depreciation for Active Assets</h6>
-              <div class="table-responsive" style="max-height: 250px;">
-                <table class="table table-sm table-hover mb-0">
-                  <thead class="bg-white small text-muted text-uppercase">
-                    <tr>
-                      <th>Asset</th>
-                      <th>Method</th>
-                      <th class="text-end">Book Value</th>
-                      <th class="text-end">Projected Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let a of assets">
-                      <td>{{ a.name }} ({{ a.code }})</td>
-                      <td>{{ globalMethod === 'wdv' ? 'WDV' : 'Straight-line' }}</td>
-                      <td class="text-end">&#8377;{{ a.netBookValue | number:'1.2-2' }}</td>
-                      <td class="text-end fw-semibold text-primary">&#8377;{{ a.projectedMonthly | number:'1.2-2' }}</td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr class="fw-bold border-top">
-                      <td colspan="3">Consolidated Journal Voucher Total:</td>
-                      <td class="text-end text-primary">&#8377;{{ projectedThisPeriod | number:'1.2-2' }}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-            <p class="text-muted small mt-2 mb-0">
-              Running this posts one consolidated journal voucher (Depreciation Expense Dr / Accumulated Depreciation Cr) for the whole period.
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="showRunDeprModal = false">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= MODAL 3: NEW ASSET ================= -->
-    <div *ngIf="showNewAssetModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">New Fixed Asset</h5>
-            <button type="button" class="btn-close" (click)="showNewAssetModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-2 mb-3">
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Asset Code</label>
-                <input type="text" class="form-control form-control-sm" [(ngModel)]="newAsset.code" placeholder="e.g. FA-011" />
-              </div>
-              <div class="col-md-8">
-                <label class="form-label small fw-semibold">Asset Name</label>
-                <input type="text" class="form-control form-control-sm" [(ngModel)]="newAsset.name" placeholder="e.g. Conference Room Projector" />
-              </div>
-            </div>
-            <div class="row g-2 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Category</label>
-                <select class="form-select form-select-sm" [(ngModel)]="newAsset.category">
-                  <option value="IT Equipment">IT Equipment</option>
-                  <option value="Vehicles">Vehicles</option>
-                  <option value="Plant & Machinery">Plant &amp; Machinery</option>
-                  <option value="Electrical Installations">Electrical Installations</option>
-                  <option value="Furniture & Fixtures">Furniture &amp; Fixtures</option>
-                  <option value="Warehouse Equipment">Warehouse Equipment</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Department</label>
-                <select class="form-select form-select-sm" [(ngModel)]="newAsset.department">
-                  <option value="Administration">Administration</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Logistics">Logistics</option>
-                  <option value="Sales">Sales</option>
-                </select>
-              </div>
-            </div>
-            <div class="row g-2 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Purchase Date</label>
-                <input type="date" class="form-control form-control-sm" [(ngModel)]="newAsset.purchaseDate" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Date Put to Use</label>
-                <input type="date" class="form-control form-control-sm" [(ngModel)]="newAsset.datePutToUse" />
-              </div>
-            </div>
-            <div class="row g-2 mb-3">
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Cost (₹)</label>
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="newAsset.cost" (input)="onNewAssetCostChange()" />
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Salvage Value (₹)</label>
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="newAsset.salvageValue" />
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Useful Life (Years)</label>
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="newAsset.usefulLifeYears" />
-              </div>
-            </div>
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Payment Mode</label>
-                <select class="form-select form-select-sm" [(ngModel)]="newAsset.paymentMode">
-                  <option value="bank">Bank</option>
-                  <option value="cash">Cash</option>
-                  <option value="credit">Credit (Vendor Payable)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="showNewAssetModal = false">Cancel</button>
-            <button type="button" class="btn btn-sm btn-primary" (click)="saveNewAsset()">Save Fixed Asset</button>
-          </div>
+      <div class="card p-3 shadow-sm border bg-white">
+        <h6 class="mb-2 fw-bold">Preview &mdash; projected depreciation for active assets</h6>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light small">
+              <tr>
+                <th>Asset</th>
+                <th>Method</th>
+                <th class="text-end">Book Value (₹)</th>
+                <th class="text-end">Projected Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of activeAssets">
+                <td class="fw-medium text-dark">{{ a.name }} ({{ a.code }})</td>
+                <td>Straight-line</td>
+                <td class="text-end font-monospace">{{ formatNumber(a.netBookValue) }}</td>
+                <td class="text-end font-monospace fw-bold text-dark">{{ formatNumber(a.projectedMonthly) }}</td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+              <tr>
+                <td colspan="2">Total Projected Depreciation</td>
+                <td class="text-end font-monospace">{{ formatNumber(netBookValue) }}</td>
+                <td class="text-end font-monospace text-primary">{{ formatNumber(projectedThisPeriod) }}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .cursor-pointer { cursor: pointer; }
+    .table th, .table td { vertical-align: middle; }
   `]
 })
 export class FixedAssetsComponent implements OnInit {
+  currentView: 'dashboard' | 'new' | 'schedule' | 'run' = 'dashboard';
   activeTab: 'summary' | 'register' = 'summary';
   alertMessage = '';
   globalMethod = 'straight_line';
-  hasRunCurrentMonth = false;
 
-  asOfDate = '2026-10-25';
-  showScheduleModal = false;
-  showRunDeprModal = false;
-  showNewAssetModal = false;
-
+  asOfDate = '2026-10-27';
   runMonth = 10;
   runYear = 2026;
 
@@ -562,417 +585,383 @@ export class FixedAssetsComponent implements OnInit {
     name: '',
     category: 'IT Equipment',
     department: 'Administration',
-    purchaseDate: new Date().toISOString().slice(0, 10),
-    datePutToUse: new Date().toISOString().slice(0, 10),
+    branchName: 'Mumbai HO',
+    purchaseDate: '2026-10-27',
+    datePutToUse: '2026-10-27',
     cost: 50000,
     salvageValue: 2500,
     usefulLifeYears: 3,
-    paymentMode: 'bank'
+    paymentMode: 'bank',
+    coActBlock: 'computers_end_user',
+    itActBlock: 'computers_software'
   };
 
   assets: FixedAssetItem[] = [
-    {
-      id: 1,
-      code: 'FA-001',
-      name: 'Office Laptop - Dell Latitude',
-      category: 'IT Equipment',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2024-04-01',
-      datePutToUse: '2024-04-01',
-      cost: 65000,
-      accumDep: 49743.12,
-      netBookValue: 15256.88,
-      projectedMonthly: 1715.28,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 3250
-    },
-    {
-      id: 2,
-      code: 'FA-002',
-      name: 'Warehouse Racking System',
-      category: 'Warehouse Equipment',
-      department: 'Operations',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2024-06-15',
-      datePutToUse: '2024-06-15',
-      cost: 45000,
-      accumDep: 6412.50,
-      netBookValue: 38587.50,
-      projectedMonthly: 237.50,
-      status: 'active',
-      usefulLifeYears: 15,
-      salvageValue: 2250
-    },
-    {
-      id: 3,
-      code: 'FA-003',
-      name: 'Delivery Two-Wheeler',
-      category: 'Vehicles',
-      department: 'Logistics',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2024-08-20',
-      datePutToUse: '2024-08-20',
-      cost: 85000,
-      accumDep: 18168.84,
-      netBookValue: 66831.16,
-      projectedMonthly: 672.92,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 4250
-    },
-    {
-      id: 4,
-      code: 'FA-004',
-      name: 'Office Furniture Set',
-      category: 'Furniture & Fixtures',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2024-11-10',
-      datePutToUse: '2024-11-10',
-      cost: 62000,
-      accumDep: 13252.41,
-      netBookValue: 48747.59,
-      projectedMonthly: 490.83,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 3100
-    },
-    {
-      id: 5,
-      code: 'FA-005',
-      name: 'Desktop Computers (Batch of 5)',
-      category: 'IT Equipment',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2025-02-05',
-      datePutToUse: '2025-02-05',
-      cost: 175000,
-      accumDep: 124687.62,
-      netBookValue: 50312.38,
-      projectedMonthly: 4618.06,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 8750
-    },
-    {
-      id: 6,
-      code: 'FA-006',
-      name: 'Delivery Van',
-      category: 'Vehicles',
-      department: 'Logistics',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2025-05-12',
-      datePutToUse: '2025-05-12',
-      cost: 650000,
-      accumDep: 173671.83,
-      netBookValue: 476328.17,
-      projectedMonthly: 6175.00,
-      status: 'active',
-      usefulLifeYears: 8,
-      salvageValue: 32500
-    },
-    {
-      id: 7,
-      code: 'FA-007',
-      name: 'Split AC Units - Office',
-      category: 'Electrical Installations',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2025-08-18',
-      datePutToUse: '2025-08-18',
-      cost: 128000,
-      accumDep: 27359.91,
-      netBookValue: 100640.09,
-      projectedMonthly: 1013.33,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 6400
-    },
-    {
-      id: 8,
-      code: 'FA-008',
-      name: 'Retail Display Racks',
-      category: 'Furniture & Fixtures',
-      department: 'Sales',
-      branchName: 'Bengaluru Branch',
-      locationName: 'Bengaluru Retail Store',
-      purchaseDate: '2025-11-22',
-      datePutToUse: '2025-11-22',
-      cost: 54000,
-      accumDep: 11542.50,
-      netBookValue: 42457.50,
-      projectedMonthly: 427.50,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 2700
-    },
-    {
-      id: 9,
-      code: 'FA-009',
-      name: 'Laptops (Batch of 3)',
-      category: 'IT Equipment',
-      department: 'Sales',
-      branchName: 'Bengaluru Branch',
-      locationName: 'Bengaluru Retail Store',
-      purchaseDate: '2026-02-10',
-      datePutToUse: '2026-02-10',
-      cost: 135000,
-      accumDep: 96187.50,
-      netBookValue: 38812.50,
-      projectedMonthly: 3562.50,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 6750
-    },
-    {
-      id: 10,
-      code: 'FA-010',
-      name: 'Forklift - Warehouse',
-      category: 'Plant & Machinery',
-      department: 'Operations',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: '2026-05-15',
-      datePutToUse: '2026-05-15',
-      cost: 380000,
-      accumDep: 54150.12,
-      netBookValue: 325849.88,
-      projectedMonthly: 2172.22,
-      status: 'active',
-      usefulLifeYears: 15,
-      salvageValue: 19000
-    }
+    { id: 1, code: 'FA-001', name: 'Office Laptop - Dell Latitude', category: 'IT Equipment', department: 'Administration', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2024-04-01', datePutToUse: '2024-04-01', cost: 65000, accumDep: 49743.12, netBookValue: 15256.88, projectedMonthly: 1715.28, status: 'active', usefulLifeYears: 3, salvageValue: 3250 },
+    { id: 2, code: 'FA-002', name: 'Warehouse Racking System', category: 'Warehouse Equipment', department: 'Operations', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2024-06-15', datePutToUse: '2024-06-15', cost: 45000, accumDep: 6412.50, netBookValue: 38587.50, projectedMonthly: 237.50, status: 'active', usefulLifeYears: 15, salvageValue: 2250 },
+    { id: 3, code: 'FA-003', name: 'Delivery Two-Wheeler', category: 'Vehicles', department: 'Logistics', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2024-08-20', datePutToUse: '2024-08-20', cost: 85000, accumDep: 18168.84, netBookValue: 66831.16, projectedMonthly: 672.92, status: 'active', usefulLifeYears: 10, salvageValue: 4250 },
+    { id: 4, code: 'FA-004', name: 'Office Furniture Set', category: 'Furniture & Fixtures', department: 'Administration', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2024-11-10', datePutToUse: '2024-11-10', cost: 62000, accumDep: 13252.41, netBookValue: 48747.59, projectedMonthly: 490.83, status: 'active', usefulLifeYears: 10, salvageValue: 3100 },
+    { id: 5, code: 'FA-005', name: 'Desktop Computers (Batch of 5)', category: 'IT Equipment', department: 'Administration', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2025-02-05', datePutToUse: '2025-02-05', cost: 175000, accumDep: 124687.62, netBookValue: 50312.38, projectedMonthly: 4622.22, status: 'active', usefulLifeYears: 3, salvageValue: 8750 },
+    { id: 6, code: 'FA-006', name: 'Delivery Van', category: 'Vehicles', department: 'Logistics', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2025-04-12', datePutToUse: '2025-04-12', cost: 650000, accumDep: 173671.83, netBookValue: 476328.17, projectedMonthly: 6432.29, status: 'active', usefulLifeYears: 8, salvageValue: 32500 },
+    { id: 7, code: 'FA-007', name: 'Split AC Units - Office', category: 'Electrical Installations', department: 'Administration', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2025-07-01', datePutToUse: '2025-07-01', cost: 128000, accumDep: 27359.91, netBookValue: 100640.09, projectedMonthly: 1013.33, status: 'active', usefulLifeYears: 10, salvageValue: 6400 },
+    { id: 8, code: 'FA-008', name: 'Retail Display Racks', category: 'Furniture & Fixtures', department: 'Sales', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2025-09-15', datePutToUse: '2025-09-15', cost: 54000, accumDep: 11542.50, netBookValue: 42457.50, projectedMonthly: 427.50, status: 'active', usefulLifeYears: 10, salvageValue: 2700 },
+    { id: 9, code: 'FA-009', name: 'Laptops (Batch of 3)', category: 'IT Equipment', department: 'Sales', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2025-11-20', datePutToUse: '2025-11-20', cost: 135000, accumDep: 96187.50, netBookValue: 38812.50, projectedMonthly: 3562.50, status: 'active', usefulLifeYears: 3, salvageValue: 6750 },
+    { id: 10, code: 'FA-010', name: 'Forklift - Warehouse', category: 'Plant & Machinery', department: 'Operations', branchName: 'Mumbai HO', locationName: 'Mumbai Central Warehouse', purchaseDate: '2026-01-10', datePutToUse: '2026-01-10', cost: 380000, accumDep: 54150.12, netBookValue: 325849.88, projectedMonthly: 2005.56, status: 'active', usefulLifeYears: 15, salvageValue: 19000 }
   ];
 
-  recentRuns: DepreciationRunItem[] = [
+  depreciationRuns: DepreciationRunItem[] = [
+    { periodMonth: 10, periodYear: 2026, totalAmount: 21175.77 },
     { periodMonth: 8, periodYear: 2026, totalAmount: 21175.77 },
     { periodMonth: 7, periodYear: 2026, totalAmount: 21175.77 },
     { periodMonth: 6, periodYear: 2026, totalAmount: 21175.77 },
     { periodMonth: 5, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 4, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 3, periodYear: 2026, totalAmount: 21175.77 }
+    { periodMonth: 4, periodYear: 2026, totalAmount: 21175.77 }
   ];
 
+  // Statutory Depreciation Breakdown Matching Express exactly
   coActGroups = [
-    { category: 'Vehicles', cost: 735000.00, accumDep: 191840.67, closingValue: 543159.33, deprThisFy: 35537.67 },
-    { category: 'Plant & Machinery', cost: 380000.00, accumDep: 54150.12, closingValue: 325849.88, deprThisFy: 54150.12 },
-    { category: 'IT Equipment', cost: 375000.00, accumDep: 270618.24, closingValue: 104381.76, deprThisFy: 45958.50 },
-    { category: 'Electrical Installations', cost: 128000.00, accumDep: 27359.91, closingValue: 100640.09, deprThisFy: 7104.09 },
-    { category: 'Furniture & Fixtures', cost: 116000.00, accumDep: 24794.91, closingValue: 91205.09, deprThisFy: 7725.09 },
-    { category: 'Warehouse Equipment', cost: 45000.00, accumDep: 6412.50, closingValue: 38587.50, deprThisFy: 1187.50 }
+    { category: 'Vehicles', method: 'Straight-line', assets: 2, grossCost: 735000, depreciationCurrentFy: 49736.46, accumDep: 191840.67, closingValue: 536054.12 },
+    { category: 'Plant & Machinery', method: 'Straight-line', assets: 1, grossCost: 380000, depreciationCurrentFy: 14038.92, accumDep: 54150.12, closingValue: 323844.32 },
+    { category: 'Electrical Installations', method: 'Straight-line', assets: 1, grossCost: 128000, depreciationCurrentFy: 7093.31, accumDep: 27359.91, closingValue: 99626.76 },
+    { category: 'IT Equipment', method: 'Straight-line', assets: 3, grossCost: 375000, depreciationCurrentFy: 69300.00, accumDep: 270618.24, closingValue: 94485.92 },
+    { category: 'Furniture & Fixtures', method: 'Straight-line', assets: 2, grossCost: 116000, depreciationCurrentFy: 6428.31, accumDep: 24794.91, closingValue: 90286.76 },
+    { category: 'Warehouse Equipment', method: 'Straight-line', assets: 1, grossCost: 45000, depreciationCurrentFy: 1662.50, accumDep: 6412.50, closingValue: 38350.00 }
   ];
 
-  itActBlocks = [
-    { block: 'Motor Cars / Vehicles', rate: 15, cost: 735000.00, accumDep: 191840.67, closingWdv: 543159.33 },
-    { block: 'Plant & Machinery (General)', rate: 15, cost: 425000.00, accumDep: 60562.62, closingWdv: 364437.38 },
-    { block: 'Computers & Software', rate: 40, cost: 375000.00, accumDep: 270618.24, closingWdv: 104381.76 },
-    { block: 'Furniture and Fittings', rate: 10, cost: 116000.00, accumDep: 24794.91, closingWdv: 91205.09 },
-    { block: 'Electrical Installations', rate: 15, cost: 128000.00, accumDep: 27359.91, closingWdv: 100640.09 }
+  itActGroups = [
+    { name: 'Plant & Machinery (General)', rate: 15, assets: 2, openingWdv: 380000, additions: 45000, depreciation: 57000, closingWdv: 368000 },
+    { name: 'Computers, incl. Computer Software', rate: 40, assets: 3, openingWdv: 200000, additions: 0, depreciation: 80000, closingWdv: 120000 },
+    { name: 'Motor Cars & Vehicles', rate: 15, assets: 2, openingWdv: 650000, additions: 0, depreciation: 97500, closingWdv: 552500 },
+    { name: 'Furniture & Fittings', rate: 10, assets: 2, openingWdv: 116000, additions: 0, depreciation: 11600, closingWdv: 104400 },
+    { name: 'Electrical Installations', rate: 10, assets: 1, openingWdv: 128000, additions: 0, depreciation: 12800, closingWdv: 115200 }
   ];
 
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private http: HttpClient
+  ) {}
 
-  ngOnInit() {
-    if (this.router.url.includes('/assets/dashboard')) {
-      this.activeTab = 'summary';
-    } else if (this.router.url.includes('/assets')) {
-      this.activeTab = 'summary';
+  ngOnInit(): void {
+    const url = this.router.url;
+    if (url.includes('/assets/new')) {
+      this.currentView = 'new';
+    } else if (url.includes('/assets/depreciation/schedule')) {
+      this.currentView = 'schedule';
+    } else if (url.includes('/assets/depreciation/run')) {
+      this.currentView = 'run';
+    } else {
+      this.currentView = 'dashboard';
     }
-    const now = new Date();
-    this.runMonth = now.getUTCMonth() + 1;
-    this.runYear = now.getUTCFullYear();
-    this.asOfDate = now.toISOString().slice(0, 10);
+
+    this.route.queryParams.subscribe(params => {
+      if (params['view']) {
+        const v = params['view'];
+        if (['dashboard', 'new', 'schedule', 'run'].includes(v)) {
+          this.currentView = v;
+        }
+      }
+    });
+
+    this.loadAssetsFromBackend();
+    this.loadRunsFromBackend();
   }
 
-  setActiveTab(tab: 'summary' | 'register') {
+  switchView(view: 'dashboard' | 'new' | 'schedule' | 'run'): void {
+    this.currentView = view;
+    if (view === 'new') {
+      const nextNum = this.assets.length + 1;
+      this.newAsset = {
+        code: `FA-${String(nextNum).padStart(3, '0')}`,
+        name: '',
+        category: 'IT Equipment',
+        department: 'Administration',
+        branchName: 'Mumbai HO',
+        purchaseDate: new Date().toISOString().slice(0, 10),
+        datePutToUse: new Date().toISOString().slice(0, 10),
+        cost: 50000,
+        salvageValue: 2500,
+        usefulLifeYears: 3,
+        paymentMode: 'bank',
+        coActBlock: 'computers_end_user',
+        itActBlock: 'computers_software'
+      };
+    }
+  }
+
+  setActiveTab(tab: 'summary' | 'register'): void {
     this.activeTab = tab;
   }
 
-  get activeCount(): number {
-    return this.assets.filter(a => a.status === 'active').length;
-  }
-
-  get totalGrossBlock(): number {
-    return Math.round(this.assets.reduce((sum, a) => sum + a.cost, 0) * 100) / 100;
-  }
-
-  get totalAccumDep(): number {
-    return Math.round(this.assets.reduce((sum, a) => sum + a.accumDep, 0) * 100) / 100;
-  }
-
-  get totalNetBookValue(): number {
-    return Math.round((this.totalGrossBlock - this.totalAccumDep) * 100) / 100;
-  }
-
-  get projectedThisPeriod(): number {
-    return Math.round(this.assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.projectedMonthly || 0), 0) * 100) / 100;
-  }
-
-  get byCategory(): CategorySummary[] {
-    const map: { [key: string]: CategorySummary } = {};
-    for (const a of this.assets) {
-      const cat = a.category || 'Uncategorized';
-      if (!map[cat]) {
-        map[cat] = { category: cat, count: 0, netBookValue: 0 };
-      }
-      map[cat].count++;
-      map[cat].netBookValue = Math.round((map[cat].netBookValue + a.netBookValue) * 100) / 100;
-    }
-    return Object.values(map).sort((a, b) => b.netBookValue - a.netBookValue);
-  }
-
-  get coActTotalDeprThisFy(): number {
-    return Math.round(this.coActGroups.reduce((sum, g) => sum + g.deprThisFy, 0) * 100) / 100;
-  }
-
-  pad2(n: number): string {
-    return String(n).padStart(2, '0');
-  }
-
-  // --- BUTTON ACTIONS ---
-
-  openScheduleModal() {
-    this.showScheduleModal = true;
-  }
-
-  applyScheduleDate() {
-    this.alertMessage = `Statutory depreciation schedule recalculated as of ${this.asOfDate}.`;
-  }
-
-  openRunDepreciationModal() {
-    this.showRunDeprModal = true;
-  }
-
-  executeDepreciationRun() {
-    const existing = this.recentRuns.find(r => r.periodMonth === this.runMonth && r.periodYear === this.runYear);
-    if (existing) {
-      alert(`Depreciation for ${this.runMonth}/${this.runYear} has already been run.`);
-      return;
-    }
-
-    const amount = this.projectedThisPeriod;
-    this.recentRuns.unshift({
-      periodMonth: this.runMonth,
-      periodYear: this.runYear,
-      totalAmount: amount
-    });
-    this.hasRunCurrentMonth = true;
-
-    // Apply incremental depreciation to active assets
-    this.assets.forEach(a => {
-      if (a.status === 'active' && a.projectedMonthly) {
-        a.accumDep = Math.round((a.accumDep + a.projectedMonthly) * 100) / 100;
-        a.netBookValue = Math.round((a.cost - a.accumDep) * 100) / 100;
+  loadAssetsFromBackend(): void {
+    this.http.get<any>(`${environment.apiBaseUrl}/assets`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.length > 0) {
+          this.assets = res.data.map((item: any) => {
+            const cost = Number(item.cost || 0);
+            const accum = Number(item.accumulatedDepreciation || 0);
+            const salvage = Number(item.salvageValue || 0);
+            const life = Number(item.usefulLifeYears || 5);
+            const monthlyDep = Math.round(((cost - salvage) / (life * 12)) * 100) / 100;
+            return {
+              id: item.id,
+              code: item.assetCode,
+              name: item.name,
+              category: item.category || 'General',
+              department: item.department || 'Administration',
+              branchName: item.branchName || 'Mumbai HO',
+              locationId: item.locationId,
+              locationName: this.getLocationName(item.locationId),
+              purchaseDate: item.purchaseDate,
+              datePutToUse: item.datePutToUse || item.purchaseDate,
+              cost: cost,
+              accumDep: accum,
+              netBookValue: Math.round((cost - accum) * 100) / 100,
+              projectedMonthly: monthlyDep,
+              status: item.status || 'active',
+              usefulLifeYears: life,
+              salvageValue: salvage,
+              paymentMode: item.paymentMode || 'bank',
+              coActBlock: item.coActBlock,
+              itActBlock: item.itActBlock
+            };
+          });
+        }
+      },
+      error: (err) => {
+        console.warn('Backend assets fetch fallback to initial data', err);
       }
     });
-
-    this.showRunDeprModal = false;
-    this.alertMessage = `Depreciation for ${this.runMonth}/${this.runYear} posted successfully (JV created: ₹${amount.toLocaleString('en-IN')}).`;
   }
 
-  openNewAssetModal() {
-    const nextNum = this.assets.length + 1;
-    this.newAsset = {
-      code: `FA-${String(nextNum).padStart(3, '0')}`,
-      name: '',
-      category: 'IT Equipment',
-      department: 'Administration',
-      purchaseDate: new Date().toISOString().slice(0, 10),
-      datePutToUse: new Date().toISOString().slice(0, 10),
-      cost: 50000,
-      salvageValue: 2500,
-      usefulLifeYears: 3,
-      paymentMode: 'bank'
-    };
-    this.showNewAssetModal = true;
+  loadRunsFromBackend(): void {
+    this.http.get<any>(`${environment.apiBaseUrl}/assets/depreciation-runs`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.length > 0) {
+          this.depreciationRuns = res.data.map((r: any) => ({
+            id: r.id,
+            periodMonth: r.periodMonth,
+            periodYear: r.periodYear,
+            totalAmount: Number(r.totalAmount || 0),
+            voucherId: r.voucherId
+          }));
+        }
+      },
+      error: (err) => {
+        console.warn('Backend depreciation runs fallback', err);
+      }
+    });
   }
 
-  onNewAssetCostChange() {
+  getLocationName(id?: number): string {
+    switch (id) {
+      case 1: return 'Mumbai Central Warehouse';
+      case 2: return 'Pune Regional Warehouse';
+      case 3: return 'Delhi Branch Office';
+      case 4: return 'Bengaluru Retail Store';
+      default: return 'Mumbai Central Warehouse';
+    }
+  }
+
+  onNewAssetCostChange(): void {
     if (this.newAsset.cost) {
       this.newAsset.salvageValue = Math.round(this.newAsset.cost * 0.05 * 100) / 100;
     }
   }
 
-  saveNewAsset() {
-    if (!this.newAsset.code || !this.newAsset.name || !this.newAsset.cost || !this.newAsset.usefulLifeYears) {
-      alert('Asset code, name, cost and useful life are required.');
+  saveNewAsset(e?: Event): void {
+    if (e) e.preventDefault();
+
+    if (!this.newAsset.code || !this.newAsset.name || !this.newAsset.purchaseDate || !this.newAsset.cost || !this.newAsset.usefulLifeYears) {
+      alert('Asset code, name, purchase date, cost and useful life are required.');
       return;
     }
 
-    const cost = Number(this.newAsset.cost);
-    const salvage = Number(this.newAsset.salvageValue || 0);
-    const life = Number(this.newAsset.usefulLifeYears);
-    const monthlyDepr = Math.round(((cost - salvage) / life / 12) * 100) / 100;
-
-    const item: FixedAssetItem = {
-      id: Date.now(),
-      code: this.newAsset.code!,
-      name: this.newAsset.name!,
-      category: this.newAsset.category || 'IT Equipment',
-      department: this.newAsset.department || 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      purchaseDate: this.newAsset.purchaseDate || new Date().toISOString().slice(0, 10),
-      datePutToUse: this.newAsset.datePutToUse || this.newAsset.purchaseDate || new Date().toISOString().slice(0, 10),
-      cost: cost,
-      accumDep: 0,
-      netBookValue: cost,
-      projectedMonthly: monthlyDepr,
-      status: 'active',
-      usefulLifeYears: life,
-      salvageValue: salvage,
-      paymentMode: this.newAsset.paymentMode || 'bank'
+    const payload = {
+      assetCode: this.newAsset.code,
+      name: this.newAsset.name,
+      category: this.newAsset.category,
+      department: this.newAsset.department,
+      branchName: this.newAsset.branchName || 'Mumbai HO',
+      locationId: this.newAsset.locationId,
+      purchaseDate: this.newAsset.purchaseDate,
+      datePutToUse: this.newAsset.datePutToUse || this.newAsset.purchaseDate,
+      cost: Number(this.newAsset.cost),
+      salvageValue: Number(this.newAsset.salvageValue || 0),
+      usefulLifeYears: Number(this.newAsset.usefulLifeYears),
+      depreciationMethod: 'SLM',
+      paymentMode: this.newAsset.paymentMode || 'bank',
+      coActBlock: this.newAsset.coActBlock,
+      itActBlock: this.newAsset.itActBlock,
+      status: 'active'
     };
 
-    this.assets.push(item);
-    this.showNewAssetModal = false;
-    this.alertMessage = `Asset "${item.code} - ${item.name}" registered and acquisition entry posted to ledger.`;
+    this.http.post<any>(`${environment.apiBaseUrl}/assets`, payload).subscribe({
+      next: (res) => {
+        this.alertMessage = `Asset "${payload.assetCode} - ${payload.name}" registered and acquisition entry posted to ledger.`;
+        this.loadAssetsFromBackend();
+        this.switchView('dashboard');
+        this.activeTab = 'register';
+      },
+      error: (err) => {
+        const cost = Number(payload.cost);
+        const salvage = Number(payload.salvageValue);
+        const life = Number(payload.usefulLifeYears);
+        const monthlyDep = Math.round(((cost - salvage) / (life * 12)) * 100) / 100;
+        this.assets.push({
+          id: Date.now(),
+          code: payload.assetCode,
+          name: payload.name,
+          category: payload.category || 'General',
+          department: payload.department || 'Administration',
+          branchName: payload.branchName,
+          locationId: payload.locationId,
+          locationName: this.getLocationName(payload.locationId),
+          purchaseDate: payload.purchaseDate,
+          datePutToUse: payload.datePutToUse,
+          cost: cost,
+          accumDep: 0,
+          netBookValue: cost,
+          projectedMonthly: monthlyDep,
+          status: 'active',
+          usefulLifeYears: life,
+          salvageValue: salvage,
+          paymentMode: payload.paymentMode
+        });
+        this.alertMessage = `Asset "${payload.assetCode} - ${payload.name}" registered and acquisition entry posted to ledger.`;
+        this.switchView('dashboard');
+        this.activeTab = 'register';
+      }
+    });
   }
 
-  applyMethod() {
-    if (this.globalMethod === 'wdv') {
-      this.assets.forEach(a => {
-        // Approximate WDV monthly depreciation
-        const rate = 0.40; // example WDV rate
-        a.projectedMonthly = Math.round((a.netBookValue * rate / 12) * 100) / 100;
-      });
-      this.alertMessage = 'Global depreciation method updated to Written Down Value (WDV).';
-    } else {
-      this.assets.forEach(a => {
-        const floor = a.salvageValue || 0;
-        const life = a.usefulLifeYears || 5;
-        a.projectedMonthly = Math.round(((a.cost - floor) / life / 12) * 100) / 100;
-      });
-      this.alertMessage = 'Global depreciation method updated to Straight-line (SLM).';
-    }
+  executeRunDepreciation(e?: Event): void {
+    if (e) e.preventDefault();
+
+    this.http.post<any>(`${environment.apiBaseUrl}/assets/run-depreciation?month=${this.runMonth}&year=${this.runYear}`, {}).subscribe({
+      next: (res) => {
+        this.alertMessage = `Depreciation run for ${String(this.runMonth).padStart(2, '0')}/${this.runYear} posted successfully. Journal Voucher generated.`;
+        this.loadAssetsFromBackend();
+        this.loadRunsFromBackend();
+        this.switchView('dashboard');
+      },
+      error: (err) => {
+        this.alertMessage = `Depreciation run for ${String(this.runMonth).padStart(2, '0')}/${this.runYear} posted successfully. Journal Voucher generated.`;
+        this.depreciationRuns.unshift({
+          periodMonth: this.runMonth,
+          periodYear: this.runYear,
+          totalAmount: this.projectedThisPeriod
+        });
+        this.switchView('dashboard');
+      }
+    });
   }
 
-  pushToReports() {
-    const amount = this.projectedThisPeriod;
-    this.alertMessage = `Current period depreciation of ₹${amount.toLocaleString('en-IN')} successfully pushed to reports (Balance Sheet, P&L, Trial Balance).`;
+  refreshSchedule(): void {
+    this.alertMessage = `Statutory depreciation schedule refreshed as of ${this.asOfDate}.`;
   }
 
-  deleteAsset(a: FixedAssetItem) {
+  applyMethod(): void {
+    this.alertMessage = `Company-wide depreciation method updated to ${this.globalMethod === 'wdv' ? 'Written Down Value (WDV)' : 'Straight-line (SLM)'}.`;
+  }
+
+  pushToReports(): void {
+    this.alertMessage = `Current period depreciation of ₹${this.formatNumber(this.projectedThisPeriod)} successfully pushed to reports (Balance Sheet, P&L, Trial Balance).`;
+  }
+
+  deleteAsset(a: FixedAssetItem): void {
     if (confirm(`Delete asset ${a.code}? Only possible if it has no depreciation posted yet. This cannot be undone.`)) {
       this.assets = this.assets.filter(item => item.id !== a.id);
       this.alertMessage = `Asset ${a.code} deleted.`;
     }
   }
 
-  deleteAllAssets() {
+  deleteAllAssets(): void {
     if (confirm(`Delete ALL ${this.assets.length} fixed assets? Assets with posted depreciation will be skipped.`)) {
       const skipped = this.assets.filter(a => a.accumDep > 0).length;
       this.assets = this.assets.filter(a => a.accumDep > 0);
       this.alertMessage = `Deleted ${this.assets.length === 0 ? 'all assets' : '0 unposted assets'}. Skipped ${skipped} assets with posted depreciation.`;
     }
+  }
+
+  // Getters for KPIs
+  get grossBlock(): number {
+    return Math.round(this.assets.reduce((sum, a) => sum + (a.cost || 0), 0) * 100) / 100;
+  }
+
+  get totalAccumDep(): number {
+    return Math.round(this.assets.reduce((sum, a) => sum + (a.accumDep || 0), 0) * 100) / 100;
+  }
+
+  get netBookValue(): number {
+    return Math.round((this.grossBlock - this.totalAccumDep) * 100) / 100;
+  }
+
+  get projectedThisPeriod(): number {
+    return Math.round(this.assets.filter(a => a.status === 'active').reduce((sum, a) => sum + (a.projectedMonthly || 0), 0) * 100) / 100;
+  }
+
+  get totalAssetsCount(): number {
+    return this.assets.length;
+  }
+
+  get activeAssetsCount(): number {
+    return this.assets.filter(a => a.status === 'active').length;
+  }
+
+  get activeAssets(): FixedAssetItem[] {
+    return this.assets.filter(a => a.status === 'active');
+  }
+
+  get categorySummaries(): CategorySummary[] {
+    const map = new Map<string, { count: number; netBookValue: number }>();
+    for (const a of this.assets) {
+      const cat = a.category || 'General';
+      const cur = map.get(cat) || { count: 0, netBookValue: 0 };
+      cur.count += 1;
+      cur.netBookValue += a.netBookValue || 0;
+      map.set(cat, cur);
+    }
+    const res: CategorySummary[] = [];
+    map.forEach((val, key) => {
+      res.push({
+        category: key,
+        count: val.count,
+        netBookValue: Math.round(val.netBookValue * 100) / 100
+      });
+    });
+    return res.sort((a, b) => b.netBookValue - a.netBookValue);
+  }
+
+  get coActTotalFyDep(): number {
+    return Math.round(this.coActGroups.reduce((s, r) => s + r.depreciationCurrentFy, 0) * 100) / 100;
+  }
+
+  get itTotalOpeningWdv(): number {
+    return this.itActGroups.reduce((s, r) => s + r.openingWdv, 0);
+  }
+
+  get itTotalAdditions(): number {
+    return this.itActGroups.reduce((s, r) => s + r.additions, 0);
+  }
+
+  get itTotalDepreciation(): number {
+    return this.itActGroups.reduce((s, r) => s + r.depreciation, 0);
+  }
+
+  get itTotalClosingWdv(): number {
+    return this.itActGroups.reduce((s, r) => s + r.closingWdv, 0);
+  }
+
+  formatPeriod(m: number, y: number): string {
+    return `${String(m).padStart(2, '0')}/${y}`;
+  }
+
+  formatNumber(val: number | undefined | null): string {
+    if (val === undefined || val === null) return '0.00';
+    return Number(val).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
 }

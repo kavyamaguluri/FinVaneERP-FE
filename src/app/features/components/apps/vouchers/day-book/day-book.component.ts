@@ -267,7 +267,7 @@ export interface DayBookLineRow {
 export class DayBookComponent implements OnInit {
   granularity: string = 'custom';
   fromDate: string = '2024-04-01';
-  toDate: string = '2026-10-25';
+  toDate: string = '2026-10-27';
   searchQuery: string = '';
   dateSort: string = 'desc';
 
