@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -161,7 +161,7 @@ import { Subscription } from 'rxjs';
         </tbody>
       </table>
       <p class="small text-success mb-0 mt-2">
-        ✓ Reconciles with the actual change in Cash & Bank balance (₹-8,88,750.00) for this period.
+        âœ“ Reconciles with the actual change in Cash & Bank balance (â‚¹-8,88,750.00) for this period.
       </p>
     </div>
 
@@ -169,7 +169,7 @@ import { Subscription } from 'rxjs';
     <div *ngIf="method === 'direct'">
       <div class="card p-3 mb-3 d-flex flex-row justify-content-between align-items-center">
         <div><span class="text-muted small">Opening Cash & Bank Balance (as on {{ formatDate(from) }})</span></div>
-        <div class="fw-bold">₹0.00</div>
+        <div class="fw-bold">â‚¹0.00</div>
       </div>
 
       <!-- Operating Activities -->
@@ -184,7 +184,7 @@ import { Subscription } from 'rxjs';
             <tr><td>25-10-2026</td><td>PMT-001</td><td>Purchases</td><td>Payment to suppliers</td><td class="text-end text-danger">-14,34,926.35</td></tr>
           </tbody>
         </table>
-        <p class="text-end fw-bold mb-0">Total: ₹-1,84,926.35</p>
+        <p class="text-end fw-bold mb-0">Total: â‚¹-1,84,926.35</p>
       </div>
 
       <!-- Investing Activities -->
@@ -198,7 +198,7 @@ import { Subscription } from 'rxjs';
             <tr><td>15-05-2026</td><td>PMT-012</td><td>Fixed Assets - Gross Block</td><td>Purchase of computer equipment & furniture</td><td class="text-end text-danger">-12,03,823.65</td></tr>
           </tbody>
         </table>
-        <p class="text-end fw-bold mb-0">Total: ₹-12,03,823.65</p>
+        <p class="text-end fw-bold mb-0">Total: â‚¹-12,03,823.65</p>
       </div>
 
       <!-- Financing Activities -->
@@ -212,14 +212,14 @@ import { Subscription } from 'rxjs';
             <tr><td>01-04-2024</td><td>RCP-000</td><td>Owner's Capital</td><td>Capital introduced by owner</td><td class="text-end text-success">5,00,000.00</td></tr>
           </tbody>
         </table>
-        <p class="text-end fw-bold mb-0">Total: ₹5,00,000.00</p>
+        <p class="text-end fw-bold mb-0">Total: â‚¹5,00,000.00</p>
       </div>
 
       <div class="card p-4">
-        <h5 class="text-end">Net Increase / (Decrease) in Cash: ₹-8,88,750.00</h5>
-        <h6 class="text-end text-muted">Closing Cash & Bank Balance (as on {{ formatDate(to) }}): ₹-8,88,750.00</h6>
+        <h5 class="text-end">Net Increase / (Decrease) in Cash: â‚¹-8,88,750.00</h5>
+        <h6 class="text-end text-muted">Closing Cash & Bank Balance (as on {{ formatDate(to) }}): â‚¹-8,88,750.00</h6>
         <p class="small text-success mb-0 text-end">
-          ✓ Reconciles with the actual change in Cash & Bank balance (₹-8,88,750.00) for this period.
+          âœ“ Reconciles with the actual change in Cash & Bank balance (â‚¹-8,88,750.00) for this period.
         </p>
       </div>
       <p class="small text-muted mt-2">Direct method figures are only as complete as the cash/bank journal entries recorded &mdash; invoice payments not yet posted as receipts against Bank/Cash won't appear here.</p>
@@ -280,8 +280,8 @@ import { Subscription } from 'rxjs';
 export class CashFlowComponent implements OnInit, OnDestroy {
   method: 'indirect' | 'direct' = 'indirect';
   granularity: string = 'custom';
-  from: string = '2024-04-01';
-  to: string = '2026-10-27';
+  from: string = '';
+  to: string = '';
 
   showWc: boolean = true;
   showInv: boolean = true;
@@ -342,7 +342,7 @@ export class CashFlowComponent implements OnInit, OnDestroy {
   }
 
   updateCashFlowData(): void {
-    if (this.from === '2026-10-01' || this.from.startsWith('2026-10')) {
+    if (this.granularity === 'monthly') {
       // October 2026 ground truth from Express
       this.openingCash = -888750.00;
       this.operatingCash = -21175.77;
@@ -359,19 +359,19 @@ export class CashFlowComponent implements OnInit, OnDestroy {
   }
 
   onGranularityChange(): void {
-    const curYear = 2026;
+    const curYear = new Date().getFullYear();
     if (this.granularity === 'annually') {
-      this.from = '2024-04-01';
-      this.to = `${curYear}-03-31`;
+      this.from = this.getFyStart();
+      this.to = this.getFyEnd();
     } else if (this.granularity === 'half_yearly') {
-      this.from = '2024-04-01';
-      this.to = '2024-09-30';
+      this.from = this.getFyStart();
+      this.to = this.getQuarterEnd();
     } else if (this.granularity === 'quarterly') {
-      this.from = '2024-04-01';
-      this.to = '2024-06-30';
+      this.from = this.getFyStart();
+      this.to = this.getQuarterEnd();
     } else if (this.granularity === 'monthly') {
-      this.from = '2026-10-01';
-      this.to = '2026-10-31';
+      this.from = this.getMonthStart();
+      this.to = this.getMonthEnd();
     }
   }
 
@@ -394,7 +394,7 @@ export class CashFlowComponent implements OnInit, OnDestroy {
 
   resetToToday(): void {
     this.granularity = 'custom';
-    this.from = '2024-04-01';
+    this.from = this.getFyStart();
     this.to = new Date().toISOString().split('T')[0];
     this.applyFilter();
   }
@@ -428,4 +428,36 @@ export class CashFlowComponent implements OnInit, OnDestroy {
   formatNumber(val: number): string {
     return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  // ─── Dynamic Date Helpers ────────────────────────────────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  getMonthEnd(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+  getQuarterStart(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ─────────────────────────────────────────────────────────────────────
 }
+

@@ -109,6 +109,8 @@ const routes: Routes = [
       { path: 'payroll/report', component: PayrollReportComponent },
 
       // Reports matching Express
+      { path: 'reports/ledger/:id', component: DayBookComponent },
+      { path: 'reports/ledger', component: DayBookComponent },
       { path: 'reports/trial-balance', component: TrialBalanceComponent },
       { path: 'reports/balance-sheet', component: BalanceSheetComponent },
       { path: 'reports/profit-loss', component: ProfitLossComponent },

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BudgetService } from '../../../service/budget.service';
 
@@ -110,8 +110,8 @@ export class BudgetFormComponent implements OnInit {
 
   accounts: BudgetAccountOption[] = [];
   selectedAccountKey = '';
-  periodStart = '2026-09-07';
-  periodEnd = '2026-10-24';
+  periodStart = '';
+  periodEnd = '';
   amount: number | null = null;
   notes = '';
 
@@ -144,11 +144,11 @@ export class BudgetFormComponent implements OnInit {
       }
     } else {
       if (this.activeTenantId === '2') {
-        this.periodStart = '2026-09-07';
-        this.periodEnd = '2026-10-24';
+        this.periodStart = this.getFyStart();
+        this.periodEnd = this.getToday();
       } else {
-        this.periodStart = '2026-04-01';
-        this.periodEnd = '2026-10-22';
+        this.periodStart = this.getFyStart();
+        this.periodEnd = this.getToday();
       }
     }
   }
@@ -216,4 +216,46 @@ export class BudgetFormComponent implements OnInit {
       }
     });
   }
+
+  // === Dynamic Date Helpers ===
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date();
+    const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date();
+    const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string {
+    const n = new Date();
+    return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1));
+  }
+  getMonthEnd(): string {
+    const n = new Date();
+    return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0));
+  }
+  getQuarterStart(): string {
+    const now = new Date();
+    const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date();
+    const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ============================
 }

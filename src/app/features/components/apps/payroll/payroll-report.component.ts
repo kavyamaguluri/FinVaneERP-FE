@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
@@ -161,7 +161,7 @@ export interface EmployeePayrollSummary {
           <tbody>
             <tr *ngFor="let emp of byEmployee">
               <td class="fw-bold">{{ emp.name }}</td>
-              <td>{{ emp.designation || '—' }}</td>
+              <td>{{ emp.designation || 'â€”' }}</td>
               <td class="text-end">{{ emp.monthsPaid }}</td>
               <td class="text-end">&#8377;{{ emp.totalGross | number:'1.2-2' }}</td>
               <td class="text-end">&#8377;{{ emp.totalPf | number:'1.2-2' }}</td>
@@ -180,7 +180,7 @@ export interface EmployeePayrollSummary {
 export class PayrollReportComponent implements OnInit {
   granularity = 'custom';
   fromDate = '2024-04-01';
-  toDate = '2026-10-25';
+  toDate = '';
   activeTenantId = '1';
 
   grandTotal = {
@@ -609,7 +609,7 @@ export class PayrollReportComponent implements OnInit {
       y: {
         beginAtZero: true,
         position: 'left',
-        title: { display: true, text: 'Amount (₹)' }
+        title: { display: true, text: 'Amount (â‚¹)' }
       },
       y1: {
         beginAtZero: true,
@@ -637,8 +637,8 @@ export class PayrollReportComponent implements OnInit {
       this.fromDate = start.toISOString().slice(0, 10);
       this.toDate = end.toISOString().slice(0, 10);
     } else if (this.granularity === 'annually') {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2027-03-31';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getFyEnd();
     }
     this.loadReport();
   }
@@ -649,7 +649,7 @@ export class PayrollReportComponent implements OnInit {
 
   resetToToday() {
     this.granularity = 'custom';
-    this.fromDate = '2024-04-01';
+    this.fromDate = this.getFyStart();
     const now = new Date();
     this.toDate = now.toISOString().slice(0, 10);
     this.loadReport();
@@ -1017,4 +1017,37 @@ export class PayrollReportComponent implements OnInit {
       ]
     };
   }
+  // ─── Dynamic Date Helpers ────────────────────────────────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  getMonthEnd(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+  getQuarterStart(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ─────────────────────────────────────────────────────────────────────
 }
+
+

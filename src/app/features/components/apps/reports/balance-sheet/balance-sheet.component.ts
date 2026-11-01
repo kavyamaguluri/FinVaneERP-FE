@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -109,7 +109,7 @@ import { Subscription } from 'rxjs';
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">6,86,79,112.00</td></tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Equity and Liabilities</td>
-                <td class="text-end">₹{{ formatNumber(totalLiabilities) }}</td>
+                <td class="text-end">â‚¹{{ formatNumber(totalLiabilities) }}</td>
               </tr>
             </tbody>
           </table>
@@ -131,7 +131,7 @@ import { Subscription } from 'rxjs';
               <tr class="fw-semibold"><td class="ps-3">Sub-total</td><td class="text-end">6,90,96,862.00</td></tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Assets</td>
-                <td class="text-end">₹{{ formatNumber(totalAssets) }}</td>
+                <td class="text-end">â‚¹{{ formatNumber(totalAssets) }}</td>
               </tr>
             </tbody>
           </table>
@@ -229,7 +229,7 @@ import { Subscription } from 'rxjs';
               </tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Liabilities & Equity</td>
-                <td class="text-end text-brand">₹7,03,00,685.65</td>
+                <td class="text-end text-brand">â‚¹7,03,00,685.65</td>
               </tr>
             </tbody>
           </table>
@@ -312,7 +312,7 @@ import { Subscription } from 'rxjs';
               </tr>
               <tr class="fw-bold border-top border-dark">
                 <td>Total Assets</td>
-                <td class="text-end text-brand">₹7,03,00,685.65</td>
+                <td class="text-end text-brand">â‚¹7,03,00,685.65</td>
               </tr>
             </tbody>
           </table>
@@ -333,13 +333,13 @@ import { Subscription } from 'rxjs';
             </thead>
             <tbody>
               <tr class="table-light"><td colspan="2"><strong>Capital Account</strong></td></tr>
-              <tr><td class="ps-3">Owner's Capital</td><td class="text-end">₹5,00,000.00</td></tr>
-              <tr><td class="ps-3">Profit & Loss Account</td><td class="text-end">₹0.00</td></tr>
+              <tr><td class="ps-3">Owner's Capital</td><td class="text-end">â‚¹5,00,000.00</td></tr>
+              <tr><td class="ps-3">Profit & Loss Account</td><td class="text-end">â‚¹0.00</td></tr>
               <tr class="table-light"><td colspan="2"><strong>Current Liabilities</strong></td></tr>
-              <tr><td class="ps-3">Sundry Creditors</td><td class="text-end">₹5,05,38,774.00</td></tr>
-              <tr><td class="ps-3">Duties & Taxes</td><td class="text-end">₹66,67,338.00</td></tr>
-              <tr><td class="ps-3">Provisions</td><td class="text-end">₹1,14,73,000.00</td></tr>
-              <tr class="fw-bold border-top border-dark"><td>Total Liabilities & Equity</td><td class="text-end text-brand">₹7,03,00,685.65</td></tr>
+              <tr><td class="ps-3">Sundry Creditors</td><td class="text-end">â‚¹5,05,38,774.00</td></tr>
+              <tr><td class="ps-3">Duties & Taxes</td><td class="text-end">â‚¹66,67,338.00</td></tr>
+              <tr><td class="ps-3">Provisions</td><td class="text-end">â‚¹1,14,73,000.00</td></tr>
+              <tr class="fw-bold border-top border-dark"><td>Total Liabilities & Equity</td><td class="text-end text-brand">â‚¹7,03,00,685.65</td></tr>
             </tbody>
           </table>
         </div>
@@ -353,15 +353,15 @@ import { Subscription } from 'rxjs';
             </thead>
             <tbody>
               <tr class="table-light"><td colspan="2"><strong>Fixed Assets</strong></td></tr>
-              <tr><td class="ps-3">Fixed Assets - Gross Block</td><td class="text-end">₹17,79,000.00</td></tr>
-              <tr><td class="ps-3">Accumulated Depreciation</td><td class="text-end">₹-5,75,176.35</td></tr>
+              <tr><td class="ps-3">Fixed Assets - Gross Block</td><td class="text-end">â‚¹17,79,000.00</td></tr>
+              <tr><td class="ps-3">Accumulated Depreciation</td><td class="text-end">â‚¹-5,75,176.35</td></tr>
               <tr class="table-light"><td colspan="2"><strong>Current Assets</strong></td></tr>
-              <tr><td class="ps-3">Bank Accounts</td><td class="text-end">₹-5,86,750.00</td></tr>
-              <tr><td class="ps-3">Cash-in-Hand</td><td class="text-end">₹-3,02,000.00</td></tr>
-              <tr><td class="ps-3">Stock-in-Hand</td><td class="text-end">₹1,82,53,700.00</td></tr>
-              <tr><td class="ps-3">Sundry Debtors</td><td class="text-end">₹4,43,66,108.00</td></tr>
-              <tr><td class="ps-3">Input Tax Credit</td><td class="text-end">₹73,65,804.00</td></tr>
-              <tr class="fw-bold border-top border-dark"><td>Total Assets</td><td class="text-end text-brand">₹7,03,00,685.65</td></tr>
+              <tr><td class="ps-3">Bank Accounts</td><td class="text-end">â‚¹-5,86,750.00</td></tr>
+              <tr><td class="ps-3">Cash-in-Hand</td><td class="text-end">â‚¹-3,02,000.00</td></tr>
+              <tr><td class="ps-3">Stock-in-Hand</td><td class="text-end">â‚¹1,82,53,700.00</td></tr>
+              <tr><td class="ps-3">Sundry Debtors</td><td class="text-end">â‚¹4,43,66,108.00</td></tr>
+              <tr><td class="ps-3">Input Tax Credit</td><td class="text-end">â‚¹73,65,804.00</td></tr>
+              <tr class="fw-bold border-top border-dark"><td>Total Assets</td><td class="text-end text-brand">â‚¹7,03,00,685.65</td></tr>
             </tbody>
           </table>
         </div>
@@ -413,8 +413,8 @@ import { Subscription } from 'rxjs';
 })
 export class BalanceSheetComponent implements OnInit, OnDestroy {
   granularity: string = 'custom';
-  from: string = '2024-04-01';
-  to: string = '2026-10-27';
+  from: string = '';
+  to: string = '';
   compareTo: string = '';
   variance: boolean = false;
   isComparing: boolean = false;
@@ -493,19 +493,19 @@ export class BalanceSheetComponent implements OnInit, OnDestroy {
   }
 
   onGranularityChange(): void {
-    const curYear = 2026;
+    const curYear = new Date().getFullYear();
     if (this.granularity === 'annually') {
-      this.from = '2024-04-01';
-      this.to = `${curYear}-03-31`;
+      this.from = this.getFyStart();
+      this.to = this.getFyEnd();
     } else if (this.granularity === 'half_yearly') {
-      this.from = '2024-04-01';
-      this.to = '2024-09-30';
+      this.from = this.getFyStart();
+      this.to = this.getQuarterEnd();
     } else if (this.granularity === 'quarterly') {
-      this.from = '2024-04-01';
-      this.to = '2024-06-30';
+      this.from = this.getFyStart();
+      this.to = this.getQuarterEnd();
     } else if (this.granularity === 'monthly') {
-      this.from = '2026-10-01';
-      this.to = '2026-10-31';
+      this.from = this.getMonthStart();
+      this.to = this.getMonthEnd();
     }
   }
 
@@ -528,7 +528,7 @@ export class BalanceSheetComponent implements OnInit, OnDestroy {
 
   resetToToday(): void {
     this.granularity = 'custom';
-    this.from = '2024-04-01';
+    this.from = this.getFyStart();
     this.to = new Date().toISOString().split('T')[0];
     this.applyFilter();
   }
@@ -570,4 +570,36 @@ export class BalanceSheetComponent implements OnInit, OnDestroy {
   formatNumber(val: number): string {
     return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  // ─── Dynamic Date Helpers ────────────────────────────────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  getMonthEnd(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+  getQuarterStart(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ─────────────────────────────────────────────────────────────────────
 }
+

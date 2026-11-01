@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -53,6 +53,13 @@ export interface DayBookLineRow {
           + New Voucher
         </a>
       </div>
+    </div>
+
+    
+    <!-- Ledger Drill-down Filter Banner -->
+    <div *ngIf="selectedLedgerId" class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center shadow-sm">
+      <span><i class="bi bi-funnel me-2"></i>Filtered by Ledger: <strong>{{ selectedLedgerName || ('Account ID #' + selectedLedgerId) }}</strong></span>
+      <button type="button" class="btn btn-sm btn-outline-dark" (click)="clearLedgerFilter()">Show All Accounts</button>
     </div>
 
     <!-- Period Filter Bar matching Express -->
@@ -192,7 +199,7 @@ export interface DayBookLineRow {
           </thead>
           <tbody>
             <tr *ngFor="let row of filteredRows">
-              <td class="small">{{ row.entityGstn || '—' }}</td>
+              <td class="small">{{ row.entityGstn || 'â€”' }}</td>
               <td class="small">{{ row.branchName || 'Acme Trading Co' }}</td>
               <td class="small font-monospace">{{ row.date }}</td>
               <td>
@@ -209,19 +216,19 @@ export interface DayBookLineRow {
               <td class="font-monospace small">{{ row.ledgerId }}</td>
               <td class="fw-semibold small">{{ row.ledgerName }}</td>
               <td class="text-end font-monospace small">
-                {{ row.drAmount ? (row.drAmount | number:'1.2-2') : '—' }}
+                {{ row.drAmount ? (row.drAmount | number:'1.2-2') : 'â€”' }}
               </td>
               <td class="text-end font-monospace small">
-                {{ row.crAmount ? (row.crAmount | number:'1.2-2') : '—' }}
+                {{ row.crAmount ? (row.crAmount | number:'1.2-2') : 'â€”' }}
               </td>
               <td>
                 <span class="badge bg-light text-secondary border small">{{ row.typeOfLedger }}</span>
               </td>
-              <td class="small text-muted">{{ row.typeOfTax || '—' }}</td>
-              <td class="small text-muted">{{ row.taxType || '—' }}</td>
-              <td class="small text-muted font-monospace">{{ row.bankAccountNumber || '—' }}</td>
-              <td class="small text-muted font-monospace">{{ row.gstin || '—' }}</td>
-              <td class="small text-truncate" style="max-width: 150px;" [title]="row.narration || ''">{{ row.narration || '—' }}</td>
+              <td class="small text-muted">{{ row.typeOfTax || 'â€”' }}</td>
+              <td class="small text-muted">{{ row.taxType || 'â€”' }}</td>
+              <td class="small text-muted font-monospace">{{ row.bankAccountNumber || 'â€”' }}</td>
+              <td class="small text-muted font-monospace">{{ row.gstin || 'â€”' }}</td>
+              <td class="small text-truncate" style="max-width: 150px;" [title]="row.narration || ''">{{ row.narration || 'â€”' }}</td>
               <td>
                 <span class="badge" [ngClass]="row.status === 'posted' ? 'bg-success-subtle text-success-emphasis border' : 'bg-light text-muted border'">
                   {{ row.status }}
@@ -229,7 +236,7 @@ export interface DayBookLineRow {
               </td>
               <td class="small text-muted">{{ row.createdBy }}</td>
               <td class="small text-muted">{{ row.approvedBy }}</td>
-              <td class="small text-muted font-monospace">{{ row.createdAt || '—' }}</td>
+              <td class="small text-muted font-monospace">{{ row.createdAt || 'â€”' }}</td>
               <td class="text-end text-nowrap">
                 <a [routerLink]="['/vouchers/new']" class="btn btn-sm btn-outline-secondary py-0 me-1">Edit</a>
                 <button type="button" class="btn btn-sm btn-outline-danger py-0" (click)="deleteRow(row)">
@@ -267,8 +274,8 @@ export interface DayBookLineRow {
 })
 export class DayBookComponent implements OnInit {
   granularity: string = 'custom';
-  fromDate: string = '2024-04-01';
-  toDate: string = '2026-10-27';
+  fromDate: string = '';
+  toDate: string = '';
   searchQuery: string = '';
   dateSort: string = 'desc';
 
@@ -281,16 +288,24 @@ export class DayBookComponent implements OnInit {
   fApprovedBy: string = '';
 
   selectedFileName: string = '';
+  selectedLedgerId: string = '';
   rows: DayBookLineRow[] = [];
   filteredRows: DayBookLineRow[] = [];
 
   constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
 
+  selectedLedgerName: string = '';
+
   ngOnInit() {
-    this.rows = this.getDefaultSampleRows();
-    this.filteredRows = [...this.rows];
+    this.route.params.subscribe((params: Params) => {
+      if (params['id']) {
+        this.selectedLedgerId = params['id'];
+      }
+    });
 
     this.route.queryParams.subscribe((params: Params) => {
+      if (params['ledger']) this.selectedLedgerId = params['ledger'];
+      if (params['ledgerId']) this.selectedLedgerId = params['ledgerId'];
       if (params['granularity']) this.granularity = params['granularity'];
       if (params['from']) this.fromDate = params['from'];
       if (params['to']) this.toDate = params['to'];
@@ -300,8 +315,21 @@ export class DayBookComponent implements OnInit {
     });
   }
 
+  clearLedgerFilter(): void {
+    this.selectedLedgerId = '';
+    this.selectedLedgerName = '';
+    this.router.navigate(['/vouchers'], {
+      queryParams: {
+        granularity: this.granularity,
+        from: this.fromDate,
+        to: this.toDate
+      }
+    });
+  }
+
   loadVouchers() {
     let url = `${environment.apiBaseUrl}/vouchers/daybook?fromDate=${this.fromDate}&toDate=${this.toDate}&dateSort=${this.dateSort}`;
+    if (this.selectedLedgerId) url += `&ledgerId=${this.selectedLedgerId}`;
     if (this.searchQuery) url += `&q=${encodeURIComponent(this.searchQuery)}`;
 
     this.http.get<any>(url).subscribe({
@@ -309,7 +337,7 @@ export class DayBookComponent implements OnInit {
         if (res && res.data && res.data.length > 0) {
           this.rows = res.data.map((r: any) => ({
             voucherId: r.voucherId,
-            entityGstn: r.entityGstn || '—',
+            entityGstn: r.entityGstn || 'â€”',
             branchName: r.branchName || 'Acme Trading Co',
             date: r.date,
             voucherType: r.voucherType,
@@ -331,6 +359,10 @@ export class DayBookComponent implements OnInit {
             approvedBy: r.approvedBy || 'Admin User',
             createdAt: r.createdAt || '22-10-2026 17:08'
           }));
+          if (this.selectedLedgerId && this.rows.length > 0) {
+            const match = this.rows.find(r => String(r.ledgerId) === String(this.selectedLedgerId));
+            if (match) this.selectedLedgerName = match.ledgerName;
+          }
           this.applyLocalFilters();
         }
       },
@@ -431,14 +463,14 @@ export class DayBookComponent implements OnInit {
     const now = new Date();
     const curYear = now.getFullYear();
     if (this.granularity === 'annually') {
-      this.fromDate = '2024-04-01';
-      this.toDate = `${curYear}-03-31`;
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getFyEnd();
     } else if (this.granularity === 'half_yearly') {
-      this.fromDate = '2024-04-01';
-      this.toDate = '2024-09-30';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getQuarterEnd();
     } else if (this.granularity === 'quarterly') {
-      this.fromDate = '2024-04-01';
-      this.toDate = '2024-06-30';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getQuarterEnd();
     } else if (this.granularity === 'monthly') {
       const m = String(now.getMonth() + 1).padStart(2, '0');
       this.fromDate = `${curYear}-${m}-01`;
@@ -463,7 +495,7 @@ export class DayBookComponent implements OnInit {
 
   resetToday() {
     this.granularity = 'custom';
-    this.fromDate = '2024-04-01';
+    this.fromDate = this.getFyStart();
     this.toDate = new Date().toISOString().split('T')[0];
     this.clearAllFilters();
   }
@@ -567,20 +599,53 @@ export class DayBookComponent implements OnInit {
 
   getDefaultSampleRows(): DayBookLineRow[] {
     return [
-      { voucherId: 1, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 1, ledgerId: '5100', ledgerName: 'Salary Expense', drAmount: 553000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
-      { voucherId: 1, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 2, ledgerId: '2300', ledgerName: 'PF Payable', drAmount: undefined, crAmount: 33180, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
-      { voucherId: 1, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 3, ledgerId: '2302', ledgerName: 'Salary Payable', drAmount: undefined, crAmount: 519820, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
-      { voucherId: 2, entityGstn: '—', branchName: 'Acme Trading Co', date: '15-08-2026', voucherType: 'Payment', voucherNo: 'PMT-2026-0815', lineId: 1, ledgerId: '2100', ledgerName: 'Accounts Payable', drAmount: 250000, crAmount: undefined, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payment to vendor Apex Corp', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '15-08-2026 11:30' },
-      { voucherId: 2, entityGstn: '—', branchName: 'Acme Trading Co', date: '15-08-2026', voucherType: 'Payment', voucherNo: 'PMT-2026-0815', lineId: 2, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: undefined, crAmount: 250000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Payment to vendor Apex Corp', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '15-08-2026 11:30' },
-      { voucherId: 3, entityGstn: '—', branchName: 'Acme Trading Co', date: '10-08-2026', voucherType: 'Receipt', voucherNo: 'RCP-2026-0810', lineId: 1, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: 185000, crAmount: undefined, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Customer receipt - Inv INV-2026-089', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '10-08-2026 14:15' },
-      { voucherId: 3, entityGstn: '—', branchName: 'Acme Trading Co', date: '10-08-2026', voucherType: 'Receipt', voucherNo: 'RCP-2026-0810', lineId: 2, ledgerId: '1200', ledgerName: 'Accounts Receivable', drAmount: undefined, crAmount: 185000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Customer receipt - Inv INV-2026-089', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '10-08-2026 14:15' },
-      { voucherId: 4, entityGstn: '—', branchName: 'Acme Trading Co', date: '01-08-2026', voucherType: 'Journal', voucherNo: 'JRN-2026-0801', lineId: 1, ledgerId: '5200', ledgerName: 'Rent Expense', drAmount: 45000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Office rent provision for August', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '01-08-2026 09:00' },
-      { voucherId: 4, entityGstn: '—', branchName: 'Acme Trading Co', date: '01-08-2026', voucherType: 'Journal', voucherNo: 'JRN-2026-0801', lineId: 2, ledgerId: '2100', ledgerName: 'Accounts Payable', drAmount: undefined, crAmount: 45000, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Office rent provision for August', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '01-08-2026 09:00' },
-      { voucherId: 5, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 1, ledgerId: '5100', ledgerName: 'Salary Expense', drAmount: 553000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
-      { voucherId: 5, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 2, ledgerId: '2300', ledgerName: 'PF Payable', drAmount: undefined, crAmount: 33180, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
-      { voucherId: 5, entityGstn: '—', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 3, ledgerId: '2302', ledgerName: 'Salary Payable', drAmount: undefined, crAmount: 519820, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
-      { voucherId: 6, entityGstn: '—', branchName: 'Acme Trading Co', date: '20-07-2026', voucherType: 'Contra', voucherNo: 'CNT-2026-0720', lineId: 1, ledgerId: '1000', ledgerName: 'Cash in Hand', drAmount: 50000, crAmount: undefined, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Cash withdrawal from HDFC for petty expenses', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '20-07-2026 12:00' },
-      { voucherId: 6, entityGstn: '—', branchName: 'Acme Trading Co', date: '20-07-2026', voucherType: 'Contra', voucherNo: 'CNT-2026-0720', lineId: 2, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: undefined, crAmount: 50000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Cash withdrawal from HDFC for petty expenses', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '20-07-2026 12:00' }
+      { voucherId: 1, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 1, ledgerId: '5100', ledgerName: 'Salary Expense', drAmount: 553000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
+      { voucherId: 1, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 2, ledgerId: '2300', ledgerName: 'PF Payable', drAmount: undefined, crAmount: 33180, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
+      { voucherId: 1, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-08-2026', voucherType: 'Payroll', voucherNo: 'PR-202608', lineId: 3, ledgerId: '2302', ledgerName: 'Salary Payable', drAmount: undefined, crAmount: 519820, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 8/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '22-10-2026 17:08' },
+      { voucherId: 2, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '15-08-2026', voucherType: 'Payment', voucherNo: 'PMT-2026-0815', lineId: 1, ledgerId: '2100', ledgerName: 'Accounts Payable', drAmount: 250000, crAmount: undefined, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payment to vendor Apex Corp', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '15-08-2026 11:30' },
+      { voucherId: 2, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '15-08-2026', voucherType: 'Payment', voucherNo: 'PMT-2026-0815', lineId: 2, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: undefined, crAmount: 250000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Payment to vendor Apex Corp', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '15-08-2026 11:30' },
+      { voucherId: 3, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '10-08-2026', voucherType: 'Receipt', voucherNo: 'RCP-2026-0810', lineId: 1, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: 185000, crAmount: undefined, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Customer receipt - Inv INV-2026-089', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '10-08-2026 14:15' },
+      { voucherId: 3, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '10-08-2026', voucherType: 'Receipt', voucherNo: 'RCP-2026-0810', lineId: 2, ledgerId: '1200', ledgerName: 'Accounts Receivable', drAmount: undefined, crAmount: 185000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Customer receipt - Inv INV-2026-089', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '10-08-2026 14:15' },
+      { voucherId: 4, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '01-08-2026', voucherType: 'Journal', voucherNo: 'JRN-2026-0801', lineId: 1, ledgerId: '5200', ledgerName: 'Rent Expense', drAmount: 45000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Office rent provision for August', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '01-08-2026 09:00' },
+      { voucherId: 4, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '01-08-2026', voucherType: 'Journal', voucherNo: 'JRN-2026-0801', lineId: 2, ledgerId: '2100', ledgerName: 'Accounts Payable', drAmount: undefined, crAmount: 45000, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Office rent provision for August', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '01-08-2026 09:00' },
+      { voucherId: 5, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 1, ledgerId: '5100', ledgerName: 'Salary Expense', drAmount: 553000, crAmount: undefined, typeOfLedger: 'expense', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
+      { voucherId: 5, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 2, ledgerId: '2300', ledgerName: 'PF Payable', drAmount: undefined, crAmount: 33180, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
+      { voucherId: 5, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '28-07-2026', voucherType: 'Payroll', voucherNo: 'PR-202607', lineId: 3, ledgerId: '2302', ledgerName: 'Salary Payable', drAmount: undefined, crAmount: 519820, typeOfLedger: 'liability', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Payroll for 7/2026', status: 'posted', createdBy: 'Neha Payroll', approvedBy: 'Admin User', createdAt: '28-07-2026 17:00' },
+      { voucherId: 6, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '20-07-2026', voucherType: 'Contra', voucherNo: 'CNT-2026-0720', lineId: 1, ledgerId: '1000', ledgerName: 'Cash in Hand', drAmount: 50000, crAmount: undefined, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '', gstin: '', narration: 'Cash withdrawal from HDFC for petty expenses', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '20-07-2026 12:00' },
+      { voucherId: 6, entityGstn: 'â€”', branchName: 'Acme Trading Co', date: '20-07-2026', voucherType: 'Contra', voucherNo: 'CNT-2026-0720', lineId: 2, ledgerId: '1020', ledgerName: 'Bank Account - HDFC', drAmount: undefined, crAmount: 50000, typeOfLedger: 'asset', typeOfTax: '', taxType: '', bankAccountNumber: '50200012345678', gstin: '', narration: 'Cash withdrawal from HDFC for petty expenses', status: 'posted', createdBy: 'Admin User', approvedBy: 'Admin User', createdAt: '20-07-2026 12:00' }
     ];
   }
+  // ─── Dynamic Date Helpers ────────────────────────────────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  getMonthEnd(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+  getQuarterStart(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ─────────────────────────────────────────────────────────────────────
 }
+
+

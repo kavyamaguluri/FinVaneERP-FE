@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BudgetEntry, BudgetService } from '../../../service/budget.service';
 
@@ -93,8 +93,8 @@ import { BudgetEntry, BudgetService } from '../../../service/budget.service';
               <td class="text-end" [ngClass]="r.variance < 0 ? 'text-danger' : 'text-success'">
                 {{ r.variance | number:'1.2-2' }}
               </td>
-              <td class="text-end">{{ r.variancePct !== null ? (r.variancePct | number:'1.1-1') + '%' : '—' }}</td>
-              <td class="small text-muted">{{ r.notes || '—' }}</td>
+              <td class="text-end">{{ r.variancePct !== null ? (r.variancePct | number:'1.1-1') + '%' : 'â€”' }}</td>
+              <td class="small text-muted">{{ r.notes || 'â€”' }}</td>
               <td class="text-nowrap text-end">
                 <a [routerLink]="['/budgets', r.id, 'edit']" class="btn btn-sm btn-outline-secondary me-1">Edit</a>
                 <button type="button" class="btn btn-sm btn-outline-danger" (click)="onDelete(r.id, r.code, r.name)">Delete</button>
@@ -162,11 +162,11 @@ export class BudgetListComponent implements OnInit {
 
     if (!this.route.snapshot.queryParams['from']) {
       if (this.activeTenantId === '2') {
-        this.fromDate = '2026-09-07';
-        this.toDate = '2026-10-24';
+        this.fromDate = this.getFyStart();
+        this.toDate = this.getToday();
       } else {
-        this.fromDate = '2026-04-01';
-        this.toDate = '2026-10-22';
+        this.fromDate = this.getFyStart();
+        this.toDate = this.getToday();
       }
       this.loadBudgets();
     }
@@ -174,14 +174,14 @@ export class BudgetListComponent implements OnInit {
 
   onGranularityChange() {
     if (this.granularity === 'monthly') {
-      this.fromDate = '2026-10-01';
-      this.toDate = '2026-10-31';
+      this.fromDate = this.getMonthStart();
+      this.toDate = this.getMonthEnd();
     } else if (this.granularity === 'quarterly') {
-      this.fromDate = '2026-07-01';
-      this.toDate = '2026-09-30';
+      this.fromDate = this.getQuarterStart();
+      this.toDate = this.getQuarterEnd();
     } else if (this.granularity === 'annually') {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2027-03-31';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getFyEnd();
     }
     this.applyFilter();
   }
@@ -199,11 +199,11 @@ export class BudgetListComponent implements OnInit {
   resetToToday() {
     this.granularity = 'custom';
     if (this.activeTenantId === '2') {
-      this.fromDate = '2026-09-07';
-      this.toDate = '2026-10-24';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getToday();
     } else {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2026-10-22';
+      this.fromDate = this.getFyStart();
+      this.toDate = this.getToday();
     }
     this.applyFilter();
   }
@@ -235,9 +235,51 @@ export class BudgetListComponent implements OnInit {
   }
 
   onDelete(id: number, code: string, name: string) {
-    if (confirm(`Delete the budget entry for ${code} — ${name}? This cannot be undone.`)) {
+    if (confirm(`Delete the budget entry for ${code} â€” ${name}? This cannot be undone.`)) {
       this.budgetService.deleteBudget(id);
       this.loadBudgets();
     }
   }
+
+  // === Dynamic Date Helpers ===
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date();
+    const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date();
+    const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string {
+    const n = new Date();
+    return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1));
+  }
+  getMonthEnd(): string {
+    const n = new Date();
+    return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0));
+  }
+  getQuarterStart(): string {
+    const now = new Date();
+    const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date();
+    const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ============================
 }

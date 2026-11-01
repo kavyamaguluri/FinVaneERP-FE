@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
@@ -13,6 +13,27 @@ export interface TopSellingItem {
   category: string;
   qtySold: number;
   revenue: number;
+}
+
+export interface LowStockItem {
+  id?: number;
+  name: string;
+  sku: string;
+  currentStock: number;
+  reorderLevel: number;
+}
+
+export interface StockByLocation {
+  id?: number;
+  code: string;
+  name: string;
+  locationType: string;
+  value: number;
+}
+
+export interface TransferStats {
+  cnt: number;
+  igst: number;
 }
 
 export interface UpcomingInvoice {
@@ -38,7 +59,38 @@ export interface BudgetSummary {
   expenseVariancePct: number;
 }
 
+export interface CfoFlag {
+  tone: 'danger' | 'warning' | 'success';
+  text: string;
+}
+
+export interface CfoKpis {
+  salesTotal?: number;
+  purchaseTotal?: number;
+  grossProfit?: number;
+  grossMarginPct?: number | null;
+  netProfit?: number;
+  netMarginPct?: number | null;
+  cashBank?: number;
+  debtors?: number;
+  creditors?: number;
+  currentRatio?: number | null;
+  quickRatio?: number | null;
+  dso?: number | null;
+  dpo?: number | null;
+  cashRunwayMonths?: number | null;
+}
+
+export interface CfoSummary {
+  from?: string;
+  to?: string;
+  narrative?: string[];
+  flags?: CfoFlag[];
+  kpis?: CfoKpis;
+}
+
 export interface DashboardMetrics {
+  cfoSummary?: CfoSummary;
   cashBankBalance: number;
   totalReceivables: number;
   totalPayables: number;
@@ -88,6 +140,9 @@ export interface DashboardMetrics {
   topSellingItems?: TopSellingItem[];
   upcomingReceivables?: UpcomingInvoice[];
   upcomingPayables?: UpcomingInvoice[];
+  lowStock?: LowStockItem[];
+  stockByLocation?: StockByLocation[];
+  transferStats?: TransferStats;
   budget?: BudgetSummary;
 }
 
@@ -244,21 +299,21 @@ export interface DashboardMetrics {
                 <tr>
                   <th>Location</th>
                   <th>Type</th>
-                  <th class="text-end">State Code</th>
+                  <th class="text-end">Stock Value</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let loc of locations">
+                <tr *ngFor="let loc of (metrics.stockByLocation && metrics.stockByLocation.length > 0 ? metrics.stockByLocation : locations)">
                   <td>{{ loc.code }} &mdash; {{ loc.name }}</td>
-                  <td class="text-capitalize">{{ loc.locationType || 'warehouse' }}</td>
-                  <td class="text-end font-monospace fw-semibold">{{ loc.stateCode }}</td>
+                  <td class="text-capitalize">{{ (loc.locationType || loc.location_type || 'warehouse').replace('_', ' ') }}</td>
+                  <td class="text-end font-monospace fw-semibold">{{ (loc.value || 0) | indianCurrency:0 }}</td>
                 </tr>
                 <tr *ngIf="!locations || locations.length === 0">
                   <td colspan="3" class="text-center text-muted small py-3">No locations recorded.</td>
                 </tr>
               </tbody>
             </table>
-            <p class="small text-muted mt-2 mb-0">{{ locations.length }} active warehouse location(s) recorded &middot; Inter-state transfers tracked</p>
+            <p class="small text-muted mt-2 mb-0">{{ metrics.transferStats?.cnt || 0 }} stock transfer(s) recorded &bull; {{ (metrics.transferStats?.igst || 0) | indianCurrency:0 }} IGST on inter-state transfers</p>
           </div>
         </div>
       </div>
@@ -295,7 +350,7 @@ export interface DashboardMetrics {
                 <tr *ngFor="let v of recentVouchers">
                   <td><a routerLink="/vouchers" class="font-monospace fw-semibold text-brand">{{ v.voucherNumber }}</a></td>
                   <td>{{ v.voucherDate }}</td>
-                  <td><span class="badge bg-brand-soft text-brand">{{ v.voucherType || 'posted' }}</span></td>
+                  <td><span class="badge" [ngClass]="'badge-status-' + (v.status || 'posted')">{{ v.status || 'posted' }}</span></td>
                 </tr>
                 <tr *ngIf="!recentVouchers || recentVouchers.length === 0">
                   <td colspan="3" class="text-center text-muted p-3">No day book entries recorded.</td>
@@ -308,83 +363,83 @@ export interface DashboardMetrics {
     </div>
 
     <!-- ===================== CFO SUMMARY TAB matching Express cfoSummary ===================== -->
-    <div *ngIf="activeTab === 'cfo'">
-      <div class="row g-3">
-        <div class="col-12">
-          <h5 class="mb-0 d-flex justify-content-between align-items-center fw-bold">
-            CFO Executive Summary
-            <span class="fs-6">
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="exportSummary()">
-                Export as PDF
-              </button>
-            </span>
-          </h5>
-        </div>
+      <div *ngIf="activeTab === 'cfo'">
+        <div class="row g-3">
+          <div class="col-12">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+              CFO Executive Summary
+              <span class="fs-6">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="exportSummary()">
+                  Export as PDF
+                </button>
+              </span>
+            </h5>
+          </div>
 
-        <div class="col-12">
-          <div class="card p-4">
-            <div class="small text-muted mb-3">
-              Auto-generated from posted ledger entries for {{ fromDisplayDate }} to {{ toDisplayDate }} &mdash; not a substitute for professional judgement.
-            </div>
+          <div class="col-12">
+            <div class="card p-3">
+              <div class="small text-muted mb-2">
+                Auto-generated from posted ledger entries for {{ fromDisplayDate }} to {{ toDisplayDate }} &mdash; not a substitute for professional judgement.
+              </div>
 
-            <!-- Narrative Paragraphs matching Express buildCfoSummary -->
-            <p class="mb-2 text-dark" style="line-height: 1.6;">
-              Revenue for the period totalled {{ (metrics.totalSales || 0) | indianCurrency }} against {{ (metrics.totalPurchases || 0) | indianCurrency }} of purchases, leaving gross profit at {{ (metrics.grossProfit || 0) | indianCurrency }} (100% margin). The largest cost line was Rent Expense at {{ (activeTenantId === '2' ? 18000 : (metrics.otherExpenses || 0)) | indianCurrency }}. Net profit for the period is {{ (metrics.netProfit || 0) | indianCurrency }} (60% margin).
-            </p>
-            <p class="mb-2 text-dark" style="line-height: 1.6;">
-              Cash &amp; bank stood at {{ metrics.cashBankBalance | indianCurrency }} as of {{ toDisplayDate }}, giving roughly {{ metrics.cashRunwayMonths || 25.07 }} months of runway at the current spend rate. Receivables stand at {{ metrics.totalReceivables | indianCurrency }} against payables of {{ metrics.totalPayables | indianCurrency }}. Current ratio is {{ metrics.currentRatio !== null && metrics.currentRatio !== undefined ? metrics.currentRatio : 'not meaningful' }}, quick ratio {{ metrics.quickRatio !== null && metrics.quickRatio !== undefined ? metrics.quickRatio : 'not meaningful' }}.
-            </p>
-            <p class="mb-3 text-dark" style="line-height: 1.6;">
-              No material risk flags this period &mdash; the business is tracking within normal bounds on the metrics reviewed.
-            </p>
+              <!-- Narrative Paragraphs dynamically rendered from backend -->
+              <ng-container *ngIf="metrics.cfoSummary?.narrative?.length">
+                <p *ngFor="let p of metrics.cfoSummary?.narrative" class="mb-2 text-dark" style="line-height: 1.6;">
+                  {{ p }}
+                </p>
+              </ng-container>
 
-            <!-- 4 CFO KPI Cards matching Express -->
-            <div class="row g-3 my-2">
-              <div class="col-md-3">
-                <div class="card p-3 kpi-card">
-                  <div class="kpi-label">Revenue</div>
-                  <div class="kpi-value">{{ (metrics.totalSales || 0) | indianCurrency:0 }}</div>
+              <!-- 4 CFO KPI Cards matching Express -->
+              <div class="row g-3 my-2">
+                <div class="col-md-3">
+                  <div class="card p-3 kpi-card">
+                    <div class="kpi-label">Revenue</div>
+                    <div class="kpi-value">{{ (metrics.cfoSummary?.kpis?.salesTotal ?? metrics.totalSales) | indianCurrency:0 }}</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card p-3 kpi-card">
+                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-value" [ngClass]="(metrics.cfoSummary?.kpis?.netProfit ?? metrics.netProfit) < 0 ? 'text-danger' : 'text-success'">
+                      {{ (metrics.cfoSummary?.kpis?.netProfit ?? metrics.netProfit) | indianCurrency:0 }}
+                    </div>
+                    <div class="kpi-sub" [ngClass]="(metrics.cfoSummary?.kpis?.netProfit ?? metrics.netProfit) < 0 ? 'text-danger' : 'text-success'">
+                      {{ (metrics.cfoSummary?.kpis?.netMarginPct !== null && metrics.cfoSummary?.kpis?.netMarginPct !== undefined) ? (metrics.cfoSummary?.kpis?.netMarginPct + '%') : '&mdash;' }} margin
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card p-3 kpi-card">
+                    <div class="kpi-label">Cash &amp; Bank</div>
+                    <div class="kpi-value" [ngClass]="(metrics.cfoSummary?.kpis?.cashBank ?? metrics.cashBankBalance) < 0 ? 'text-danger' : ''">
+                      {{ (metrics.cfoSummary?.kpis?.cashBank ?? metrics.cashBankBalance) | indianCurrency:0 }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card p-3 kpi-card">
+                    <div class="kpi-label">Current Ratio</div>
+                    <div class="kpi-value">
+                      {{ (metrics.cfoSummary?.kpis?.currentRatio ?? metrics.currentRatio) !== null && (metrics.cfoSummary?.kpis?.currentRatio ?? metrics.currentRatio) !== undefined ? (metrics.cfoSummary?.kpis?.currentRatio ?? metrics.currentRatio) : '&mdash;' }}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="card p-3 kpi-card">
-                  <div class="kpi-label">Net Profit</div>
-                  <div class="kpi-value" [ngClass]="metrics.netProfit >= 0 ? 'text-success' : 'text-danger'">{{ metrics.netProfit | indianCurrency:0 }}</div>
-                  <div class="kpi-sub">60% margin</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="card p-3 kpi-card">
-                  <div class="kpi-label">Cash &amp; Bank</div>
-                  <div class="kpi-value" [ngClass]="{'text-danger': metrics.cashBankBalance < 0}">{{ metrics.cashBankBalance | indianCurrency:0 }}</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="card p-3 kpi-card">
-                  <div class="kpi-label">Current Ratio</div>
-                  <div class="kpi-value">{{ metrics.currentRatio !== null && metrics.currentRatio !== undefined ? metrics.currentRatio : '&mdash;' }}</div>
-                </div>
-              </div>
-            </div>
 
-            <!-- Risk Flags matching Express -->
-            <div class="mt-3">
-              <div class="small fw-bold text-muted mb-2">Flags</div>
-              <div class="d-flex align-items-center mb-1">
-                <span class="me-2 text-success" style="font-size: 1.2rem;">&#9679;</span>
-                <span class="small">Net profit of {{ metrics.netProfit | indianCurrency }} for the period.</span>
-              </div>
-              <div class="d-flex align-items-center mb-1">
-                <span class="me-2 text-success" style="font-size: 1.2rem;">&#9679;</span>
-                <span class="small">No material red flags identified for this period.</span>
+              <!-- Risk Flags matching Express -->
+              <div class="mt-2">
+                <div class="small fw-bold text-muted mb-2">Flags</div>
+                <div *ngFor="let f of metrics.cfoSummary?.flags" class="d-flex align-items-start mb-1">
+                  <span class="me-2" [ngClass]="f.tone === 'danger' ? 'text-danger' : f.tone === 'warning' ? 'text-warning' : 'text-success'" style="font-size: 1.1rem; line-height: 1.4;">&#9679;</span>
+                  <span class="small">{{ f.text }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ===================== WORKING CAPITAL TAB matching Express tab-wc ===================== -->
+      <!-- ===================== WORKING CAPITAL TAB matching Express tab-wc ===================== -->
     <div *ngIf="activeTab === 'wc'">
       <div class="row g-3 mb-3">
         <div class="col-12">
@@ -588,6 +643,24 @@ export interface DashboardMetrics {
           </div>
         </div>
       </div>
+    
+      <div class="row g-3 mt-1">
+        <div class="col-12">
+          <div class="card p-3">
+            <h6 class="fw-bold mb-2">Low Stock Alerts (all locations combined)</h6>
+            <p *ngIf="!metrics.lowStock || metrics.lowStock.length === 0" class="text-muted small mb-0">No items below reorder level.</p>
+            <table *ngIf="metrics.lowStock && metrics.lowStock.length > 0" class="table table-sm mb-0">
+              <tbody>
+                <tr *ngFor="let item of metrics.lowStock">
+                  <td>{{ item.name }} ({{ item.sku }})</td>
+                  <td class="text-danger">{{ item.currentStock }} left</td>
+                  <td class="text-muted">reorder &#64; {{ item.reorderLevel }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ===================== BUDGET TAB matching Express tab-budget ===================== -->
@@ -734,12 +807,12 @@ export class DashboardComponent implements OnInit {
   isInventoryEnabled: boolean = true;
 
   granularity: string = 'custom';
-  fromDate: string = '2024-04-01';
-  toDate: string = '2026-10-25';
+  fromDate: string = '';
+  toDate: string = '';
   subtitleText: string = '';
-  fromDisplayDate: string = '01-04-2024';
-  toDisplayDate: string = '25-10-2026';
-  activityDays: number = 938;
+  fromDisplayDate: string = '';
+  toDisplayDate: string = '';
+  activityDays: number = 0;
 
   metrics: DashboardMetrics = {
     cashBankBalance: 0,
@@ -797,13 +870,13 @@ export class DashboardComponent implements OnInit {
 
     if (this.activeTenantId === '2' || bizType === 'services' || entityName.toLowerCase().includes('consultify')) {
       this.isInventoryEnabled = false;
-      this.fromDate = '2026-09-07';
-      this.toDate = '2026-10-24';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getToday();
       this.granularity = 'custom';
     } else {
       this.isInventoryEnabled = true;
-      this.fromDate = '2024-04-01';
-      this.toDate = '2026-10-25';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getToday();
       this.granularity = 'custom';
     }
 
@@ -838,25 +911,25 @@ export class DashboardComponent implements OnInit {
     this.activityDays = this.calculateDays(this.fromDate, this.toDate);
 
     if (this.granularity === 'annually') {
-      this.subtitleText = `Balances as of ${this.toDisplayDate} · Activity for FY 2026-27 (${this.activityDays} days)`;
+      this.subtitleText = `Balances as of ${this.toDisplayDate} \u2022 Activity for FY 2026-27 (${this.activityDays} days)`;
     } else {
-      this.subtitleText = `Balances as of ${this.toDisplayDate} · Activity for ${this.fromDisplayDate} to ${this.toDisplayDate} (${this.activityDays} days)`;
+      this.subtitleText = `Balances as of ${this.toDisplayDate} \u2022 Activity for ${this.fromDisplayDate} to ${this.toDisplayDate} (${this.activityDays} day${this.activityDays === 1 ? '' : 's'})`;
     }
   }
 
   onGranularityChange() {
     if (this.granularity === 'monthly') {
-      this.fromDate = '2026-10-01';
-      this.toDate = '2026-10-31';
+      this.fromDate = this.getMonthStart();
+      this.toDate = this.getMonthEnd();
     } else if (this.granularity === 'quarterly') {
-      this.fromDate = '2026-07-01';
-      this.toDate = '2026-09-30';
+      this.fromDate = this.getQuarterStart();
+      this.toDate = this.getQuarterEnd();
     } else if (this.granularity === 'half_yearly') {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2026-09-30';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getQuarterEnd();
     } else if (this.granularity === 'annually') {
-      this.fromDate = '2026-04-01';
-      this.toDate = '2027-03-31';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getFyEnd();
     }
     this.applyFilter();
   }
@@ -867,13 +940,88 @@ export class DashboardComponent implements OnInit {
     this.loadRecentVouchers();
   }
 
+  // ─── Dynamic Date Helpers (match Express "today" logic) ───────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  getDefaultFromDate(): string {
+    return this.activeTenantId === '2' ? '2026-09-07' : '2024-04-01';
+  }
+
+  getToday(): string { return this.fmt(new Date()); }
+
+  getFyStart(): string {
+    const now = new Date();
+    const fyStartMonth = 3; // April = month index 3
+    const fyYear = now.getMonth() >= fyStartMonth ? now.getFullYear() : now.getFullYear() - 1;
+    return fyYear + '-04-01';
+  }
+
+  getFyEnd(): string {
+    const now = new Date();
+    const fyStartMonth = 3;
+    const fyYear = now.getMonth() >= fyStartMonth ? now.getFullYear() : now.getFullYear() - 1;
+    return (fyYear + 1) + '-03-31';
+  }
+
+  getMonthStart(): string {
+    const now = new Date();
+    return this.fmt(new Date(now.getFullYear(), now.getMonth(), 1));
+  }
+
+  getMonthEnd(): string {
+    const now = new Date();
+    return this.fmt(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  }
+
+  getQuarterStart(): string {
+    const now = new Date();
+    const fyStartMonth = 3; // April
+    const monthInFy = (now.getMonth() - fyStartMonth + 12) % 12;
+    const qStart = Math.floor(monthInFy / 3) * 3 + fyStartMonth;
+    const year = qStart > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(year, qStart, 1));
+  }
+
+  getQuarterEnd(): string {
+    const now = new Date();
+    const fyStartMonth = 3;
+    const monthInFy = (now.getMonth() - fyStartMonth + 12) % 12;
+    const qStartIdx = Math.floor(monthInFy / 3) * 3 + fyStartMonth;
+    const qEndIdx = qStartIdx + 3;
+    const year = qStartIdx > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(year, qEndIdx, 0));
+  }
+
+  getHalfYearStart(): string {
+    const now = new Date();
+    const fyStartMonth = 3;
+    const monthInFy = (now.getMonth() - fyStartMonth + 12) % 12;
+    const hStartIdx = monthInFy < 6 ? fyStartMonth : fyStartMonth + 6;
+    const year = hStartIdx > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(year, hStartIdx, 1));
+  }
+
+  getHalfYearEnd(): string {
+    const now = new Date();
+    const fyStartMonth = 3;
+    const monthInFy = (now.getMonth() - fyStartMonth + 12) % 12;
+    const hEndIdx = monthInFy < 6 ? fyStartMonth + 6 : fyStartMonth + 12;
+    const year = (fyStartMonth + 6) > now.getMonth() && monthInFy < 6 ? now.getFullYear() : now.getFullYear();
+    return this.fmt(new Date(year, hEndIdx, 0));
+  }
+  // ──────────────────────────────────────────────────────────────────────────
   resetToToday() {
     if (this.activeTenantId === '2') {
-      this.fromDate = '2026-09-07';
-      this.toDate = '2026-10-24';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getToday();
     } else {
-      this.fromDate = '2024-04-01';
-      this.toDate = '2026-10-25';
+      this.fromDate = this.getDefaultFromDate();
+      this.toDate = this.getToday();
     }
     this.granularity = 'custom';
     this.applyFilter();
@@ -891,7 +1039,8 @@ export class DashboardComponent implements OnInit {
   }
 
   loadRecentVouchers() {
-    this.http.get<any>(`${environment.apiUrl}/vouchers?page=0&size=8`).subscribe({
+    const dateParams = (this.fromDate && this.toDate) ? `&startDate=${this.fromDate}&endDate=${this.toDate}` : '';
+    this.http.get<any>(`${environment.apiUrl}/vouchers?page=0&size=8${dateParams}`).subscribe({
       next: (res) => {
         if (res && res.data && res.data.content) {
           this.recentVouchers = res.data.content;
@@ -926,7 +1075,7 @@ export class DashboardComponent implements OnInit {
       labels: ['Sales', 'Purchases', 'Other Expenses', 'Net Profit'],
       datasets: [
         {
-          label: '₹',
+          label: 'â‚¹',
           data: [45803124, 49984566, 54887726, -59069168],
           backgroundColor: ['#0d9488', '#94a3b8', '#d97706', '#dc2626'],
           borderRadius: 6
@@ -1064,7 +1213,7 @@ export class DashboardComponent implements OnInit {
       labels: ['Sales', 'Purchases', 'Other Expenses', 'Net Profit'],
       datasets: [
         {
-          label: '₹',
+          label: 'â‚¹',
           data: [sales, purchases, expenses, net],
           backgroundColor: [
             '#0d9488',
@@ -1166,3 +1315,5 @@ export class DashboardComponent implements OnInit {
     window.print();
   }
 }
+
+

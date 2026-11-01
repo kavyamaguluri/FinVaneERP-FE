@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -60,28 +60,28 @@ export interface ItActBlockRow {
 }
 
 const CO_ACT_DEFINITIONS: Record<string, { label: string; usefulLifeYears: number }> = {
-  building_rcc: { label: 'Building — RCC Frame Structure', usefulLifeYears: 60 },
-  building_other: { label: 'Building — Other than RCC Frame Structure (incl. Factory)', usefulLifeYears: 30 },
-  building_temp: { label: 'Building — Temporary Structure', usefulLifeYears: 3 },
+  building_rcc: { label: 'Building â€” RCC Frame Structure', usefulLifeYears: 60 },
+  building_other: { label: 'Building â€” Other than RCC Frame Structure (incl. Factory)', usefulLifeYears: 30 },
+  building_temp: { label: 'Building â€” Temporary Structure', usefulLifeYears: 3 },
   plant_machinery_general: { label: 'Plant & Machinery (General, Continuous Process not covered)', usefulLifeYears: 15 },
   furniture_general: { label: 'Furniture & Fittings (General)', usefulLifeYears: 10 },
   furniture_hospitality: { label: 'Furniture & Fittings (Hotels/Schools/Cinemas/Hire)', usefulLifeYears: 8 },
   office_equipment: { label: 'Office Equipment', usefulLifeYears: 5 },
-  computers_servers: { label: 'Computers — Servers & Networks', usefulLifeYears: 6 },
-  computers_end_user: { label: 'Computers — End User Devices (Desktops, Laptops, etc.)', usefulLifeYears: 3 },
-  motor_vehicles_two_wheeler: { label: 'Motor Vehicles — Motor Cycles, Scooters, Mopeds', usefulLifeYears: 10 },
-  motor_vehicles_general: { label: 'Motor Vehicles — Cars/Buses/Lorries (Not Used on Hire)', usefulLifeYears: 8 },
-  motor_vehicles_hire: { label: 'Motor Vehicles — Buses/Lorries/Taxis Used on Hire', usefulLifeYears: 6 },
+  computers_servers: { label: 'Computers â€” Servers & Networks', usefulLifeYears: 6 },
+  computers_end_user: { label: 'Computers â€” End User Devices (Desktops, Laptops, etc.)', usefulLifeYears: 3 },
+  motor_vehicles_two_wheeler: { label: 'Motor Vehicles â€” Motor Cycles, Scooters, Mopeds', usefulLifeYears: 10 },
+  motor_vehicles_general: { label: 'Motor Vehicles â€” Cars/Buses/Lorries (Not Used on Hire)', usefulLifeYears: 8 },
+  motor_vehicles_hire: { label: 'Motor Vehicles â€” Buses/Lorries/Taxis Used on Hire', usefulLifeYears: 6 },
   motor_vehicles_electric: { label: 'Electrically Operated Vehicles (incl. Battery/Fuel Cell)', usefulLifeYears: 8 },
   electrical_installations: { label: 'Electrical Installations & Equipment', usefulLifeYears: 10 },
   laboratory_equipment: { label: 'Laboratory Equipment (General)', usefulLifeYears: 10 },
-  intangible_software: { label: 'Intangible Assets — Computer Software (per AS 26, commonly adopted)', usefulLifeYears: 3 },
+  intangible_software: { label: 'Intangible Assets â€” Computer Software (per AS 26, commonly adopted)', usefulLifeYears: 3 },
 };
 
 const IT_ACT_DEFINITIONS: Record<string, { label: string; rate: number }> = {
-  building_residential: { label: 'Building — Residential', rate: 5 },
-  building_nonresidential: { label: 'Building — Non-Residential / Factory / Office', rate: 10 },
-  building_temp: { label: 'Building — Purely Temporary Erections', rate: 40 },
+  building_residential: { label: 'Building â€” Residential', rate: 5 },
+  building_nonresidential: { label: 'Building â€” Non-Residential / Factory / Office', rate: 10 },
+  building_temp: { label: 'Building â€” Purely Temporary Erections', rate: 40 },
   furniture_fittings: { label: 'Furniture & Fittings (incl. Electrical Fittings)', rate: 10 },
   plant_machinery_general: { label: 'Plant & Machinery (General)', rate: 15 },
   motor_car_general: { label: 'Motor Cars (Not Used in a Hire Business)', rate: 15 },
@@ -90,7 +90,7 @@ const IT_ACT_DEFINITIONS: Record<string, { label: string; rate: number }> = {
   computers_software: { label: 'Computers, incl. Computer Software', rate: 40 },
   books: { label: 'Books (Professional Books / Non-Annual Publications)', rate: 40 },
   pollution_energy_saving: { label: 'Air/Water Pollution Control & Energy Saving Devices', rate: 40 },
-  intangibles: { label: 'Intangible Assets — Know-how, Patents, Copyrights, Trademarks, Licences, Franchises', rate: 25 },
+  intangibles: { label: 'Intangible Assets â€” Know-how, Patents, Copyrights, Trademarks, Licences, Franchises', rate: 25 },
 };
 
 function round2(n: number): number {
@@ -312,10 +312,10 @@ function daysInclusive(a: string, b: string): number {
                 <tr *ngFor="let a of assets">
                   <td><a class="text-primary fw-semibold">{{ a.code }}</a></td>
                   <td>{{ a.name }}</td>
-                  <td>{{ a.category || '—' }}</td>
-                  <td>{{ a.department || '—' }}</td>
-                  <td>{{ a.branchName || '—' }}</td>
-                  <td>{{ a.locationName || '—' }}</td>
+                  <td>{{ a.category || 'â€”' }}</td>
+                  <td>{{ a.department || 'â€”' }}</td>
+                  <td>{{ a.branchName || 'â€”' }}</td>
+                  <td>{{ a.locationName || 'â€”' }}</td>
                   <td>{{ a.depreciationMethod === 'wdv' ? 'WDV' : 'Straight-line' }}</td>
                   <td class="text-end font-monospace">{{ formatNumber(a.cost) }}</td>
                   <td class="text-end font-monospace">{{ formatNumber(a.accumDep) }}</td>
@@ -515,7 +515,7 @@ function daysInclusive(a: string, b: string): number {
 
       <!-- Companies Act Schedule II Table -->
       <div class="card p-3 mb-4 shadow-sm border bg-white">
-        <h5 class="mb-1 fw-bold">Grouped by Companies Act 2013 — Schedule II Category</h5>
+        <h5 class="mb-1 fw-bold">Grouped by Companies Act 2013 â€” Schedule II Category</h5>
         <p class="text-muted small mb-3">
           Depreciated over each category's prescribed useful life, run from each asset's Date Put to Use, under whichever method (Straight-Line or Written Down Value) is set on that asset -- see the Method column below.
         </p>
@@ -560,7 +560,7 @@ function daysInclusive(a: string, b: string): number {
 
       <!-- Income Tax Act Section 32 Table -->
       <div class="card p-3 mb-4 shadow-sm border bg-white">
-        <h5 class="mb-1 fw-bold">Grouped by Income Tax Act — Section 32 Block</h5>
+        <h5 class="mb-1 fw-bold">Grouped by Income Tax Act â€” Section 32 Block</h5>
         <p class="text-muted small mb-3">
           Written Down Value depreciation at the block rate, with the half-rate rule applied for assets used &lt;180 days in their year of acquisition.
         </p>
@@ -599,7 +599,7 @@ function daysInclusive(a: string, b: string): number {
           </table>
         </div>
         <p class="small text-muted mb-0 mt-3">
-          Note: this is an informational statutory schedule — no journal voucher is posted from these figures. Book depreciation (posted to the ledger via Run Depreciation) is calculated separately per the method chosen on each asset.
+          Note: this is an informational statutory schedule â€” no journal voucher is posted from these figures. Book depreciation (posted to the ledger via Run Depreciation) is calculated separately per the method chosen on each asset.
         </p>
       </div>
     </div>
@@ -657,243 +657,16 @@ export class FixedAssetsComponent implements OnInit, OnDestroy {
   totalAssetsCount: number = 10;
   activeAssetsCount: number = 10;
 
-  asOfDate: string = '2026-10-27';
+  asOfDate: string = '';
   globalMethod: string = 'straight_line';
   alertMessage: string = '';
 
   runMonth: number = 10;
   runYear: number = 2026;
 
-  assets: FixedAssetItem[] = [
-    {
-      id: 1,
-      code: 'FA-001',
-      name: 'Office Laptop - Dell Latitude',
-      category: 'IT Equipment',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-04-10',
-      datePutToUse: '2024-04-10',
-      cost: 65000.00,
-      accumDep: 49743.12,
-      netBookValue: 15256.88,
-      projectedMonthly: 1715.28,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 3250.00,
-      coActBlock: 'computers_end_user',
-      itActBlock: 'computers_software'
-    },
-    {
-      id: 2,
-      code: 'FA-002',
-      name: 'Warehouse Racking System',
-      category: 'Warehouse Equipment',
-      department: 'Operations',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-05-15',
-      datePutToUse: '2024-05-15',
-      cost: 45000.00,
-      accumDep: 6412.50,
-      netBookValue: 38587.50,
-      projectedMonthly: 237.50,
-      status: 'active',
-      usefulLifeYears: 15,
-      salvageValue: 2250.00,
-      coActBlock: 'plant_machinery_general',
-      itActBlock: 'plant_machinery_general'
-    },
-    {
-      id: 3,
-      code: 'FA-003',
-      name: 'Delivery Two-Wheeler',
-      category: 'Vehicles',
-      department: 'Logistics',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-06-01',
-      datePutToUse: '2024-06-01',
-      cost: 85000.00,
-      accumDep: 18168.84,
-      netBookValue: 66831.16,
-      projectedMonthly: 672.92,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 4250.00,
-      coActBlock: 'motor_vehicles_two_wheeler',
-      itActBlock: 'motor_car_general'
-    },
-    {
-      id: 4,
-      code: 'FA-004',
-      name: 'Office Furniture Set',
-      category: 'Furniture & Fixtures',
-      department: 'Administration',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-06-15',
-      datePutToUse: '2024-06-15',
-      cost: 62000.00,
-      accumDep: 13252.41,
-      netBookValue: 48747.59,
-      projectedMonthly: 490.83,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 3100.00,
-      coActBlock: 'furniture_general',
-      itActBlock: 'furniture_fittings'
-    },
-    {
-      id: 5,
-      code: 'FA-005',
-      name: 'Desktop Computers (Batch of 5)',
-      category: 'IT Equipment',
-      department: 'Administration',
-      branchName: 'Pune Warehouse',
-      locationName: 'Pune Regional Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-07-01',
-      datePutToUse: '2024-07-01',
-      cost: 175000.00,
-      accumDep: 124687.62,
-      netBookValue: 50312.38,
-      projectedMonthly: 4618.06,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 8750.00,
-      coActBlock: 'computers_end_user',
-      itActBlock: 'computers_software'
-    },
-    {
-      id: 6,
-      code: 'FA-006',
-      name: 'Delivery Van',
-      category: 'Vehicles',
-      department: 'Logistics',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-08-01',
-      datePutToUse: '2024-08-01',
-      cost: 650000.00,
-      accumDep: 173671.83,
-      netBookValue: 476328.17,
-      projectedMonthly: 6432.29,
-      status: 'active',
-      usefulLifeYears: 8,
-      salvageValue: 32500.00,
-      coActBlock: 'motor_vehicles_general',
-      itActBlock: 'motor_car_general'
-    },
-    {
-      id: 7,
-      code: 'FA-007',
-      name: 'Split AC Units - Office',
-      category: 'Electrical Installations',
-      department: 'Administration',
-      branchName: 'Bengaluru Retail Store',
-      locationName: 'Bengaluru Retail Store',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-09-01',
-      datePutToUse: '2024-09-01',
-      cost: 128000.00,
-      accumDep: 27359.91,
-      netBookValue: 100640.09,
-      projectedMonthly: 1013.33,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 6400.00,
-      coActBlock: 'electrical_installations',
-      itActBlock: 'plant_machinery_general'
-    },
-    {
-      id: 8,
-      code: 'FA-008',
-      name: 'Retail Display Racks',
-      category: 'Furniture & Fixtures',
-      department: 'Sales',
-      branchName: 'Bengaluru Retail Store',
-      locationName: 'Bengaluru Retail Store',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-09-15',
-      datePutToUse: '2024-09-15',
-      cost: 54000.00,
-      accumDep: 11542.50,
-      netBookValue: 42457.50,
-      projectedMonthly: 427.50,
-      status: 'active',
-      usefulLifeYears: 10,
-      salvageValue: 2700.00,
-      coActBlock: 'furniture_general',
-      itActBlock: 'furniture_fittings'
-    },
-    {
-      id: 9,
-      code: 'FA-009',
-      name: 'Laptops (Batch of 3)',
-      category: 'IT Equipment',
-      department: 'Sales',
-      branchName: 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-10-01',
-      datePutToUse: '2024-10-01',
-      cost: 135000.00,
-      accumDep: 96187.50,
-      netBookValue: 38812.50,
-      projectedMonthly: 3562.50,
-      status: 'active',
-      usefulLifeYears: 3,
-      salvageValue: 6750.00,
-      coActBlock: 'computers_end_user',
-      itActBlock: 'computers_software'
-    },
-    {
-      id: 10,
-      code: 'FA-010',
-      name: 'Forklift - Warehouse',
-      category: 'Plant & Machinery',
-      department: 'Operations',
-      branchName: 'Pune Warehouse',
-      locationName: 'Pune Regional Warehouse',
-      depreciationMethod: 'Straight-line',
-      purchaseDate: '2024-10-15',
-      datePutToUse: '2024-10-15',
-      cost: 380000.00,
-      accumDep: 54150.12,
-      netBookValue: 325849.88,
-      projectedMonthly: 2005.56,
-      status: 'active',
-      usefulLifeYears: 15,
-      salvageValue: 19000.00,
-      coActBlock: 'plant_machinery_general',
-      itActBlock: 'plant_machinery_general'
-    }
-  ];
-
-  categorySummaries: CategorySummary[] = [
-    { category: 'Vehicles', count: 2, netBookValue: 536054.12 },
-    { category: 'Plant & Machinery', count: 1, netBookValue: 323844.32 },
-    { category: 'Electrical Installations', count: 1, netBookValue: 99626.76 },
-    { category: 'IT Equipment', count: 3, netBookValue: 94485.92 },
-    { category: 'Furniture & Fixtures', count: 2, netBookValue: 90286.76 },
-    { category: 'Warehouse Equipment', count: 1, netBookValue: 38350.00 }
-  ];
-
-  depreciationRuns: DepreciationRunItem[] = [
-    { periodMonth: 10, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 8, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 7, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 6, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 5, periodYear: 2026, totalAmount: 21175.77 },
-    { periodMonth: 4, periodYear: 2026, totalAmount: 21175.77 }
-  ];
+  assets: FixedAssetItem[] = [];
+  categorySummaries: CategorySummary[] = [];
+  depreciationRuns: DepreciationRunItem[] = [];
 
   coActGroups: CoActCategoryRow[] = [];
   itActGroups: ItActBlockRow[] = [];
@@ -934,12 +707,14 @@ export class FixedAssetsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.loadData();
     this.detectRoute();
 
     this.sub = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
       this.detectRoute();
+      this.loadData();
     });
 
     this.route.queryParams.subscribe(params => {
@@ -948,8 +723,63 @@ export class FixedAssetsComponent implements OnInit, OnDestroy {
       }
       this.calculateStatutorySchedule(this.asOfDate);
     });
+  }
 
-    this.calculateStatutorySchedule(this.asOfDate);
+  loadData() {
+    this.http.get<any>(`${environment.apiBaseUrl}/assets/dashboard`).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          const d = res.data;
+          this.grossBlock = Number(d.grossBlock) || 0;
+          this.totalAccumDep = Number(d.accumDep) || 0;
+          this.netBookValue = Number(d.netBookValue) || 0;
+          this.projectedThisPeriod = Number(d.projectedThisPeriod) || 0;
+          this.totalAssetsCount = Number(d.assetCount) || 0;
+          this.activeAssetsCount = Number(d.activeCount) || 0;
+          if (d.depreciationMethod) this.globalMethod = d.depreciationMethod;
+          if (d.byCategory) this.categorySummaries = d.byCategory;
+          if (d.recentRuns) {
+            this.depreciationRuns = d.recentRuns.map((r: any) => ({
+              periodMonth: r.periodMonth,
+              periodYear: r.periodYear,
+              totalAmount: Number(r.totalAmount) || 0
+            }));
+          }
+        }
+      },
+      error: () => {}
+    });
+
+    this.http.get<any>(`${environment.apiBaseUrl}/assets`).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.assets = res.data.map((a: any) => ({
+            id: a.id,
+            code: a.code || a.assetCode,
+            name: a.name,
+            category: a.category,
+            department: a.department,
+            branchName: a.branchName,
+            locationName: a.locationName || a.branchName || 'Main Location',
+            depreciationMethod: a.depreciationMethod === 'wdv' ? 'wdv' : 'Straight-line',
+            purchaseDate: a.purchaseDate,
+            datePutToUse: a.datePutToUse || a.purchaseDate,
+            cost: Number(a.cost) || 0,
+            accumDep: Number(a.accumDep || a.accumulatedDepreciation) || 0,
+            netBookValue: Number(a.netBookValue || a.bookValue) || 0,
+            projectedMonthly: Number(a.projectedMonthly) || 0,
+            status: a.status || 'active',
+            usefulLifeYears: Number(a.usefulLifeYears) || 5,
+            salvageValue: Number(a.salvageValue) || 0,
+            paymentMode: a.paymentMode,
+            coActBlock: a.coActBlock,
+            itActBlock: a.itActBlock
+          }));
+          this.calculateStatutorySchedule(this.asOfDate);
+        }
+      },
+      error: () => {}
+    });
   }
 
   ngOnDestroy() {
@@ -1172,83 +1002,143 @@ export class FixedAssetsComponent implements OnInit, OnDestroy {
   }
 
   saveAsset() {
-    const cost = Number(this.newAsset.cost || 0);
-    const code = `FA-${String(this.assets.length + 1).padStart(3, '0')}`;
-    const usefulLife = Number(this.newAsset.usefulLifeYears || 5);
-    const salvage = this.newAsset.salvageValue != null ? Number(this.newAsset.salvageValue) : round2(cost * 0.05);
-    const monthlyDep = usefulLife > 0 ? round2((cost - salvage) / (usefulLife * 12)) : 0;
-
-    const item: FixedAssetItem = {
-      id: this.assets.length + 1,
-      code,
+    const payload = {
       name: this.newAsset.name,
       category: this.newAsset.category,
       department: this.newAsset.department,
-      branchName: this.newAsset.branchName || 'Mumbai HO',
-      locationName: 'Mumbai Central Warehouse',
-      depreciationMethod: 'Straight-line',
+      branchName: this.newAsset.branchName,
       purchaseDate: this.newAsset.purchaseDate,
       datePutToUse: this.newAsset.datePutToUse || this.newAsset.purchaseDate,
-      cost,
-      accumDep: 0,
-      netBookValue: cost,
-      projectedMonthly: monthlyDep,
-      status: 'active',
-      usefulLifeYears: usefulLife,
-      salvageValue: salvage,
-      paymentMode: this.newAsset.paymentMode,
+      cost: Number(this.newAsset.cost || 0),
+      salvageValue: this.newAsset.salvageValue != null ? Number(this.newAsset.salvageValue) : null,
+      usefulLifeYears: Number(this.newAsset.usefulLifeYears || 5),
+      depreciationMethod: this.globalMethod || 'straight_line',
+      paymentMode: this.newAsset.paymentMode || 'bank',
       coActBlock: this.newAsset.coActBlock,
       itActBlock: this.newAsset.itActBlock
     };
 
-    this.assets.unshift(item);
-    this.totalAssetsCount = this.assets.length;
-    this.activeAssetsCount = this.assets.filter(a => a.status === 'active').length;
-    this.grossBlock = round2(this.grossBlock + cost);
-    this.netBookValue = round2(this.netBookValue + cost);
-    this.projectedThisPeriod = round2(this.projectedThisPeriod + monthlyDep);
-
-    this.alertMessage = `Asset ${code} created successfully.`;
-    this.router.navigate(['/assets']);
+    this.http.post<any>(`${environment.apiBaseUrl}/assets`, payload).subscribe({
+      next: (res) => {
+        this.alertMessage = 'Fixed asset registered successfully and acquisition posted to ledger.';
+        this.newAsset = {
+          name: '',
+          category: '',
+          department: '',
+          branchName: '',
+          purchaseDate: '',
+          datePutToUse: '',
+          cost: 0,
+          salvageValue: null,
+          usefulLifeYears: 5,
+          paymentMode: 'bank',
+          coActBlock: '',
+          itActBlock: ''
+        };
+        this.router.navigate(['/assets']);
+        this.loadData();
+      },
+      error: (err) => {
+        this.alertMessage = err?.error?.message || 'Failed to register asset.';
+      }
+    });
   }
 
   applyMethod() {
-    this.alertMessage = `Company-wide depreciation method updated to ${this.globalMethod === 'wdv' ? 'Written Down Value (WDV)' : 'Straight-line (SLM)'}.`;
+    this.http.post<any>(`${environment.apiBaseUrl}/assets/depreciation-method?method=${this.globalMethod}`, {}).subscribe({
+      next: () => {
+        this.alertMessage = `Company-wide depreciation method updated to ${this.globalMethod === 'wdv' ? 'Written Down Value (WDV)' : 'Straight-line (SLM)'}.`;
+        this.loadData();
+      },
+      error: (err) => {
+        this.alertMessage = err?.error?.message || 'Failed to update depreciation method.';
+      }
+    });
   }
 
   pushToReports() {
-    this.alertMessage = `Current period depreciation of ₹${this.formatNumber(this.projectedThisPeriod)} successfully pushed to reports (Balance Sheet, P&L, Trial Balance).`;
+    this.http.post<any>(`${environment.apiBaseUrl}/assets/push-to-reports`, {}).subscribe({
+      next: (res) => {
+        this.alertMessage = `Current period depreciation of â‚¹${this.formatNumber(res?.data?.totalAmount || this.projectedThisPeriod)} successfully pushed to reports (Balance Sheet, P&L, Trial Balance).`;
+        this.loadData();
+      },
+      error: (err) => {
+        this.alertMessage = err?.error?.message || 'Failed to push depreciation to reports.';
+      }
+    });
   }
 
   deleteAsset(a: FixedAssetItem) {
-    if (confirm(`Delete asset ${a.code}? Only possible if it has no depreciation posted yet. This cannot be undone.`)) {
-      this.assets = this.assets.filter(item => item.id !== a.id);
-      this.totalAssetsCount = this.assets.length;
-      this.grossBlock = round2(this.grossBlock - a.cost);
-      this.totalAccumDep = round2(this.totalAccumDep - a.accumDep);
-      this.netBookValue = round2(this.netBookValue - a.netBookValue);
-      this.alertMessage = `Asset ${a.code} deleted.`;
-      this.calculateStatutorySchedule(this.asOfDate);
+    if (confirm(`Delete asset ${a.code}? This cannot be undone.`)) {
+      this.http.delete<any>(`${environment.apiBaseUrl}/assets/${a.id}`).subscribe({
+        next: () => {
+          this.alertMessage = `Asset ${a.code} deleted.`;
+          this.loadData();
+        },
+        error: (err) => {
+          this.alertMessage = err?.error?.message || 'Failed to delete asset.';
+        }
+      });
     }
   }
 
   deleteAllAssets() {
-    if (confirm(`Delete ALL ${this.assets.length} fixed assets? Assets that already have depreciation posted will be skipped automatically. This cannot be undone.`)) {
-      this.assets = [];
-      this.totalAssetsCount = 0;
-      this.activeAssetsCount = 0;
-      this.grossBlock = 0;
-      this.totalAccumDep = 0;
-      this.netBookValue = 0;
-      this.projectedThisPeriod = 0;
-      this.categorySummaries = [];
-      this.alertMessage = 'All assets deleted.';
-      this.calculateStatutorySchedule(this.asOfDate);
+    if (confirm(`Delete ALL ${this.assets.length} fixed assets? This cannot be undone.`)) {
+      this.http.post<any>(`${environment.apiBaseUrl}/assets/delete-all`, {}).subscribe({
+        next: () => {
+          this.alertMessage = 'All eligible assets deleted.';
+          this.loadData();
+        },
+        error: (err) => {
+          this.alertMessage = err?.error?.message || 'Failed to delete all assets.';
+        }
+      });
     }
   }
 
   executeDepreciationRun() {
-    this.alertMessage = `Depreciation posted for period ${String(this.runMonth).padStart(2, '0')}/${this.runYear}.`;
-    this.router.navigate(['/assets/dashboard']);
+    this.http.post<any>(`${environment.apiBaseUrl}/assets/run-depreciation?month=${this.runMonth}&year=${this.runYear}`, {}).subscribe({
+      next: () => {
+        this.alertMessage = `Depreciation posted for period ${String(this.runMonth).padStart(2, '0')}/${this.runYear}.`;
+        this.router.navigate(['/assets/dashboard']);
+        this.loadData();
+      },
+      error: (err) => {
+        this.alertMessage = err?.error?.message || 'Failed to run depreciation.';
+      }
+    });
   }
+  // ─── Dynamic Date Helpers ────────────────────────────────────────────
+  private fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+  getToday(): string { return this.fmt(new Date()); }
+  getFyStart(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return fy + '-04-01';
+  }
+  getFyEnd(): string {
+    const now = new Date(); const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return (fy + 1) + '-03-31';
+  }
+  getMonthStart(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth(), 1)); }
+  getMonthEnd(): string { const n = new Date(); return this.fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0)); }
+  getQuarterStart(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm, 1));
+  }
+  getQuarterEnd(): string {
+    const now = new Date(); const mInFy = (now.getMonth() - 3 + 12) % 12;
+    const qm = Math.floor(mInFy / 3) * 3 + 3;
+    const yr = qm > now.getMonth() ? now.getFullYear() - 1 : now.getFullYear();
+    return this.fmt(new Date(yr, qm + 3, 0));
+  }
+  // ─────────────────────────────────────────────────────────────────────
 }
+
+
