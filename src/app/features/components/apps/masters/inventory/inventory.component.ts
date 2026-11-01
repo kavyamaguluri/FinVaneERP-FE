@@ -44,8 +44,6 @@ export interface StockLedgerEntry {
 @Component({
   selector: 'app-inventory-list',
   template: `
-    <!-- Back Button matching application standard -->
-    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
 
     <!-- Page Header matching Express views/inventory/list.ejs exactly -->
     <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">

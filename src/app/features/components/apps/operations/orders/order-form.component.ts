@@ -12,11 +12,6 @@ export interface OrderLineItem {
 @Component({
   selector: 'app-order-form',
   template: `
-    <div class="mb-3">
-      <a [routerLink]="['/orders']" [queryParams]="{type: orderType}" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <h4 class="fw-bold mb-3">{{ orderType === 'purchase' ? 'New Purchase Order' : 'New Sales Order' }}</h4>
 

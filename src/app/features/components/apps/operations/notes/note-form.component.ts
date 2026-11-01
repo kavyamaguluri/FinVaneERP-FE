@@ -6,11 +6,6 @@ import { environment } from '../../../../../../environments/environment';
 @Component({
   selector: 'app-note-form',
   template: `
-    <div class="mb-3">
-      <a [routerLink]="['/notes']" [queryParams]="{type: noteType}" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <!-- Step 1: Pick Invoice -->
     <div *ngIf="!selectedInvoice">

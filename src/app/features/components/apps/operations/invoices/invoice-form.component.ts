@@ -12,11 +12,6 @@ export interface InvLine {
 @Component({
   selector: 'app-invoice-form',
   template: `
-    <div class="mb-3">
-      <a [routerLink]="['/invoices']" [queryParams]="{type: invoiceType}" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="fw-bold mb-0">{{ invoiceType === 'sales' ? 'New Sales Invoice' : 'New Purchase Invoice' }}</h4>

@@ -20,11 +20,6 @@ export interface BillLine {
 @Component({
   selector: 'app-purchase-bill-form',
   template: `
-    <div class="mb-3">
-      <a routerLink="/purchase-bills" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <h4 class="fw-bold mb-3">New purchase bill</h4>
 

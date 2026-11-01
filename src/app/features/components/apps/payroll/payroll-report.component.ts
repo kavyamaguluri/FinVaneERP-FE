@@ -28,7 +28,6 @@ export interface EmployeePayrollSummary {
 @Component({
   selector: 'app-payroll-report',
   template: `
-    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
 
     <div class="page-header mb-3">
       <div>

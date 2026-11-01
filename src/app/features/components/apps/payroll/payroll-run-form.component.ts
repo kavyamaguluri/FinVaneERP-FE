@@ -4,11 +4,6 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-payroll-run-form',
   template: `
-    <div class="mb-3">
-      <a routerLink="/payroll/runs" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <div class="page-header mb-3">
       <h4 class="fw-bold mb-0">Run Payroll</h4>

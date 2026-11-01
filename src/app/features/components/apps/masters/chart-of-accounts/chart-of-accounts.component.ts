@@ -8,9 +8,6 @@ import { AccountGroup } from '../../../../api/accounts/account-ledger.model';
     <!-- Page Header matching Express views/accounts/list.ejs -->
     <div class="page-header d-flex justify-content-between align-items-center mb-3">
       <div>
-        <div class="mb-2">
-          <a routerLink="/dashboard" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
-        </div>
         <h3 class="mb-1 fw-bold text-dark">Chart of Accounts</h3>
         <div class="subtitle text-muted small">
           Create ledgers one by one with <strong>+ New Account</strong>, or in bulk by downloading the template, filling it in and clicking Import. To assign Ledger Group 1 / 2 (which drives Schedule III) use <a routerLink="/accounts/coa-mapping" class="text-primary text-decoration-underline fw-semibold">COA Mapping</a>.

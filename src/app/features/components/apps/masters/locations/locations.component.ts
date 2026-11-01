@@ -16,7 +16,6 @@ export interface LocationItem {
 @Component({
   selector: 'app-locations',
   template: `
-    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
 
     <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
       <div>

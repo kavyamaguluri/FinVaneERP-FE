@@ -24,10 +24,6 @@ export interface BankTransactionItem {
 @Component({
   selector: 'app-banking',
   template: `
-    <!-- Back button if in transactions view -->
-    <button *ngIf="currentView === 'transactions'" type="button" class="btn btn-sm btn-outline-secondary mb-3" (click)="backToAccounts()">
-      &larr; Back to Bank Accounts
-    </button>
 
     <!-- Feedback Banner -->
     <div *ngIf="alertMessage" class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
@@ -96,6 +92,7 @@ export interface BankTransactionItem {
           <h4 class="mb-0 fw-bold">Transactions &mdash; {{ selectedAccount?.name }}</h4>
         </div>
         <div class="io-toolbar d-flex flex-wrap align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="backToAccounts()">&larr; All Accounts</button>
           <button type="button" class="btn btn-sm btn-outline-secondary" (click)="downloadTxnsTemplate()">Download Template</button>
           <button type="button" class="btn btn-sm btn-outline-secondary" (click)="exportTxnsExcel()">Export Excel</button>
           <div class="d-flex align-items-center gap-2">

@@ -18,7 +18,6 @@ export interface CoaMappingRow {
     <!-- Header matching Express views/accounts/coa_mapping.ejs -->
     <div class="d-flex justify-content-between align-items-start mb-3">
       <div>
-        <a routerLink="/accounts" class="btn btn-sm btn-outline-secondary mb-2 px-2 py-1" style="font-size: 0.82rem;">&larr; Back</a>
         <h3 class="mb-1 fw-bold text-dark" style="font-size: 1.45rem;">COA Mapping</h3>
         <div class="text-secondary small" style="line-height: 1.45;">
           Give every ledger a <strong>Ledger Group 1</strong> (primary) and <strong>Ledger Group 2</strong> (secondary). That pair decides where the ledger appears in the <strong>Schedule III</strong> Balance Sheet; income / expense ledgers also use their <a routerLink="/accounts/sector-mapping" class="text-primary text-decoration-underline">Sector Mapping</a> line.

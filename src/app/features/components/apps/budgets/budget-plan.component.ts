@@ -17,12 +17,6 @@ export interface PlanRow {
 @Component({
   selector: 'app-budget-plan',
   template: `
-    <!-- Back Button matching Express -->
-    <div class="mb-3">
-      <a routerLink="/budgets" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <!-- Page Header matching Express views/budgets/plan.ejs -->
     <div class="page-header d-flex flex-wrap justify-content-between align-items-start mb-3">

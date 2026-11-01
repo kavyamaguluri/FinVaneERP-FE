@@ -5,12 +5,6 @@ import { BudgetEntry, BudgetService } from '../../../service/budget.service';
 @Component({
   selector: 'app-budget-list',
   template: `
-    <!-- Back Button matching Express -->
-    <div class="mb-3">
-      <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <!-- Page Header matching Express views/budgets/list.ejs -->
     <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-3">

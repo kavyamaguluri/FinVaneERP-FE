@@ -4,11 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-employee-form',
   template: `
-    <div class="mb-3">
-      <a routerLink="/payroll/employees" class="btn btn-outline-secondary btn-sm">
-        &larr; Back
-      </a>
-    </div>
 
     <div class="page-header mb-3">
       <h4 class="fw-bold mb-0">{{ isEdit ? 'Edit Employee' : 'New Employee' }}</h4>

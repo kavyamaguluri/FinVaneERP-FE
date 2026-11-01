@@ -13,9 +13,6 @@ import { environment } from '../../../../../../environments/environment';
           Settle the GST payable under reverse charge or on imports (cash ledger / customs) — Dr RCM Payable, Cr Bank
         </div>
       </div>
-      <div class="io-toolbar">
-        <a routerLink="/purchase-bills" class="btn btn-sm btn-outline-secondary">Back</a>
-      </div>
     </div>
 
     <form (ngSubmit)="onSubmit()">
