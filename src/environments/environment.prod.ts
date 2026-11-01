@@ -1,4 +1,4 @@
-﻿export const environment = {
+export const environment = {
   production: true,
   apiBaseUrl: 'https://finvaneerp-be.onrender.com/api/v2',
   apiUrl: 'https://finvaneerp-be.onrender.com/api/v2',

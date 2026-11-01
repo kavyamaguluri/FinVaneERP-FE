@@ -1,3 +1,4 @@
+import { AuthGuard } from './features/service/auth.guard';
 
 import { PurchaseBillsComponent } from './features/components/apps/operations/invoices/purchase-bills.component';
 import { PurchaseBillFormComponent } from './features/components/apps/operations/invoices/purchase-bill-form.component';
@@ -62,6 +63,7 @@ const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
